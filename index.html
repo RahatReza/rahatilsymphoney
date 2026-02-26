@@ -1,72 +1,365 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RAHATIL | TIDAL CONVERGENCE</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;400&display=swap');
-        body, html { margin: 0; padding: 0; overflow: hidden; background: #000; font-family: 'Inter', sans-serif; cursor: none; touch-action: none; -webkit-touch-callout: none; }
-        canvas { display: block; width: 100vw; height: 100vh; position: absolute; z-index: 1; filter: contrast(1.05); }
-        
-        /* STANDARD UI */
-        #ui-layer { position: relative; z-index: 10; height: 100vh; width: 100vw; display: flex; flex-direction: column; justify-content: center; align-items: center; pointer-events: none; transition: opacity 0.6s ease; }
-        .brand-text { text-align: center; }
-        h1 { font-weight: 100; letter-spacing: 35px; color: #fff; margin: 0; font-size: 3.2rem; text-transform: uppercase; text-shadow: 0 0 30px rgba(255,255,255,0.2); }
-        .btn-init { margin-top: 80px; pointer-events: auto; cursor: pointer; color: #fff; font-size: 0.7rem; letter-spacing: 15px; text-transform: uppercase; opacity: 0.5; transition: 0.4s; position: relative;}
-        .btn-init::after { content: ''; position: absolute; bottom: -10px; left: 25%; width: 50%; height: 1px; background: #fff; opacity: 0.2; transition: 0.4s; }
-        .btn-init:hover { opacity: 1; letter-spacing: 20px; }
-        .btn-init:hover::after { width: 100%; left: 0; opacity: 1; }
-        
-        #cinematic-layer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; gap: 20px; opacity: 0; transition: opacity 0.6s ease; width: 100%; }
-        .cine-title { font-weight: 100; font-size: 2.2rem; color: #fff; letter-spacing: 15px; text-transform: uppercase; text-shadow: 0 0 25px rgba(255,255,255,0.4); opacity: 0; transform: translateY(20px); transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); text-align: center;}
-        .cine-sub { font-size: 0.65rem; color: #aaa; letter-spacing: 12px; text-transform: uppercase; opacity: 0; transform: translateY(15px); transition: all 0.6s ease; text-align: center;}
-        
-        #cinematic-layer.active { opacity: 1; }
-        #cinematic-layer.active .cine-title { opacity: 1; transform: translateY(0); letter-spacing: 28px; transition-delay: 0.1s; }
-        #cinematic-layer.active .cine-sub:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 0.4s; }
-        #cinematic-layer.active .cine-sub:nth-child(3) { opacity: 1; transform: translateY(0); color: #fff; transition-delay: 0.8s; }
 
-        #cursor { position: fixed; pointer-events: none; z-index: 9999; width: 22px; height: 22px; border: 1.5px solid #fff; border-radius: 50%; transform: translate(-50%, -50%); mix-blend-mode: difference; transition: transform 0.2s ease; }
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Inter', sans-serif;
+            cursor: none;
+            touch-action: none;
+            -webkit-touch-callout: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            z-index: 1;
+            filter: contrast(1.05);
+        }
+
+        /* STANDARD UI */
+        #ui-layer {
+            position: relative;
+            z-index: 10;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            transition: opacity 0.6s ease;
+        }
+
+        .brand-text {
+            text-align: center;
+        }
+
+        h1 {
+            font-weight: 100;
+            letter-spacing: 35px;
+            color: #fff;
+            margin: 0;
+            font-size: 3.2rem;
+            text-transform: uppercase;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-init {
+            margin-top: 80px;
+            pointer-events: auto;
+            cursor: pointer;
+            color: #fff;
+            font-size: 0.7rem;
+            letter-spacing: 15px;
+            text-transform: uppercase;
+            opacity: 0.5;
+            transition: 0.4s;
+            position: relative;
+        }
+
+        .btn-init::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 25%;
+            width: 50%;
+            height: 1px;
+            background: #fff;
+            opacity: 0.2;
+            transition: 0.4s;
+        }
+
+        .btn-init:hover {
+            opacity: 1;
+            letter-spacing: 20px;
+        }
+
+        .btn-init:hover::after {
+            width: 100%;
+            left: 0;
+            opacity: 1;
+        }
+
+        #cinematic-layer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            gap: 20px;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            width: 100%;
+        }
+
+        .cine-title {
+            font-weight: 100;
+            font-size: 2.2rem;
+            color: #fff;
+            letter-spacing: 15px;
+            text-transform: uppercase;
+            text-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            text-align: center;
+        }
+
+        .cine-sub {
+            font-size: 0.65rem;
+            color: #aaa;
+            letter-spacing: 12px;
+            text-transform: uppercase;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.6s ease;
+            text-align: center;
+        }
+
+        #cinematic-layer.active {
+            opacity: 1;
+        }
+
+        #cinematic-layer.active .cine-title {
+            opacity: 1;
+            transform: translateY(0);
+            letter-spacing: 28px;
+            transition-delay: 0.1s;
+        }
+
+        #cinematic-layer.active .cine-sub:nth-child(2) {
+            opacity: 1;
+            transform: translateY(0);
+            transition-delay: 0.4s;
+        }
+
+        #cinematic-layer.active .cine-sub:nth-child(3) {
+            opacity: 1;
+            transform: translateY(0);
+            color: #fff;
+            transition-delay: 0.8s;
+        }
+
+        #cursor {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            width: 22px;
+            height: 22px;
+            border: 1.5px solid #fff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            mix-blend-mode: difference;
+            transition: transform 0.2s ease;
+        }
 
         /* ENGINEERING OVERRIDE PANEL UI */
-        .overlay-layer { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9000; display: none; justify-content: center; align-items: center; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); pointer-events: auto; }
-        #auth-input { background: transparent; border: none; border-bottom: 1px solid #fff; color: #fff; font-family: 'Inter', sans-serif; font-size: 1.2rem; text-align: center; outline: none; letter-spacing: 5px; padding: 10px; width: 300px; text-transform: uppercase; }
-        #auth-input::placeholder { color: rgba(255,255,255,0.3); }
-        
-        .panel-box { background: rgba(10, 10, 15, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 30px; width: 400px; max-width: 90%; color: #fff; font-family: 'Inter', sans-serif; box-shadow: 0 0 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 15px; box-sizing: border-box;}
-        .panel-box h3 { margin: 0 0 10px 0; font-weight: 100; letter-spacing: 8px; text-transform: uppercase; font-size: 1.2rem; text-align: center; color: #aaa; }
-        .slider-group { display: flex; flex-direction: column; gap: 5px; }
-        .slider-group label { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: #888; display: flex; justify-content: space-between;}
-        .slider-group span { color: #fff; }
-        
-        input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #fff; cursor: pointer; margin-top: -7px; }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 2px; cursor: pointer; background: rgba(255,255,255,0.2); border-radius: 1px; }
-        
-        .panel-buttons { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-panel { flex: 1; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer; text-transform: uppercase; letter-spacing: 3px; font-family: 'Inter'; font-size: 0.65rem; transition: 0.3s; }
-        .btn-panel:hover { background: rgba(255,255,255,0.2); }
-        .btn-reset { color: #ffa0a0; border-color: rgba(255,100,100,0.3); }
-        .btn-reset:hover { background: rgba(255,100,100,0.15); border-color: rgba(255,100,100,0.6); }
+        .overlay-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            pointer-events: auto;
+        }
+
+        #auth-input {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #fff;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.2rem;
+            text-align: center;
+            outline: none;
+            letter-spacing: 5px;
+            padding: 10px;
+            width: 300px;
+            text-transform: uppercase;
+        }
+
+        #auth-input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .panel-box {
+            background: rgba(10, 10, 15, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 30px;
+            width: 400px;
+            max-width: 90%;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-sizing: border-box;
+        }
+
+        .panel-box h3 {
+            margin: 0 0 10px 0;
+            font-weight: 100;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            font-size: 1.2rem;
+            text-align: center;
+            color: #aaa;
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .slider-group label {
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #888;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .slider-group span {
+            color: #fff;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            margin-top: -7px;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 2px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 1px;
+        }
+
+        .panel-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-panel {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-family: 'Inter';
+            font-size: 0.65rem;
+            transition: 0.3s;
+        }
+
+        .btn-panel:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-reset {
+            color: #ffa0a0;
+            border-color: rgba(255, 100, 100, 0.3);
+        }
+
+        .btn-reset:hover {
+            background: rgba(255, 100, 100, 0.15);
+            border-color: rgba(255, 100, 100, 0.6);
+        }
 
         /* MOBILE RESPONSIVE SCALING */
         @media (max-width: 768px) {
-            h1 { font-size: 2.2rem; letter-spacing: 18px; margin-left: 18px; }
-            .btn-init { font-size: 0.6rem; letter-spacing: 10px; margin-top: 50px; }
-            .btn-init:hover { letter-spacing: 12px; }
-            .cine-title { font-size: 1.5rem; letter-spacing: 8px; }
-            .cine-sub { font-size: 0.5rem; letter-spacing: 6px; }
-            #cinematic-layer.active .cine-title { letter-spacing: 15px; }
-            .panel-box { padding: 20px; gap: 12px; }
-            .panel-box h3 { font-size: 1rem; letter-spacing: 5px; }
+            h1 {
+                font-size: 2.2rem;
+                letter-spacing: 18px;
+                margin-left: 18px;
+            }
+
+            .btn-init {
+                font-size: 0.6rem;
+                letter-spacing: 10px;
+                margin-top: 50px;
+            }
+
+            .btn-init:hover {
+                letter-spacing: 12px;
+            }
+
+            .cine-title {
+                font-size: 1.5rem;
+                letter-spacing: 8px;
+            }
+
+            .cine-sub {
+                font-size: 0.5rem;
+                letter-spacing: 6px;
+            }
+
+            #cinematic-layer.active .cine-title {
+                letter-spacing: 15px;
+            }
+
+            .panel-box {
+                padding: 20px;
+                gap: 12px;
+            }
+
+            .panel-box h3 {
+                font-size: 1rem;
+                letter-spacing: 5px;
+            }
         }
     </style>
 </head>
+
 <body>
     <div id="cursor"></div>
     <canvas id="v"></canvas>
-    
+
     <div id="ui-layer">
         <div class="brand-text">
             <h1>RAHATIL</h1>
@@ -89,7 +382,7 @@
     <div id="custom-panel" class="overlay-layer">
         <div class="panel-box">
             <h3>Engine Override</h3>
-            
+
             <div class="slider-group">
                 <label>Wave Energy <span id="val-energy">2.2</span></label>
                 <input type="range" id="inp-energy" min="0" max="10" step="0.1" value="2.2">
@@ -313,11 +606,11 @@ void main() {
 
         let isPaused = false;
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
-        
-        let baseDPR = isMobile ? 1.0 : Math.min(window.devicePixelRatio, 2.0); 
+
+        let baseDPR = isMobile ? 1.0 : Math.min(window.devicePixelRatio, 2.0);
         let currentDPR = baseDPR;
 
-        if(isMobile) document.getElementById('cursor').style.display = 'none';
+        if (isMobile) document.getElementById('cursor').style.display = 'none';
 
         let uLocs = {};
         const defaultConfig = { energy: 2.2, height: 0.05, stars: 600.0, r: 0.01, g: 0.04, b: 0.08 };
@@ -326,10 +619,10 @@ void main() {
         try {
             const savedData = localStorage.getItem('rahatil_engine_config');
             if (savedData) { engineConfig = { ...defaultConfig, ...JSON.parse(savedData) }; }
-        } catch(e) { console.error(e); }
+        } catch (e) { console.error(e); }
 
         function syncUIWithConfig() {
-            let configKeysUI =['energy', 'height', 'stars', 'r', 'g', 'b'];
+            let configKeysUI = ['energy', 'height', 'stars', 'r', 'g', 'b'];
             configKeysUI.forEach(k => {
                 document.getElementById(`inp-${k}`).value = engineConfig[k];
                 document.getElementById(`val-${k}`).innerText = parseFloat(engineConfig[k]).toFixed(k === 'stars' ? 0 : 2);
@@ -346,7 +639,7 @@ void main() {
         let targetMX = 0, targetMY = 0;
 
         function initExperience() {
-            if(audioInit) return;
+            if (audioInit) return;
             audioInit = true;
 
             // Gyroscope Permissions
@@ -358,28 +651,28 @@ void main() {
                         }
                     })
                     .catch(console.error);
-            } else if(isMobile) {
+            } else if (isMobile) {
                 window.addEventListener('deviceorientation', handleOrientation);
             }
-            
+
             // Audio Engine
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             audioCtx = new AudioContext();
-            
-            if(audioCtx.state === 'suspended') {
+
+            if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
 
-            const bufferSize = audioCtx.sampleRate * 2; 
+            const bufferSize = audioCtx.sampleRate * 2;
             const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const output = noiseBuffer.getChannelData(0);
-            
+
             let lastOut = 0;
-            for (let i = 0; i < bufferSize; i++) { 
-                let white = Math.random() * 2 - 1; 
-                output[i] = (lastOut + (0.02 * white)) / 1.02; 
+            for (let i = 0; i < bufferSize; i++) {
+                let white = Math.random() * 2 - 1;
+                output[i] = (lastOut + (0.02 * white)) / 1.02;
                 lastOut = output[i];
-                output[i] *= 3.5; 
+                output[i] *= 3.5;
             }
 
             waterSource = audioCtx.createBufferSource();
@@ -387,10 +680,10 @@ void main() {
             waterSource.loop = true;
 
             waterFilter = audioCtx.createBiquadFilter();
-            waterFilter.type = 'lowpass'; 
-            
+            waterFilter.type = 'lowpass';
+
             // FIX: Raised base frequency so mobile speakers can physically output the sound
-            waterFilter.frequency.value = 400; 
+            waterFilter.frequency.value = 400;
             waterFilter.Q.value = 0.5;
 
             waterGain = audioCtx.createGain();
@@ -398,8 +691,8 @@ void main() {
 
             waterSource.connect(waterFilter).connect(waterGain).connect(audioCtx.destination);
             waterSource.start(0);
-            
-            if(!isW) {
+
+            if (!isW) {
                 // FIX: Higher starting volume for mobile speaker audibility
                 waterGain.gain.setValueAtTime(0.0, audioCtx.currentTime);
                 waterGain.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 1.5);
@@ -407,63 +700,56 @@ void main() {
         }
 
         const unlockExperience = () => { initExperience(); };
-        document.addEventListener('mousedown', unlockExperience, {once:true});
-        document.addEventListener('touchstart', unlockExperience, {once:true});
+        document.addEventListener('mousedown', unlockExperience, { once: true });
+        document.addEventListener('touchstart', unlockExperience, { once: true });
 
         // --- LANDSCAPE-SAFE GYROSCOPE MAPPING ---
         function handleOrientation(event) {
             if (event.beta === null || event.gamma === null) return;
             gyroActive = true;
-            
+
             let angle = (screen.orientation ? screen.orientation.angle : window.orientation) || 0;
             let b = event.beta;
             let g = event.gamma;
             let p, r;
-            
-            // Swap axes depending on physical device rotation
-            if (angle === 90) {
-                p = -g;
-                r = b;
-            } else if (angle === -90 || angle === 270) {
-                p = g;
-                r = -b;
-            } else {
+
+            // Normalizing rotation based on actual device orientation
+            if (Math.abs(angle) === 90) { // Landscape
+                p = (angle === 90) ? -g : g;
+                r = (angle === 90) ? b : -b;
+                p -= 45.0; // Optimized landscape resting tilt
+            } else { // Portrait
                 p = b - 60.0; // Portrait resting tilt
                 r = g;
             }
-            
-            // Adjust landscape resting tilt
-            if (angle !== 0 && angle !== 180) {
-                p -= 45.0; 
-            }
-            
+
             targetMX = Math.max(-1.0, Math.min(1.0, r / 45.0));
             targetMY = Math.max(-1.0, Math.min(1.0, -p / 40.0));
         }
 
         // TOUCH API (Overrides VR temporarily)
         window.addEventListener('touchstart', (e) => {
-            if(e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
             lastTouchTime = Date.now();
             mX = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
             mY = (1 - e.touches[0].clientY / window.innerHeight) * 2 - 1;
-        }, {passive: true});
+        }, { passive: true });
 
         window.addEventListener('touchmove', (e) => {
-            if(e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
             lastTouchTime = Date.now();
-            if(e.cancelable) e.preventDefault(); 
+            if (e.cancelable) e.preventDefault();
             mX = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
             mY = (1 - e.touches[0].clientY / window.innerHeight) * 2 - 1;
-        }, {passive: false});
+        }, { passive: false });
 
         window.onmousemove = (e) => {
-            if (isMobile) return; 
+            if (isMobile) return;
             mX = (e.clientX / window.innerWidth) * 2 - 1;
             mY = (1 - e.clientY / window.innerHeight) * 2 - 1;
             const cur = document.getElementById('cursor');
-            if(cur) {
-                cur.style.left = e.clientX + 'px'; 
+            if (cur) {
+                cur.style.left = e.clientX + 'px';
                 cur.style.top = e.clientY + 'px';
             }
         };
@@ -483,7 +769,7 @@ void main() {
         });
 
         function resizeCanvas() {
-            if(!gl) return;
+            if (!gl) return;
             canvas.width = window.innerWidth * currentDPR;
             canvas.height = window.innerHeight * currentDPR;
             gl.viewport(0, 0, canvas.width, canvas.height);
@@ -499,28 +785,28 @@ void main() {
             gl = canvas.getContext('webgl2', { antialias: false, powerPreference: "high-performance" });
             if (!gl) {
                 document.getElementById('ui-layer').innerHTML = "<div class='brand-text'><h1>ENGINE HALTED</h1><div style='color:#fff; letter-spacing:8px; margin-top:20px; font-size:0.8rem;'>WEBGL2 NOT SUPPORTED</div></div>";
-                if(!isMobile) document.getElementById('cursor').style.display = 'none';
+                if (!isMobile) document.getElementById('cursor').style.display = 'none';
                 return false;
             }
 
             prg = gl.createProgram();
             const vs = compile(gl.VERTEX_SHADER, '#version 300 es\nin vec4 p;void main(){gl_Position=p;}');
             const fs = compile(gl.FRAGMENT_SHADER, document.getElementById('fs').text);
-            if(!vs || !fs) return false;
+            if (!vs || !fs) return false;
 
             gl.attachShader(prg, vs);
             gl.attachShader(prg, fs);
             gl.linkProgram(prg);
 
             const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
             const a = gl.getAttribLocation(prg, 'p'); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
-            
+
             uLocs.res = gl.getUniformLocation(prg, 'u_res');
             uLocs.time = gl.getUniformLocation(prg, 'u_time');
             uLocs.mouse = gl.getUniformLocation(prg, 'u_mouse');
             uLocs.warp = gl.getUniformLocation(prg, 'u_warp');
-            
+
             uLocs.wColor = gl.getUniformLocation(prg, 'u_waterColor');
             uLocs.wEnergy = gl.getUniformLocation(prg, 'u_waveEnergy');
             uLocs.wHeight = gl.getUniformLocation(prg, 'u_waveHeight');
@@ -534,26 +820,26 @@ void main() {
         canvas.addEventListener("webglcontextrestored", () => { initGL(); isPaused = false; }, false);
 
         function engage() {
-            if(isW || !gl || document.getElementById('custom-panel').style.display === 'flex') return;
+            if (isW || !gl || document.getElementById('custom-panel').style.display === 'flex') return;
             isW = true;
             document.getElementById('ui-layer').style.opacity = '0';
-            if(!isMobile) {
+            if (!isMobile) {
                 document.getElementById('cursor').style.transform = 'translate(-50%, -50%) scale(2.0)';
                 document.getElementById('cursor').style.opacity = '0.3';
             }
             document.getElementById('cinematic-layer').classList.add('active');
-            
+
             if (isMobile && 'vibrate' in navigator) {
-                navigator.vibrate([30, 200, 50, 150, 80, 100, 120, 50, 200, 50, 1000]); 
+                navigator.vibrate([30, 200, 50, 150, 80, 100, 120, 50, 200, 50, 1000]);
             }
 
-            if(!audioInit) initExperience();
+            if (!audioInit) initExperience();
             if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-            
+
             if (waterGain) {
                 waterGain.gain.cancelScheduledValues(audioCtx.currentTime);
                 waterGain.gain.setValueAtTime(waterGain.gain.value, audioCtx.currentTime);
-                waterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5); 
+                waterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5);
             }
 
             if (audioCtx) {
@@ -561,31 +847,31 @@ void main() {
                     let osc1 = audioCtx.createOscillator();
                     let osc2 = audioCtx.createOscillator();
                     let noteGain = audioCtx.createGain();
-                    
+
                     osc1.type = 'sine';
                     osc2.type = 'triangle';
                     osc1.frequency.value = freq;
-                    osc2.frequency.value = freq * 1.005; 
-                    
+                    osc2.frequency.value = freq * 1.005;
+
                     let t = audioCtx.currentTime + delay;
-                    
+
                     noteGain.gain.setValueAtTime(0, t);
                     noteGain.gain.linearRampToValueAtTime(0.15, t + 0.05);
                     noteGain.gain.exponentialRampToValueAtTime(0.001, t + 2.5);
-                    
+
                     osc1.connect(noteGain).connect(audioCtx.destination);
                     osc2.connect(noteGain).connect(audioCtx.destination);
-                    
+
                     osc1.start(t); osc1.stop(t + 2.5);
                     osc2.start(t); osc2.stop(t + 2.5);
                 };
 
-                playBell(261.63, 0.0);  
-                playBell(392.00, 0.2);  
-                playBell(493.88, 0.4);  
-                playBell(587.33, 0.6);  
-                playBell(659.25, 0.8);  
-                playBell(1046.50, 1.2); 
+                playBell(261.63, 0.0);
+                playBell(392.00, 0.2);
+                playBell(493.88, 0.4);
+                playBell(587.33, 0.6);
+                playBell(659.25, 0.8);
+                playBell(1046.50, 1.2);
             }
 
             setTimeout(() => { window.location.href = TARGET; }, 2200);
@@ -596,41 +882,41 @@ void main() {
             if (isPaused || !gl) return;
 
             let elapsed = now - lastTime;
-            if (elapsed < frameInterval) return; 
+            if (elapsed < frameInterval) return;
             lastTime = now - (elapsed % frameInterval);
 
             if (framesAnalyzed < 60) {
-                if (elapsed > 33) droppedFrames++; 
+                if (elapsed > 33) droppedFrames++;
                 if (framesAnalyzed === 59 && droppedFrames > 10 && currentDPR > 1.0) {
-                    currentDPR = 1.0; 
+                    currentDPR = 1.0;
                     resizeCanvas();
                 }
                 framesAnalyzed++;
             }
 
-            // SMART GYRO BLEND: Auto-return to VR 1.5 seconds after user stops touching screen
+            // SMART GYRO BLEND: Allow gyro even during warp for continuous immersion
             let timeSinceTouch = Date.now() - lastTouchTime;
-            if (gyroActive && !isW && timeSinceTouch > 1500) {
+            if (gyroActive && timeSinceTouch > 1500) {
                 mX += (targetMX - mX) * 0.05;
                 mY += (targetMY - mY) * 0.05;
             }
 
             if (isW) {
-                warp = Math.min(1.0, warp + 0.015); 
+                warp = Math.min(1.0, warp + 0.015);
             } else if (audioInit && audioCtx.state === 'running') {
-                if(waterFilter && waterSource) {
-                    let waveCycle = Math.sin(now * 0.0003 * engineConfig.energy); 
+                if (waterFilter && waterSource) {
+                    let waveCycle = Math.sin(now * 0.0003 * engineConfig.energy);
                     // FIX: Shifted target frequency up so mobile speakers don't drop the sound
                     let targetWaterFreq = 250 + (waveCycle * 100) + (engineConfig.height * 600);
                     waterFilter.frequency.setTargetAtTime(Math.max(150, targetWaterFreq), audioCtx.currentTime, 0.5);
-                    
-                    let targetRate = 0.4 + (engineConfig.energy * 0.02) + (waveCycle * 0.03); 
+
+                    let targetRate = 0.4 + (engineConfig.energy * 0.02) + (waveCycle * 0.03);
                     waterSource.playbackRate.setTargetAtTime(Math.max(0.1, targetRate), audioCtx.currentTime, 0.5);
                 }
             }
-            
+
             gl.useProgram(prg);
-            
+
             gl.uniform2f(uLocs.res, canvas.width, canvas.height);
             gl.uniform1f(uLocs.time, now * 0.001);
             gl.uniform2f(uLocs.mouse, mX, mY);
@@ -644,7 +930,7 @@ void main() {
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         }
 
-        if(initGL()) { requestAnimationFrame(render); }
+        if (initGL()) { requestAnimationFrame(render); }
 
         // --- HIDDEN OVERRIDE MODULE LOGIC ---
         window.addEventListener('keydown', (e) => {
@@ -658,9 +944,9 @@ void main() {
 
         document.getElementById('auth-input').addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                const val = e.target.value.trim(); 
+                const val = e.target.value.trim();
                 const encoded = btoa(val.split('').map(c => String.fromCharCode(c.charCodeAt(0) + 5)).join(''));
-                
+
                 if (encoded === 'ZmdoZmc2Nzg=') {
                     document.getElementById('auth-modal').style.display = 'none';
                     document.getElementById('custom-panel').style.display = 'flex';
@@ -671,13 +957,13 @@ void main() {
             }
         });
 
-        let configKeys =['energy', 'height', 'stars', 'r', 'g', 'b'];
+        let configKeys = ['energy', 'height', 'stars', 'r', 'g', 'b'];
         configKeys.forEach(k => {
             document.getElementById(`inp-${k}`).addEventListener('input', (e) => {
                 const val = parseFloat(e.target.value);
                 document.getElementById(`val-${k}`).innerText = val.toFixed(k === 'stars' ? 0 : 2);
                 engineConfig[k] = val;
-                try { localStorage.setItem('rahatil_engine_config', JSON.stringify(engineConfig)); } catch(err){}
+                try { localStorage.setItem('rahatil_engine_config', JSON.stringify(engineConfig)); } catch (err) { }
             });
         });
 
@@ -693,4 +979,5 @@ void main() {
 
     </script>
 </body>
+
 </html>
