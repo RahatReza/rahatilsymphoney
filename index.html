@@ -337,7 +337,7 @@ void main() {
         }
         syncUIWithConfig();
 
-        // --- WEB AUDIO API & VR INIT (STRICT SYNCHRONOUS FLOW) ---
+        // --- WEB AUDIO API & VR INIT ---
         let audioCtx;
         let waterSource, waterFilter, waterGain;
         let audioInit = false;
@@ -345,12 +345,11 @@ void main() {
         let lastTouchTime = 0;
         let targetMX = 0, targetMY = 0;
 
-        // Must NOT be async to preserve iOS user-gesture token
         function initExperience() {
             if(audioInit) return;
             audioInit = true;
 
-            // 1. Instantly request Gyroscope Permissions (Synchronous boundary)
+            // Gyroscope Permissions
             if (isMobile && typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission()
                     .then(permissionState => {
@@ -363,11 +362,10 @@ void main() {
                 window.addEventListener('deviceorientation', handleOrientation);
             }
             
-            // 2. Setup Audio Engine synchronously
+            // Audio Engine
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             audioCtx = new AudioContext();
             
-            // Force resume if suspended (iOS strictly requires this inside the gesture)
             if(audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
@@ -390,8 +388,10 @@ void main() {
 
             waterFilter = audioCtx.createBiquadFilter();
             waterFilter.type = 'lowpass'; 
-            waterFilter.frequency.value = 120; 
-            waterFilter.Q.value = 0.1;
+            
+            // FIX: Raised base frequency so mobile speakers can physically output the sound
+            waterFilter.frequency.value = 400; 
+            waterFilter.Q.value = 0.5;
 
             waterGain = audioCtx.createGain();
             waterGain.gain.value = 0.0;
@@ -400,24 +400,45 @@ void main() {
             waterSource.start(0);
             
             if(!isW) {
-                // iOS safe volume ramp
+                // FIX: Higher starting volume for mobile speaker audibility
                 waterGain.gain.setValueAtTime(0.0, audioCtx.currentTime);
-                waterGain.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 1.5);
+                waterGain.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 1.5);
             }
         }
 
-        document.addEventListener('click', initExperience, {once:true});
-        document.addEventListener('touchstart', initExperience, {once:true});
+        const unlockExperience = () => { initExperience(); };
+        document.addEventListener('mousedown', unlockExperience, {once:true});
+        document.addEventListener('touchstart', unlockExperience, {once:true});
 
+        // --- LANDSCAPE-SAFE GYROSCOPE MAPPING ---
         function handleOrientation(event) {
-            if (event.beta !== null && event.gamma !== null) {
-                gyroActive = true;
-                let pitch = (event.beta - 60.0) / 40.0; 
-                let roll = event.gamma / 45.0; 
-                // Always track physics in background
-                targetMX = Math.max(-1.0, Math.min(1.0, roll));
-                targetMY = Math.max(-1.0, Math.min(1.0, -pitch));
+            if (event.beta === null || event.gamma === null) return;
+            gyroActive = true;
+            
+            let angle = (screen.orientation ? screen.orientation.angle : window.orientation) || 0;
+            let b = event.beta;
+            let g = event.gamma;
+            let p, r;
+            
+            // Swap axes depending on physical device rotation
+            if (angle === 90) {
+                p = -g;
+                r = b;
+            } else if (angle === -90 || angle === 270) {
+                p = g;
+                r = -b;
+            } else {
+                p = b - 60.0; // Portrait resting tilt
+                r = g;
             }
+            
+            // Adjust landscape resting tilt
+            if (angle !== 0 && angle !== 180) {
+                p -= 45.0; 
+            }
+            
+            targetMX = Math.max(-1.0, Math.min(1.0, r / 45.0));
+            targetMY = Math.max(-1.0, Math.min(1.0, -p / 40.0));
         }
 
         // TOUCH API (Overrides VR temporarily)
@@ -549,7 +570,7 @@ void main() {
                     let t = audioCtx.currentTime + delay;
                     
                     noteGain.gain.setValueAtTime(0, t);
-                    noteGain.gain.linearRampToValueAtTime(0.12, t + 0.05);
+                    noteGain.gain.linearRampToValueAtTime(0.15, t + 0.05);
                     noteGain.gain.exponentialRampToValueAtTime(0.001, t + 2.5);
                     
                     osc1.connect(noteGain).connect(audioCtx.destination);
@@ -575,7 +596,7 @@ void main() {
             if (isPaused || !gl) return;
 
             let elapsed = now - lastTime;
-            if (elapsed < frameInterval) return;
+            if (elapsed < frameInterval) return; 
             lastTime = now - (elapsed % frameInterval);
 
             if (framesAnalyzed < 60) {
@@ -588,11 +609,10 @@ void main() {
             }
 
             // SMART GYRO BLEND: Auto-return to VR 1.5 seconds after user stops touching screen
-            if (gyroActive && !isW) {
-                if(Date.now() - lastTouchTime > 1500) {
-                    mX += (targetMX - mX) * 0.05;
-                    mY += (targetMY - mY) * 0.05;
-                }
+            let timeSinceTouch = Date.now() - lastTouchTime;
+            if (gyroActive && !isW && timeSinceTouch > 1500) {
+                mX += (targetMX - mX) * 0.05;
+                mY += (targetMY - mY) * 0.05;
             }
 
             if (isW) {
@@ -600,8 +620,9 @@ void main() {
             } else if (audioInit && audioCtx.state === 'running') {
                 if(waterFilter && waterSource) {
                     let waveCycle = Math.sin(now * 0.0003 * engineConfig.energy); 
-                    let targetWaterFreq = 120 + (waveCycle * 40) + (engineConfig.height * 200);
-                    waterFilter.frequency.setTargetAtTime(Math.max(50, targetWaterFreq), audioCtx.currentTime, 0.5);
+                    // FIX: Shifted target frequency up so mobile speakers don't drop the sound
+                    let targetWaterFreq = 250 + (waveCycle * 100) + (engineConfig.height * 600);
+                    waterFilter.frequency.setTargetAtTime(Math.max(150, targetWaterFreq), audioCtx.currentTime, 0.5);
                     
                     let targetRate = 0.4 + (engineConfig.energy * 0.02) + (waveCycle * 0.03); 
                     waterSource.playbackRate.setTargetAtTime(Math.max(0.1, targetRate), audioCtx.currentTime, 0.5);
