@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>RAHATIL | TIDAL CONVERGENCE</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;400&display=swap');
+        body, html { margin: 0; padding: 0; overflow: hidden; background: #000; font-family: 'Inter', sans-serif; cursor: none; }
+        canvas { display: block; width: 100vw; height: 100vh; position: absolute; z-index: 1; filter: contrast(1.05); }
+        
+        /* STANDARD UI */
+        #ui-layer { position: relative; z-index: 10; height: 100vh; width: 100vw; display: flex; flex-direction: column; justify-content: center; align-items: center; pointer-events: none; transition: opacity 0.6s ease; }
+        .brand-text { text-align: center; }
+        h1 { font-weight: 100; letter-spacing: 35px; color: #fff; margin: 0; font-size: 3.2rem; text-transform: uppercase; text-shadow: 0 0 30px rgba(255,255,255,0.2); }
+        .btn-init { margin-top: 80px; pointer-events: auto; cursor: pointer; color: #fff; font-size: 0.7rem; letter-spacing: 15px; text-transform: uppercase; opacity: 0.5; transition: 0.4s; position: relative;}
+        .btn-init::after { content: ''; position: absolute; bottom: -10px; left: 25%; width: 50%; height: 1px; background: #fff; opacity: 0.2; transition: 0.4s; }
+        .btn-init:hover { opacity: 1; letter-spacing: 20px; }
+        .btn-init:hover::after { width: 100%; left: 0; opacity: 1; }
+        
+        #cinematic-layer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; gap: 20px; opacity: 0; transition: opacity 0.6s ease; }
+        .cine-title { font-weight: 100; font-size: 2.2rem; color: #fff; letter-spacing: 15px; text-transform: uppercase; text-shadow: 0 0 25px rgba(255,255,255,0.4); opacity: 0; transform: translateY(20px); transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .cine-sub { font-size: 0.65rem; color: #aaa; letter-spacing: 12px; text-transform: uppercase; opacity: 0; transform: translateY(15px); transition: all 0.6s ease; }
+        
+        #cinematic-layer.active { opacity: 1; }
+        #cinematic-layer.active .cine-title { opacity: 1; transform: translateY(0); letter-spacing: 28px; transition-delay: 0.1s; }
+        #cinematic-layer.active .cine-sub:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 0.4s; }
+        #cinematic-layer.active .cine-sub:nth-child(3) { opacity: 1; transform: translateY(0); color: #fff; transition-delay: 0.8s; }
+
+        #cursor { position: fixed; pointer-events: none; z-index: 9999; width: 22px; height: 22px; border: 1.5px solid #fff; border-radius: 50%; transform: translate(-50%, -50%); mix-blend-mode: difference; transition: transform 0.2s ease; }
+
+        /* ENGINEERING OVERRIDE PANEL UI */
+        .overlay-layer { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9000; display: none; justify-content: center; align-items: center; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); pointer-events: auto; }
+        #auth-input { background: transparent; border: none; border-bottom: 1px solid #fff; color: #fff; font-family: 'Inter', sans-serif; font-size: 1.2rem; text-align: center; outline: none; letter-spacing: 5px; padding: 10px; width: 300px; text-transform: uppercase; }
+        #auth-input::placeholder { color: rgba(255,255,255,0.3); }
+        
+        .panel-box { background: rgba(10, 10, 15, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 30px; width: 400px; color: #fff; font-family: 'Inter', sans-serif; box-shadow: 0 0 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 15px; }
+        .panel-box h3 { margin: 0 0 10px 0; font-weight: 100; letter-spacing: 8px; text-transform: uppercase; font-size: 1.2rem; text-align: center; color: #aaa; }
+        .slider-group { display: flex; flex-direction: column; gap: 5px; }
+        .slider-group label { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: #888; display: flex; justify-content: space-between;}
+        .slider-group span { color: #fff; }
+        
+        input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #fff; cursor: pointer; margin-top: -5px; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 2px; cursor: pointer; background: rgba(255,255,255,0.2); border-radius: 1px; }
+        
+        .panel-buttons { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-panel { flex: 1; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer; text-transform: uppercase; letter-spacing: 3px; font-family: 'Inter'; font-size: 0.65rem; transition: 0.3s; }
+        .btn-panel:hover { background: rgba(255,255,255,0.2); }
+        .btn-reset { color: #ffa0a0; border-color: rgba(255,100,100,0.3); }
+        .btn-reset:hover { background: rgba(255,100,100,0.15); border-color: rgba(255,100,100,0.6); }
+    </style>
+</head>
+<body>
+    <div id="cursor"></div>
+    <canvas id="v"></canvas>
+    
+    <div id="ui-layer">
+        <div class="brand-text">
+            <h1>RAHATIL</h1>
+            <div class="btn-init" onclick="engage()">Initialize</div>
+        </div>
+    </div>
+
+    <div id="cinematic-layer">
+        <div class="cine-title">Welcome, Rahatil</div>
+        <div class="cine-sub">Calibrating Tidal Engine...</div>
+        <div class="cine-sub">Redirecting to Terminal</div>
+    </div>
+
+    <!-- ADMIN AUTHORIZATION MODAL -->
+    <div id="auth-modal" class="overlay-layer">
+        <input type="password" id="auth-input" placeholder="OVERRIDE CODE" autocomplete="off" />
+    </div>
+
+    <!-- ENGINEERING PANEL -->
+    <div id="custom-panel" class="overlay-layer">
+        <div class="panel-box">
+            <h3>Engine Override</h3>
+            
+            <div class="slider-group">
+                <label>Wave Energy <span id="val-energy">2.2</span></label>
+                <input type="range" id="inp-energy" min="0" max="10" step="0.1" value="2.2">
+            </div>
+            <div class="slider-group">
+                <label>Wave Height <span id="val-height">0.05</span></label>
+                <input type="range" id="inp-height" min="0" max="0.2" step="0.01" value="0.05">
+            </div>
+            <div class="slider-group">
+                <label>Star Density (Lower = More) <span id="val-stars">600</span></label>
+                <input type="range" id="inp-stars" min="100" max="1500" step="10" value="600">
+            </div>
+            <div class="slider-group">
+                <label>Water Red <span id="val-r">0.01</span></label>
+                <input type="range" id="inp-r" min="0" max="1" step="0.01" value="0.01">
+            </div>
+            <div class="slider-group">
+                <label>Water Green <span id="val-g">0.04</span></label>
+                <input type="range" id="inp-g" min="0" max="1" step="0.01" value="0.04">
+            </div>
+            <div class="slider-group">
+                <label>Water Blue <span id="val-b">0.08</span></label>
+                <input type="range" id="inp-b" min="0" max="1" step="0.01" value="0.08">
+            </div>
+
+            <div class="panel-buttons">
+                <button class="btn-panel btn-reset" onclick="resetAdminPanel()">Reset Default</button>
+                <button class="btn-panel" onclick="closeAdminPanel()">Sync & Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script id="fs" type="x-shader/x-fragment">#version 300 es
+
+// SAFARI PRECISION HANDLING
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+
+out vec4 fragColor;
+uniform vec2 u_res;
+uniform float u_time;
+uniform vec2 u_mouse;
+uniform float u_warp; 
+
+// CUSTOMIZATION UNIFORMS
+uniform vec3 u_waterColor;
+uniform float u_waveEnergy;
+uniform float u_waveHeight;
+uniform float u_starDensity;
+
+#define PI 3.14159265359
+
+float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+float noise(vec2 p) {
+    vec2 i = floor(p); vec2 f = fract(p);
+    vec2 u = f*f*(3.0-2.0*f);
+    return mix(mix(hash(i), hash(i+vec2(1,0)), u.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), u.x), u.y);
+}
+
+// MULTI-OCTAVE GERSTNER WAVE FORMULA WITH DISPLACEMENT
+float GetWaterHeight(vec3 p, bool micro) {
+    float t = u_time * u_waveEnergy; 
+    float h = 0.0;
+    vec2 uv = p.xz;
+    
+    // Gerstner-like sharp peak math
+    vec2 d1 = normalize(vec2(1.0, 1.2));
+    h += u_waveHeight * pow(sin(dot(uv, d1) * 2.0 + t) * 0.5 + 0.5, 2.0);
+    
+    vec2 d2 = normalize(vec2(-1.0, 0.8));
+    h += (u_waveHeight * 0.6) * pow(sin(dot(uv, d2) * 3.5 - t * 1.3) * 0.5 + 0.5, 2.5);
+    
+    vec2 d3 = normalize(vec2(0.3, -1.5));
+    h += (u_waveHeight * 0.3) * pow(sin(dot(uv, d3) * 6.0 + t * 1.8) * 0.5 + 0.5, 3.0);
+
+    if(micro) h += noise(uv * 12.0 + t) * (u_waveHeight * 0.2);
+    
+    // 3D MOUSE WAKE / LIQUID RIPPLES
+    vec2 m_uv = u_mouse * vec2(u_res.x / u_res.y, 1.0) * 0.5;
+    vec3 m_rd = normalize(vec3(m_uv.x, m_uv.y - 0.1, 1.1 + u_warp * 0.6));
+    
+    if(m_rd.y < -0.01) {
+        vec3 ro_m = vec3(0.0, 1.5, u_time * 0.3 * (2.0 + u_warp * 35.0));
+        vec3 m_p = ro_m - m_rd * (1.5 / m_rd.y); 
+        
+        float dist = length(p.xz - m_p.xz);
+        float wake = smoothstep(3.5, 0.0, dist) * cos(dist * 7.0 - u_time * 12.0) * 0.06;
+        h += wake * (1.0 - smoothstep(0.0, 0.5, u_warp)); 
+    }
+
+    return h - (u_waveHeight * 0.5); 
+}
+
+vec3 GetNormal(vec3 p, bool micro) {
+    vec2 e = vec2(0.01, 0.0); 
+    float h = GetWaterHeight(p, micro);
+    return normalize(vec3(h - GetWaterHeight(p - e.xyy, micro), 0.35, h - GetWaterHeight(p - e.yxy, micro)));
+}
+
+// DYNAMIC PLANAR STAR ENGINE
+float GetStars(vec3 rd, float nightFactor, bool isRef) {
+    if(nightFactor < 0.01) return 0.0;
+    vec3 starRd = isRef ? normalize(vec3(rd.x, abs(rd.y), rd.z)) : rd;
+    vec2 starUV = starRd.xz / (abs(starRd.y) + 0.001);
+    
+    float baseHash = hash(starUV);
+    float stars = pow(baseHash, isRef ? u_starDensity * 1.33 : u_starDensity);
+    
+    float starPhase = hash(starUV + vec2(45.2, 12.8)) * PI * 2.0; 
+    float starFreq = hash(starUV + vec2(9.3, 74.1)) * 2.5 + 0.5; 
+    float twinkle = 0.5 + 0.5 * sin(u_time * starFreq + starPhase);
+    
+    float warpFade = 1.0 - smoothstep(0.1, 0.7, u_warp);
+    return stars * twinkle * nightFactor * (isRef ? 0.3 : 1.2) * warpFade;
+}
+
+void main() {
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
+    float t = u_time * 0.3;
+    
+    // CAMERA SHAKE MATH 
+    float shakeIntensity = pow(u_warp, 5.0) * 0.04;
+    vec2 cameraShake = vec2(sin(u_time * 150.0), cos(u_time * 130.0)) * shakeIntensity;
+    uv += cameraShake;
+
+    float solarEase = u_warp * u_warp * (3.0 - 2.0 * u_warp);
+    float currentSunY = mix(0.15 + u_mouse.y * 0.3, -1.5, solarEase);
+    
+    vec3 sunDir = normalize(vec3(u_mouse.x * 1.5, currentSunY, 1.0));
+    vec3 moonDir = normalize(vec3(-u_mouse.x * 1.0, -currentSunY + 0.15, -1.0));
+
+    vec3 ro = vec3(0, 1.5, t * (2.0 + u_warp * 35.0));
+    vec3 rd = normalize(vec3(uv.x, uv.y - 0.1, 1.1 + u_warp * 0.6)); 
+
+    float dayFactor = smoothstep(-0.02, 0.15, sunDir.y);
+    float nightFactor = 1.0 - dayFactor;
+    
+    vec3 nightZenith = vec3(0.000, 0.001, 0.005); 
+    vec3 nightHorizon = vec3(0.002, 0.008, 0.025);
+    vec3 dayZenith = vec3(0.05, 0.15, 0.4);
+    vec3 dayHorizon = vec3(0.6, 0.8, 0.9);
+    vec3 sunsetHorizon = vec3(1.0, 0.35, 0.1);
+    
+    vec3 zenith = mix(nightZenith, dayZenith, dayFactor);
+    vec3 horizon = mix(nightHorizon, mix(sunsetHorizon, dayHorizon, smoothstep(0.0, 0.4, sunDir.y)), dayFactor);
+    
+    float sunsetGlow = smoothstep(-0.15, 0.1, sunDir.y) * smoothstep(0.4, -0.05, sunDir.y);
+    horizon += vec3(1.0, 0.4, 0.1) * sunsetGlow * pow(max(0.0, dot(rd, sunDir)), 1.5);
+    
+    float skyGrad = smoothstep(-0.2, 0.6, rd.y);
+    vec3 col = mix(horizon, zenith, skyGrad);
+    
+    // --- SUN WHITE SATURATION FIX ---
+    float sunMask = smoothstep(-0.05, 0.02, sunDir.y);
+    float moonMask = smoothstep(-0.05, 0.02, moonDir.y);
+
+    // Deep, richer golden color instead of pure white blowout
+    float sunShape = pow(max(0.0, dot(rd, sunDir)), 2500.0) * 3.0; // Tighter core
+    float sunHalo = pow(max(0.0, dot(rd, sunDir)), 90.0) * 0.8;    // Softer spread
+    col += vec3(1.0, 0.6, 0.2) * sunShape * sunMask;               // Golden core
+    col += vec3(1.0, 0.8, 0.4) * sunHalo * sunMask;                // Warm gradient aura
+    
+    float moonShape = pow(max(0.0, dot(rd, moonDir)), 3000.0) * 8.0;
+    float moonHalo = pow(max(0.0, dot(rd, moonDir)), 200.0) * 0.8;
+    col += vec3(0.85, 0.9, 1.0) * (moonShape + moonHalo) * nightFactor * moonMask;
+
+    vec2 nebUV = rd.xz / (abs(rd.y) + 0.001);
+    float neb = noise(nebUV * 2.0 + u_time * 0.01) * noise(nebUV * 4.0 - u_time * 0.01);
+    vec3 milkyWay = vec3(0.08, 0.03, 0.12) * neb * nightFactor * smoothstep(0.0, 0.3, rd.y) * 0.6;
+    col += milkyWay * (1.0 - smoothstep(0.2, 0.8, u_warp));
+    
+    col += GetStars(rd, nightFactor, false) * smoothstep(-0.1, 0.2, rd.y);
+
+    if(rd.y < 0.0) {
+        float d = -(ro.y) / rd.y; 
+        vec3 p = ro + rd * d;
+        
+        vec3 N_sharp = GetNormal(p, true);  
+        vec3 N_smooth = GetNormal(p, false); 
+        
+        vec3 refR_Planar = reflect(rd, vec3(0, 1, 0)); 
+        float refSkyGrad = smoothstep(-0.2, 0.6, reflect(rd, N_smooth).y);
+        vec3 reflectedSky = mix(horizon, zenith, refSkyGrad);
+        
+        reflectedSky += vec3(0.04, 0.015, 0.06) * noise(refR_Planar.xz * 2.0) * noise(refR_Planar.xz * 4.0) * nightFactor * smoothstep(0.0, 0.3, refR_Planar.y);
+        reflectedSky += GetStars(refR_Planar, nightFactor, true);
+
+        float fresnel = pow(1.0 - max(0.0, dot(-rd, N_sharp)), 5.0);
+        
+        vec3 waterBase = mix(vec3(0.000, 0.001, 0.003), u_waterColor, dayFactor);
+        vec3 waterCol = mix(waterBase, reflectedSky * 0.85, 0.15 + 0.85 * fresnel);
+        
+        // Match water reflection warmth to the new sun fix
+        float sunSpec = pow(max(0.0, dot(N_sharp, normalize(-rd + sunDir))), 512.0);
+        float sunTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), sunDir.xz)), 40.0);
+        waterCol += vec3(1.0, 0.7, 0.3) * sunSpec * 15.0 * sunTrail * sunMask;
+        
+        float moonSpec = pow(max(0.0, dot(N_sharp, normalize(-rd + moonDir))), 300.0);
+        float moonTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), moonDir.xz)), 30.0);
+        waterCol += vec3(0.6, 0.8, 1.0) * moonSpec * 10.0 * moonTrail * nightFactor * moonMask;
+        
+        col = mix(horizon, waterCol, smoothstep(250.0, 5.0, d));
+    }
+
+    // CINEMATIC CHROMATIC ABERRATION & HYPER-GLOW
+    float hyperGlow = pow(u_warp, 3.5) * 2.5;
+    vec3 warpBase = vec3(0.85, 0.95, 1.0) * hyperGlow;
+    
+    // Split RGB channels near edges during high velocity
+    float caSplit = u_warp * length(uv) * 1.5;
+    warpBase += vec3(caSplit, 0.0, -caSplit) * u_warp * 1.5;
+    
+    col += warpBase;
+
+    col = (col*(2.51*col+0.03))/(col*(2.43*col+0.59)+0.14);
+    fragColor = vec4(pow(col, vec3(1.0/2.2)), 1.0);
+}</script>
+    <script>
+        const canvas = document.getElementById('v');
+        let gl, prg, isW = false, warp = 0, mX = 0, mY = 0;
+        const TARGET = "https://www.linkedin.com/in/rahatreza100/";
+
+        let isPaused = false;
+        let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+        let baseDPR = isMobile ? 1.0 : Math.min(window.devicePixelRatio, 2.0); 
+        let currentDPR = baseDPR;
+
+        // Hide custom cursor on mobile to prevent floating ghost cursor
+        if(isMobile) document.getElementById('cursor').style.display = 'none';
+
+        // ENGINE STATE & LOCAL STORAGE PERSISTENCE
+        let uLocs = {};
+        const defaultConfig = { energy: 2.2, height: 0.05, stars: 600.0, r: 0.01, g: 0.04, b: 0.08 };
+        let engineConfig = { ...defaultConfig };
+
+        try {
+            const savedData = localStorage.getItem('rahatil_engine_config');
+            if (savedData) { engineConfig = { ...defaultConfig, ...JSON.parse(savedData) }; }
+        } catch(e) { console.error(e); }
+
+        function syncUIWithConfig() {
+            let configKeysUI =['energy', 'height', 'stars', 'r', 'g', 'b'];
+            configKeysUI.forEach(k => {
+                document.getElementById(`inp-${k}`).value = engineConfig[k];
+                document.getElementById(`val-${k}`).innerText = parseFloat(engineConfig[k]).toFixed(k === 'stars' ? 0 : 2);
+            });
+        }
+        syncUIWithConfig();
+
+        // --- WEB AUDIO API: SYNTHESIS (OCEAN + MELODY) ---
+        let audioCtx;
+        let waterSource, waterFilter, waterGain;
+        let audioInit = false;
+
+        function setupAudio() {
+            if(audioInit) return;
+            audioInit = true;
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+
+            // Procedural Granular Water Engine (Pink Noise approximation for deep calmness)
+            const bufferSize = audioCtx.sampleRate * 2; 
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            
+            let lastOut = 0;
+            for (let i = 0; i < bufferSize; i++) { 
+                let white = Math.random() * 2 - 1; 
+                output[i] = (lastOut + (0.02 * white)) / 1.02; // Soften the harshness
+                lastOut = output[i];
+                output[i] *= 3.5; 
+            }
+
+            waterSource = audioCtx.createBufferSource();
+            waterSource.buffer = noiseBuffer;
+            waterSource.loop = true;
+
+            // Deep Lowpass filter for peaceful, distant ocean sound
+            waterFilter = audioCtx.createBiquadFilter();
+            waterFilter.type = 'lowpass'; 
+            waterFilter.frequency.value = 120; 
+            waterFilter.Q.value = 0.1;
+
+            waterGain = audioCtx.createGain();
+            waterGain.gain.value = 0.0;
+
+            waterSource.connect(waterFilter).connect(waterGain).connect(audioCtx.destination);
+            waterSource.start();
+            
+            // Fade ocean in gently (very low volume)
+            if(!isW) {
+                waterGain.gain.linearRampToValueAtTime(0.03, audioCtx.currentTime + 4.0);
+            }
+
+            // --- MOBILE VR REQUEST ---
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                window.addEventListener('deviceorientation', handleOrientation);
+            }
+        }
+
+        const unlockAudio = () => { setupAudio(); };
+        document.addEventListener('click', unlockAudio, {once:true});
+        document.addEventListener('keydown', unlockAudio, {once:true});
+
+        // --- DEVICE ORIENTATION (VR GYRO CAMERA) ---
+        let useGyro = false;
+        let targetMX = 0, targetMY = 0;
+
+        function handleOrientation(event) {
+            if (event.beta !== null && event.gamma !== null) {
+                useGyro = true;
+                // Map physical tilt to screen coordinates
+                // Holding phone at ~60 deg is horizon
+                let pitch = (event.beta - 60.0) / 40.0; 
+                let roll = event.gamma / 45.0; 
+                
+                targetMX = Math.max(-1.0, Math.min(1.0, roll));
+                targetMY = Math.max(-1.0, Math.min(1.0, -pitch));
+            }
+        }
+
+        const targetFPS = 60;
+        const frameInterval = 1000 / targetFPS;
+        let lastTime = 0;
+        let framesAnalyzed = 0;
+        let droppedFrames = 0;
+
+        document.addEventListener("visibilitychange", () => { isPaused = document.hidden; });
+
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(resizeCanvas, 200);
+        });
+
+        function resizeCanvas() {
+            if(!gl) return;
+            canvas.width = window.innerWidth * currentDPR;
+            canvas.height = window.innerHeight * currentDPR;
+            gl.viewport(0, 0, canvas.width, canvas.height);
+        }
+
+        window.onmousemove = (e) => {
+            if (useGyro) return; // Ignore mouse if VR is active
+            mX = (e.clientX / window.innerWidth) * 2 - 1;
+            mY = (1 - e.clientY / window.innerHeight) * 2 - 1;
+            if(!isMobile) {
+                const cur = document.getElementById('cursor');
+                cur.style.left = e.clientX + 'px'; cur.style.top = e.clientY + 'px';
+            }
+        };
+
+        const compile = (t, s) => {
+            const sh = gl.createShader(t); gl.shaderSource(sh, s); gl.compileShader(sh);
+            if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(sh)); return null; }
+            return sh;
+        };
+
+        function initGL() {
+            gl = canvas.getContext('webgl2', { antialias: false, powerPreference: "high-performance" });
+            if (!gl) {
+                document.getElementById('ui-layer').innerHTML = "<div class='brand-text'><h1>ENGINE HALTED</h1><div style='color:#fff; letter-spacing:8px; margin-top:20px; font-size:0.8rem;'>WEBGL2 NOT SUPPORTED</div></div>";
+                if(!isMobile) document.getElementById('cursor').style.display = 'none';
+                return false;
+            }
+
+            prg = gl.createProgram();
+            const vs = compile(gl.VERTEX_SHADER, '#version 300 es\nin vec4 p;void main(){gl_Position=p;}');
+            const fs = compile(gl.FRAGMENT_SHADER, document.getElementById('fs').text);
+            if(!vs || !fs) return false;
+
+            gl.attachShader(prg, vs);
+            gl.attachShader(prg, fs);
+            gl.linkProgram(prg);
+
+            const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+            const a = gl.getAttribLocation(prg, 'p'); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
+            
+            uLocs.res = gl.getUniformLocation(prg, 'u_res');
+            uLocs.time = gl.getUniformLocation(prg, 'u_time');
+            uLocs.mouse = gl.getUniformLocation(prg, 'u_mouse');
+            uLocs.warp = gl.getUniformLocation(prg, 'u_warp');
+            
+            uLocs.wColor = gl.getUniformLocation(prg, 'u_waterColor');
+            uLocs.wEnergy = gl.getUniformLocation(prg, 'u_waveEnergy');
+            uLocs.wHeight = gl.getUniformLocation(prg, 'u_waveHeight');
+            uLocs.sDensity = gl.getUniformLocation(prg, 'u_starDensity');
+
+            resizeCanvas();
+            return true;
+        }
+
+        canvas.addEventListener("webglcontextlost", (e) => { e.preventDefault(); isPaused = true; }, false);
+        canvas.addEventListener("webglcontextrestored", () => { initGL(); isPaused = false; }, false);
+
+        function engage() {
+            if(isW || !gl || document.getElementById('custom-panel').style.display === 'flex') return;
+            isW = true;
+            document.getElementById('ui-layer').style.opacity = '0';
+            if(!isMobile) {
+                document.getElementById('cursor').style.transform = 'translate(-50%, -50%) scale(2.0)';
+                document.getElementById('cursor').style.opacity = '0.3';
+            }
+            document.getElementById('cinematic-layer').classList.add('active');
+            
+            if (isMobile && 'vibrate' in navigator) {
+                navigator.vibrate([30, 200, 50, 150, 80, 100, 120, 50, 200, 50, 1000]); 
+            }
+
+            setupAudio();
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            
+            if (waterGain) waterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5); 
+
+            if (audioCtx) {
+                const playBell = (freq, delay) => {
+                    let osc1 = audioCtx.createOscillator();
+                    let osc2 = audioCtx.createOscillator();
+                    let noteGain = audioCtx.createGain();
+                    
+                    osc1.type = 'sine';
+                    osc2.type = 'triangle';
+                    osc1.frequency.value = freq;
+                    osc2.frequency.value = freq * 1.005; 
+                    
+                    let t = audioCtx.currentTime + delay;
+                    
+                    noteGain.gain.setValueAtTime(0, t);
+                    noteGain.gain.linearRampToValueAtTime(0.12, t + 0.05);
+                    noteGain.gain.exponentialRampToValueAtTime(0.001, t + 2.5);
+                    
+                    osc1.connect(noteGain).connect(audioCtx.destination);
+                    osc2.connect(noteGain).connect(audioCtx.destination);
+                    
+                    osc1.start(t); osc1.stop(t + 2.5);
+                    osc2.start(t); osc2.stop(t + 2.5);
+                };
+
+                playBell(261.63, 0.0);  
+                playBell(392.00, 0.2);  
+                playBell(493.88, 0.4);  
+                playBell(587.33, 0.6);  
+                playBell(659.25, 0.8);  
+                playBell(1046.50, 1.2); 
+            }
+
+            setTimeout(() => { window.location.href = TARGET; }, 2200);
+        }
+
+        function render(now) {
+            requestAnimationFrame(render);
+            if (isPaused || !gl) return;
+
+            let elapsed = now - lastTime;
+            if (elapsed < frameInterval) return;
+            lastTime = now - (elapsed % frameInterval);
+
+            if (framesAnalyzed < 60) {
+                if (elapsed > 33) droppedFrames++; 
+                if (framesAnalyzed === 59 && droppedFrames > 10 && currentDPR > 1.0) {
+                    currentDPR = 1.0; 
+                    resizeCanvas();
+                }
+                framesAnalyzed++;
+            }
+
+            // Smoothly interpolate VR coordinates
+            if (useGyro && !isW) {
+                mX += (targetMX - mX) * 0.1;
+                mY += (targetMY - mY) * 0.1;
+            }
+
+            if (isW) {
+                warp = Math.min(1.0, warp + 0.015); 
+            } else if (audioInit && audioCtx.state === 'running') {
+                if(waterFilter && waterSource) {
+                    let waveCycle = Math.sin(now * 0.0003 * engineConfig.energy); 
+                    let targetWaterFreq = 120 + (waveCycle * 40) + (engineConfig.height * 200);
+                    waterFilter.frequency.setTargetAtTime(Math.max(50, targetWaterFreq), audioCtx.currentTime, 0.5);
+                    
+                    let targetRate = 0.4 + (engineConfig.energy * 0.02) + (waveCycle * 0.03); 
+                    waterSource.playbackRate.setTargetAtTime(Math.max(0.1, targetRate), audioCtx.currentTime, 0.5);
+                }
+            }
+            
+            gl.useProgram(prg);
+            
+            gl.uniform2f(uLocs.res, canvas.width, canvas.height);
+            gl.uniform1f(uLocs.time, now * 0.001);
+            gl.uniform2f(uLocs.mouse, mX, mY);
+            gl.uniform1f(uLocs.warp, warp);
+
+            gl.uniform3f(uLocs.wColor, engineConfig.r, engineConfig.g, engineConfig.b);
+            gl.uniform1f(uLocs.wEnergy, engineConfig.energy);
+            gl.uniform1f(uLocs.wHeight, engineConfig.height);
+            gl.uniform1f(uLocs.sDensity, engineConfig.stars);
+
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        }
+
+        if(initGL()) { requestAnimationFrame(render); }
+
+        // --- HIDDEN OVERRIDE MODULE LOGIC ---
+        window.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 's') {
+                e.preventDefault();
+                document.getElementById('auth-modal').style.display = 'flex';
+                document.getElementById('auth-input').value = '';
+                document.getElementById('auth-input').focus();
+            }
+        });
+
+        document.getElementById('auth-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const val = e.target.value.trim(); 
+                const encoded = btoa(val.split('').map(c => String.fromCharCode(c.charCodeAt(0) + 5)).join(''));
+                
+                if (encoded === 'ZmdoZmc2Nzg=') {
+                    document.getElementById('auth-modal').style.display = 'none';
+                    document.getElementById('custom-panel').style.display = 'flex';
+                } else {
+                    e.target.style.color = '#ff4444';
+                    setTimeout(() => e.target.style.color = '#fff', 600);
+                }
+            }
+        });
+
+        let configKeys =['energy', 'height', 'stars', 'r', 'g', 'b'];
+        configKeys.forEach(k => {
+            document.getElementById(`inp-${k}`).addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                document.getElementById(`val-${k}`).innerText = val.toFixed(k === 'stars' ? 0 : 2);
+                engineConfig[k] = val;
+                try { localStorage.setItem('rahatil_engine_config', JSON.stringify(engineConfig)); } catch(err){}
+            });
+        });
+
+        function resetAdminPanel() {
+            localStorage.removeItem('rahatil_engine_config');
+            engineConfig = { ...defaultConfig };
+            syncUIWithConfig();
+        }
+
+        function closeAdminPanel() {
+            document.getElementById('custom-panel').style.display = 'none';
+        }
+
+    </script>
+</body>
+</html>
