@@ -337,7 +337,7 @@ void main() {
         }
         syncUIWithConfig();
 
-        // --- WEB AUDIO API & VR INIT (STRICT ASYNC FOR MOBILE) ---
+        // --- WEB AUDIO API & VR INIT (STRICT SYNCHRONOUS FLOW) ---
         let audioCtx;
         let waterSource, waterFilter, waterGain;
         let audioInit = false;
@@ -345,13 +345,32 @@ void main() {
         let lastTouchTime = 0;
         let targetMX = 0, targetMY = 0;
 
-        async function initExperience() {
+        // Must NOT be async to preserve iOS user-gesture token
+        function initExperience() {
             if(audioInit) return;
             audioInit = true;
+
+            // 1. Instantly request Gyroscope Permissions (Synchronous boundary)
+            if (isMobile && typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                        }
+                    })
+                    .catch(console.error);
+            } else if(isMobile) {
+                window.addEventListener('deviceorientation', handleOrientation);
+            }
             
+            // 2. Setup Audio Engine synchronously
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             audioCtx = new AudioContext();
-            if(audioCtx.state === 'suspended') await audioCtx.resume();
+            
+            // Force resume if suspended (iOS strictly requires this inside the gesture)
+            if(audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
 
             const bufferSize = audioCtx.sampleRate * 2; 
             const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
@@ -378,23 +397,12 @@ void main() {
             waterGain.gain.value = 0.0;
 
             waterSource.connect(waterFilter).connect(waterGain).connect(audioCtx.destination);
-            waterSource.start();
+            waterSource.start(0);
             
             if(!isW) {
                 // iOS safe volume ramp
-                waterGain.gain.setTargetAtTime(0.06, audioCtx.currentTime, 1.5);
-            }
-
-            // VR Gyro Permissions (must be in same gesture scope)
-            if (isMobile && typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                try {
-                    const permissionState = await DeviceOrientationEvent.requestPermission();
-                    if (permissionState === 'granted') {
-                        window.addEventListener('deviceorientation', handleOrientation);
-                    }
-                } catch(e) { console.warn("Gyro blocked", e); }
-            } else if(isMobile) {
-                window.addEventListener('deviceorientation', handleOrientation);
+                waterGain.gain.setValueAtTime(0.0, audioCtx.currentTime);
+                waterGain.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 1.5);
             }
         }
 
@@ -406,21 +414,22 @@ void main() {
                 gyroActive = true;
                 let pitch = (event.beta - 60.0) / 40.0; 
                 let roll = event.gamma / 45.0; 
+                // Always track physics in background
                 targetMX = Math.max(-1.0, Math.min(1.0, roll));
                 targetMY = Math.max(-1.0, Math.min(1.0, -pitch));
             }
         }
 
-        // SMART TOUCH PRIORITY
+        // TOUCH API (Overrides VR temporarily)
         window.addEventListener('touchstart', (e) => {
-            if(e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.classList.contains('btn-init')) return;
+            if(e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
             lastTouchTime = Date.now();
             mX = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
             mY = (1 - e.touches[0].clientY / window.innerHeight) * 2 - 1;
         }, {passive: true});
 
         window.addEventListener('touchmove', (e) => {
-            if(e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.classList.contains('btn-init')) return;
+            if(e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
             lastTouchTime = Date.now();
             if(e.cancelable) e.preventDefault(); 
             mX = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
@@ -520,7 +529,11 @@ void main() {
             if(!audioInit) initExperience();
             if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
             
-            if (waterGain) waterGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5); 
+            if (waterGain) {
+                waterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+                waterGain.gain.setValueAtTime(waterGain.gain.value, audioCtx.currentTime);
+                waterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5); 
+            }
 
             if (audioCtx) {
                 const playBell = (freq, delay) => {
