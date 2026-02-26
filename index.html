@@ -2,10 +2,11 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RAHATIL | TIDAL CONVERGENCE</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;400&display=swap');
-        body, html { margin: 0; padding: 0; overflow: hidden; background: #000; font-family: 'Inter', sans-serif; cursor: none; }
+        body, html { margin: 0; padding: 0; overflow: hidden; background: #000; font-family: 'Inter', sans-serif; cursor: none; touch-action: none; }
         canvas { display: block; width: 100vw; height: 100vh; position: absolute; z-index: 1; filter: contrast(1.05); }
         
         /* STANDARD UI */
@@ -17,9 +18,9 @@
         .btn-init:hover { opacity: 1; letter-spacing: 20px; }
         .btn-init:hover::after { width: 100%; left: 0; opacity: 1; }
         
-        #cinematic-layer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; gap: 20px; opacity: 0; transition: opacity 0.6s ease; }
-        .cine-title { font-weight: 100; font-size: 2.2rem; color: #fff; letter-spacing: 15px; text-transform: uppercase; text-shadow: 0 0 25px rgba(255,255,255,0.4); opacity: 0; transform: translateY(20px); transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
-        .cine-sub { font-size: 0.65rem; color: #aaa; letter-spacing: 12px; text-transform: uppercase; opacity: 0; transform: translateY(15px); transition: all 0.6s ease; }
+        #cinematic-layer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; gap: 20px; opacity: 0; transition: opacity 0.6s ease; width: 100%; }
+        .cine-title { font-weight: 100; font-size: 2.2rem; color: #fff; letter-spacing: 15px; text-transform: uppercase; text-shadow: 0 0 25px rgba(255,255,255,0.4); opacity: 0; transform: translateY(20px); transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); text-align: center;}
+        .cine-sub { font-size: 0.65rem; color: #aaa; letter-spacing: 12px; text-transform: uppercase; opacity: 0; transform: translateY(15px); transition: all 0.6s ease; text-align: center;}
         
         #cinematic-layer.active { opacity: 1; }
         #cinematic-layer.active .cine-title { opacity: 1; transform: translateY(0); letter-spacing: 28px; transition-delay: 0.1s; }
@@ -33,21 +34,33 @@
         #auth-input { background: transparent; border: none; border-bottom: 1px solid #fff; color: #fff; font-family: 'Inter', sans-serif; font-size: 1.2rem; text-align: center; outline: none; letter-spacing: 5px; padding: 10px; width: 300px; text-transform: uppercase; }
         #auth-input::placeholder { color: rgba(255,255,255,0.3); }
         
-        .panel-box { background: rgba(10, 10, 15, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 30px; width: 400px; color: #fff; font-family: 'Inter', sans-serif; box-shadow: 0 0 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 15px; }
+        .panel-box { background: rgba(10, 10, 15, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 30px; width: 400px; max-width: 90%; color: #fff; font-family: 'Inter', sans-serif; box-shadow: 0 0 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 15px; box-sizing: border-box;}
         .panel-box h3 { margin: 0 0 10px 0; font-weight: 100; letter-spacing: 8px; text-transform: uppercase; font-size: 1.2rem; text-align: center; color: #aaa; }
         .slider-group { display: flex; flex-direction: column; gap: 5px; }
         .slider-group label { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: #888; display: flex; justify-content: space-between;}
         .slider-group span { color: #fff; }
         
         input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #fff; cursor: pointer; margin-top: -5px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #fff; cursor: pointer; margin-top: -7px; }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 2px; cursor: pointer; background: rgba(255,255,255,0.2); border-radius: 1px; }
         
         .panel-buttons { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-panel { flex: 1; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer; text-transform: uppercase; letter-spacing: 3px; font-family: 'Inter'; font-size: 0.65rem; transition: 0.3s; }
+        .btn-panel { flex: 1; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer; text-transform: uppercase; letter-spacing: 3px; font-family: 'Inter'; font-size: 0.65rem; transition: 0.3s; }
         .btn-panel:hover { background: rgba(255,255,255,0.2); }
         .btn-reset { color: #ffa0a0; border-color: rgba(255,100,100,0.3); }
         .btn-reset:hover { background: rgba(255,100,100,0.15); border-color: rgba(255,100,100,0.6); }
+
+        /* MOBILE RESPONSIVE SCALING */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.2rem; letter-spacing: 18px; margin-left: 18px; }
+            .btn-init { font-size: 0.6rem; letter-spacing: 10px; margin-top: 50px; }
+            .btn-init:hover { letter-spacing: 12px; }
+            .cine-title { font-size: 1.5rem; letter-spacing: 8px; }
+            .cine-sub { font-size: 0.5rem; letter-spacing: 6px; }
+            #cinematic-layer.active .cine-title { letter-spacing: 15px; }
+            .panel-box { padding: 20px; gap: 12px; }
+            .panel-box h3 { font-size: 1rem; letter-spacing: 5px; }
+        }
     </style>
 </head>
 <body>
@@ -145,7 +158,6 @@ float GetWaterHeight(vec3 p, bool micro) {
     float h = 0.0;
     vec2 uv = p.xz;
     
-    // Gerstner-like sharp peak math
     vec2 d1 = normalize(vec2(1.0, 1.2));
     h += u_waveHeight * pow(sin(dot(uv, d1) * 2.0 + t) * 0.5 + 0.5, 2.0);
     
@@ -232,15 +244,13 @@ void main() {
     float skyGrad = smoothstep(-0.2, 0.6, rd.y);
     vec3 col = mix(horizon, zenith, skyGrad);
     
-    // --- SUN WHITE SATURATION FIX ---
     float sunMask = smoothstep(-0.05, 0.02, sunDir.y);
     float moonMask = smoothstep(-0.05, 0.02, moonDir.y);
 
-    // Deep, richer golden color instead of pure white blowout
-    float sunShape = pow(max(0.0, dot(rd, sunDir)), 2500.0) * 3.0; // Tighter core
-    float sunHalo = pow(max(0.0, dot(rd, sunDir)), 90.0) * 0.8;    // Softer spread
-    col += vec3(1.0, 0.6, 0.2) * sunShape * sunMask;               // Golden core
-    col += vec3(1.0, 0.8, 0.4) * sunHalo * sunMask;                // Warm gradient aura
+    float sunShape = pow(max(0.0, dot(rd, sunDir)), 2500.0) * 3.0; 
+    float sunHalo = pow(max(0.0, dot(rd, sunDir)), 90.0) * 0.8;    
+    col += vec3(1.0, 0.6, 0.2) * sunShape * sunMask;               
+    col += vec3(1.0, 0.8, 0.4) * sunHalo * sunMask;                
     
     float moonShape = pow(max(0.0, dot(rd, moonDir)), 3000.0) * 8.0;
     float moonHalo = pow(max(0.0, dot(rd, moonDir)), 200.0) * 0.8;
@@ -272,7 +282,6 @@ void main() {
         vec3 waterBase = mix(vec3(0.000, 0.001, 0.003), u_waterColor, dayFactor);
         vec3 waterCol = mix(waterBase, reflectedSky * 0.85, 0.15 + 0.85 * fresnel);
         
-        // Match water reflection warmth to the new sun fix
         float sunSpec = pow(max(0.0, dot(N_sharp, normalize(-rd + sunDir))), 512.0);
         float sunTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), sunDir.xz)), 40.0);
         waterCol += vec3(1.0, 0.7, 0.3) * sunSpec * 15.0 * sunTrail * sunMask;
@@ -304,10 +313,11 @@ void main() {
 
         let isPaused = false;
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+        
+        // STRICT MOBILE PERFORMANCE SCALING
         let baseDPR = isMobile ? 1.0 : Math.min(window.devicePixelRatio, 2.0); 
         let currentDPR = baseDPR;
 
-        // Hide custom cursor on mobile to prevent floating ghost cursor
         if(isMobile) document.getElementById('cursor').style.display = 'none';
 
         // ENGINE STATE & LOCAL STORAGE PERSISTENCE
@@ -340,7 +350,6 @@ void main() {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             audioCtx = new AudioContext();
 
-            // Procedural Granular Water Engine (Pink Noise approximation for deep calmness)
             const bufferSize = audioCtx.sampleRate * 2; 
             const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const output = noiseBuffer.getChannelData(0);
@@ -348,7 +357,7 @@ void main() {
             let lastOut = 0;
             for (let i = 0; i < bufferSize; i++) { 
                 let white = Math.random() * 2 - 1; 
-                output[i] = (lastOut + (0.02 * white)) / 1.02; // Soften the harshness
+                output[i] = (lastOut + (0.02 * white)) / 1.02; 
                 lastOut = output[i];
                 output[i] *= 3.5; 
             }
@@ -357,7 +366,6 @@ void main() {
             waterSource.buffer = noiseBuffer;
             waterSource.loop = true;
 
-            // Deep Lowpass filter for peaceful, distant ocean sound
             waterFilter = audioCtx.createBiquadFilter();
             waterFilter.type = 'lowpass'; 
             waterFilter.frequency.value = 120; 
@@ -369,13 +377,12 @@ void main() {
             waterSource.connect(waterFilter).connect(waterGain).connect(audioCtx.destination);
             waterSource.start();
             
-            // Fade ocean in gently (very low volume)
             if(!isW) {
                 waterGain.gain.linearRampToValueAtTime(0.03, audioCtx.currentTime + 4.0);
             }
 
             // --- MOBILE VR REQUEST ---
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            if (isMobile && typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission()
                     .then(permissionState => {
                         if (permissionState === 'granted') {
@@ -383,32 +390,54 @@ void main() {
                         }
                     })
                     .catch(console.error);
-            } else {
+            } else if(isMobile) {
                 window.addEventListener('deviceorientation', handleOrientation);
             }
         }
 
         const unlockAudio = () => { setupAudio(); };
         document.addEventListener('click', unlockAudio, {once:true});
-        document.addEventListener('keydown', unlockAudio, {once:true});
+        document.addEventListener('touchstart', unlockAudio, {once:true});
 
-        // --- DEVICE ORIENTATION (VR GYRO CAMERA) ---
+        // --- DEVICE ORIENTATION & TOUCH API ---
         let useGyro = false;
         let targetMX = 0, targetMY = 0;
 
         function handleOrientation(event) {
             if (event.beta !== null && event.gamma !== null) {
                 useGyro = true;
-                // Map physical tilt to screen coordinates
-                // Holding phone at ~60 deg is horizon
                 let pitch = (event.beta - 60.0) / 40.0; 
                 let roll = event.gamma / 45.0; 
-                
                 targetMX = Math.max(-1.0, Math.min(1.0, roll));
                 targetMY = Math.max(-1.0, Math.min(1.0, -pitch));
             }
         }
 
+        // TOUCH SUPPORT FOR NON-GYRO MOBILE DRAGGING
+        window.addEventListener('touchstart', (e) => {
+            if (useGyro) return;
+            mX = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
+            mY = (1 - e.touches[0].clientY / window.innerHeight) * 2 - 1;
+        }, {passive: true});
+
+        window.addEventListener('touchmove', (e) => {
+            if (useGyro) return;
+            mX = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
+            mY = (1 - e.touches[0].clientY / window.innerHeight) * 2 - 1;
+        }, {passive: true});
+
+        window.onmousemove = (e) => {
+            if (useGyro || isMobile) return; 
+            mX = (e.clientX / window.innerWidth) * 2 - 1;
+            mY = (1 - e.clientY / window.innerHeight) * 2 - 1;
+            const cur = document.getElementById('cursor');
+            if(cur) {
+                cur.style.left = e.clientX + 'px'; 
+                cur.style.top = e.clientY + 'px';
+            }
+        };
+
+        // STRICT 60 FPS PACING
         const targetFPS = 60;
         const frameInterval = 1000 / targetFPS;
         let lastTime = 0;
@@ -429,16 +458,6 @@ void main() {
             canvas.height = window.innerHeight * currentDPR;
             gl.viewport(0, 0, canvas.width, canvas.height);
         }
-
-        window.onmousemove = (e) => {
-            if (useGyro) return; // Ignore mouse if VR is active
-            mX = (e.clientX / window.innerWidth) * 2 - 1;
-            mY = (1 - e.clientY / window.innerHeight) * 2 - 1;
-            if(!isMobile) {
-                const cur = document.getElementById('cursor');
-                cur.style.left = e.clientX + 'px'; cur.style.top = e.clientY + 'px';
-            }
-        };
 
         const compile = (t, s) => {
             const sh = gl.createShader(t); gl.shaderSource(sh, s); gl.compileShader(sh);
@@ -543,7 +562,7 @@ void main() {
             if (isPaused || !gl) return;
 
             let elapsed = now - lastTime;
-            if (elapsed < frameInterval) return;
+            if (elapsed < frameInterval) return; // STRICT 60 FPS CAP
             lastTime = now - (elapsed % frameInterval);
 
             if (framesAnalyzed < 60) {
@@ -555,7 +574,6 @@ void main() {
                 framesAnalyzed++;
             }
 
-            // Smoothly interpolate VR coordinates
             if (useGyro && !isW) {
                 mX += (targetMX - mX) * 0.1;
                 mY += (targetMY - mY) * 0.1;
