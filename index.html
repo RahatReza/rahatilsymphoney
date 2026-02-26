@@ -6,7 +6,7 @@
     <title>RAHATIL | TIDAL CONVERGENCE</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;400&display=swap');
-        body, html { margin: 0; padding: 0; overflow: hidden; background: #000; font-family: 'Inter', sans-serif; cursor: none; touch-action: none; }
+        body, html { margin: 0; padding: 0; overflow: hidden; background: #000; font-family: 'Inter', sans-serif; cursor: none; touch-action: none; -webkit-touch-callout: none; }
         canvas { display: block; width: 100vw; height: 100vh; position: absolute; z-index: 1; filter: contrast(1.05); }
         
         /* STANDARD UI */
@@ -399,13 +399,15 @@ void main() {
         document.addEventListener('click', unlockAudio, {once:true});
         document.addEventListener('touchstart', unlockAudio, {once:true});
 
-        // --- DEVICE ORIENTATION & TOUCH API ---
-        let useGyro = false;
+        // --- DEVICE ORIENTATION & TOUCH API OVERRIDE LOGIC ---
+        let gyroActive = false;
+        let userTouched = false;
         let targetMX = 0, targetMY = 0;
 
         function handleOrientation(event) {
+            if (userTouched) return; // Touch takes absolute priority
             if (event.beta !== null && event.gamma !== null) {
-                useGyro = true;
+                gyroActive = true;
                 let pitch = (event.beta - 60.0) / 40.0; 
                 let roll = event.gamma / 45.0; 
                 targetMX = Math.max(-1.0, Math.min(1.0, roll));
@@ -413,21 +415,24 @@ void main() {
             }
         }
 
-        // TOUCH SUPPORT FOR NON-GYRO MOBILE DRAGGING
+        // TOUCH SUPPORT FOR MOBILE DRAGGING (Takes Priority over Gyro)
         window.addEventListener('touchstart', (e) => {
-            if (useGyro) return;
+            if(e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.classList.contains('btn-init')) return;
+            userTouched = true; // Permanently override gyro if user prefers swiping
             mX = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
             mY = (1 - e.touches[0].clientY / window.innerHeight) * 2 - 1;
         }, {passive: true});
 
         window.addEventListener('touchmove', (e) => {
-            if (useGyro) return;
+            if(e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.classList.contains('btn-init')) return;
+            userTouched = true;
+            if(e.cancelable) e.preventDefault(); // Critical: Stops mobile pull-to-refresh & screen scrolling
             mX = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
             mY = (1 - e.touches[0].clientY / window.innerHeight) * 2 - 1;
-        }, {passive: true});
+        }, {passive: false});
 
         window.onmousemove = (e) => {
-            if (useGyro || isMobile) return; 
+            if (gyroActive || isMobile) return; 
             mX = (e.clientX / window.innerWidth) * 2 - 1;
             mY = (1 - e.clientY / window.innerHeight) * 2 - 1;
             const cur = document.getElementById('cursor');
@@ -574,7 +579,8 @@ void main() {
                 framesAnalyzed++;
             }
 
-            if (useGyro && !isW) {
+            // Smoothly interpolate VR coordinates ONLY if user hasn't touched the screen
+            if (gyroActive && !isW && !userTouched) {
                 mX += (targetMX - mX) * 0.1;
                 mY += (targetMY - mY) * 0.1;
             }
