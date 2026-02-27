@@ -471,8 +471,6 @@ float GetWaterHeight(vec3 p, bool micro) {
     
     if(m_rd.y < -0.05) {
         vec3 ro_m = vec3(0.0, 1.5, u_time * 0.3 * (2.0 + u_warp * 35.0));
-        
-        // STABILITY CAP: Prevent math explosion at deep vertical angles
         float safeY = clamp(m_rd.y, -0.85, -0.15); 
         vec3 m_p = ro_m - m_rd * (1.5 / safeY); 
         
@@ -546,16 +544,31 @@ void main() {
     float sunMask = smoothstep(-0.05, 0.02, sunDir.y);
     float moonMask = smoothstep(-0.05, 0.02, moonDir.y);
 
+    // --- CINEMATIC VOLUMETRIC SUN SYSTEM ---
     float sunDot = max(0.0, dot(rd, sunDir));
-    float sunShape = smoothstep(0.998, 0.9995, sunDot) * 1.8; 
-    float sunHalo = pow(sunDot, 150.0) * 0.45;    
-    col += vec3(1.0, 0.8, 0.6) * sunShape * sunMask;               
-    col += vec3(1.0, 0.9, 0.7) * sunHalo * sunMask;                
+    float sunAlt = max(0.0, sunDir.y);
     
+    // Altitude-based Rayleigh Scattering (Color Shifts)
+    vec3 coreColor = mix(vec3(1.0, 0.7, 0.4), vec3(1.0, 0.98, 0.95), smoothstep(0.0, 0.3, sunAlt));
+    vec3 glowColor = mix(vec3(1.0, 0.25, 0.05), vec3(1.0, 0.8, 0.5), smoothstep(0.0, 0.4, sunAlt));
+    
+    // Multi-Layered Optical Bloom (Mobile GPU Safe < 200.0)
+    float sunCore = smoothstep(0.9985, 0.9998, sunDot) * 2.5; 
+    float sunInnerGlow = pow(sunDot, 180.0) * 1.5;            
+    float sunOuterGlow = pow(sunDot, 50.0) * 0.8;             
+    float sunAtmosphere = pow(sunDot, 12.0) * 0.4;            
+    
+    vec3 cinematicSun = coreColor * sunCore;
+    cinematicSun += glowColor * sunInnerGlow;
+    cinematicSun += glowColor * sunOuterGlow;
+    cinematicSun += mix(vec3(1.0, 0.1, 0.0), glowColor, 0.5) * sunAtmosphere;
+    col += cinematicSun * sunMask;
+    
+    // --- CINEMATIC MOON SYSTEM ---
     float moonDot = max(0.0, dot(rd, moonDir));
-    float moonShape = smoothstep(0.9985, 0.9998, moonDot) * 8.0; 
-    float moonHalo = pow(moonDot, 150.0) * 0.8;
-    col += vec3(0.85, 0.9, 1.0) * (moonShape + moonHalo) * nightFactor * moonMask;
+    float moonCore = smoothstep(0.999, 0.9998, moonDot) * 2.5; 
+    float moonGlow = pow(moonDot, 120.0) * 0.8 + pow(moonDot, 30.0) * 0.3;
+    col += vec3(0.8, 0.9, 1.0) * (moonCore + moonGlow) * nightFactor * moonMask;
 
     vec2 nebUV = rd.xz / (abs(rd.y) + 0.001);
     float neb = noise(nebUV * 2.0 + u_time * 0.01) * noise(nebUV * 4.0 - u_time * 0.01);
@@ -586,13 +599,21 @@ void main() {
         vec3 waterSunDir = normalize(vec3(sunDir.x, max(sunDir.y, 0.001), sunDir.z));
         vec3 waterMoonDir = normalize(vec3(moonDir.x, max(moonDir.y, 0.001), moonDir.z));
 
-        float sunSpec = pow(max(0.0, dot(N_sharp, normalize(-rd + waterSunDir))), 250.0);
-        float sunTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), waterSunDir.xz)), 40.0);
-        waterCol += vec3(1.0, 0.8, 0.5) * sunSpec * 10.0 * sunTrail * sunMask; 
+        // --- CINEMATIC LIQUID REFLECTIONS ---
+        float specDot = max(0.0, dot(N_sharp, normalize(-rd + waterSunDir)));
+        float smoothSpecDot = max(0.0, dot(N_smooth, normalize(-rd + waterSunDir)));
         
-        float moonSpec = pow(max(0.0, dot(N_sharp, normalize(-rd + waterMoonDir))), 150.0);
+        float sunSpecCore = pow(specDot, 180.0) * 5.0; 
+        float sunSpecGlow = pow(smoothSpecDot, 40.0) * 2.0; 
+        float sunTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), waterSunDir.xz)), 35.0);
+        
+        vec3 waterSpecColor = mix(vec3(1.0, 0.3, 0.05), vec3(1.0, 0.9, 0.7), smoothstep(0.0, 0.3, waterSunDir.y));
+        waterCol += waterSpecColor * (sunSpecCore + sunSpecGlow) * sunTrail * sunMask; 
+        
+        float moonSpecDot = max(0.0, dot(N_sharp, normalize(-rd + waterMoonDir)));
+        float moonSpec = pow(moonSpecDot, 150.0) * 3.0 + pow(moonSpecDot, 30.0) * 1.0;
         float moonTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), waterMoonDir.xz)), 30.0);
-        waterCol += vec3(0.6, 0.8, 1.0) * moonSpec * 10.0 * moonTrail * nightFactor * moonMask;
+        waterCol += vec3(0.6, 0.8, 1.0) * moonSpec * moonTrail * nightFactor * moonMask;
         
         col = mix(horizon, waterCol, smoothstep(250.0, 5.0, d));
     }
@@ -696,7 +717,6 @@ void main() {
             window.addEventListener('deviceorientation', handleOrientation);
         }
 
-        // FIX 9: Consolidated Audio Init ensuring no redundant object generation
         function initExperience() {
             if (audioInit) return;
             audioInit = true;
@@ -757,7 +777,6 @@ void main() {
         document.addEventListener('mousedown', unlockExperience, { once: true });
         document.addEventListener('touchstart', unlockExperience, { once: true });
 
-        // FIX 10: Strict touch-action capture to block iOS safari edge-swiping defaults.
         window.addEventListener('touchstart', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
             if (e.cancelable) e.preventDefault(); 
@@ -858,7 +877,6 @@ void main() {
         function engage() {
             if (isW || !gl || document.getElementById('custom-panel').style.display === 'flex') return;
             
-            // Centralized Audio Startup Logic ensuring browser gestures aren't rejected
             if (!audioInit) initExperience();
             if (audioCtx && audioCtx.state === 'suspended') {
                 audioCtx.resume();
@@ -872,12 +890,10 @@ void main() {
             }
             document.getElementById('cinematic-layer').classList.add('active');
 
-            // FIX 8: Universal iOS/Android Haptic Integration
             if (isMobile) {
                 if ('vibrate' in navigator && typeof navigator.vibrate === 'function') {
                     navigator.vibrate([30, 200, 50, 150, 80, 100, 120, 50, 200, 50, 1000]);
                 } else if (audioCtx && audioCtx.state === 'running') {
-                    // iOS Haptic Fallback: Deep sub-bass pulse to simulate mechanical thud
                     let rumble = audioCtx.createOscillator();
                     let rumbleGain = audioCtx.createGain();
                     
@@ -1020,18 +1036,15 @@ void main() {
             }
         });
 
-        // FIX 7: Upgraded Authentication to use native Web Crypto API (SHA-256)
         document.getElementById('auth-input').addEventListener('keydown', async (e) => {
             if (e.key === 'Enter') {
                 const val = e.target.value.trim();
                 
-                // Generates hash of user input
                 const msgBuffer = new TextEncoder().encode(val);
                 const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
                 const hashArray = Array.from(new Uint8Array(hashBuffer));
                 const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-                // Compares against the SHA-256 hash of "abcab123"
                 if (hashHex === '3057e9b04f32c9497e7f62c5db4d93bd579997184282563f10111f1de43c3325') {
                     document.getElementById('auth-modal').style.display = 'none';
                     document.getElementById('custom-panel').style.display = 'flex';
