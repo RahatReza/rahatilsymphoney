@@ -616,6 +616,7 @@ void main() {
     <script>
         const canvas = document.getElementById('v');
         let gl, prg, isW = false, warp = 0, mX = 0, mY = 0;
+        let offsetMX = 0, offsetMY = 0; // Sticky touch offsets
         const TARGET = "https://www.linkedin.com/in/rahatreza100/";
 
         let isPaused = false;
@@ -661,8 +662,11 @@ void main() {
             let g = event.gamma;
 
             // GIMBAL LOCK GUARD: Prevent violent coordinate flipping on extreme angles
+            // When looking straight down (b -> 90), gamma becomes unstable. 
+            // We damp the X movement influence as we approach vertical angles.
+            let stabilityFactor = Math.cos(Math.min(Math.abs(b), 90) * Math.PI / 180);
             b = Math.max(-85, Math.min(85, b));
-            g = Math.max(-85, Math.min(85, g));
+            g = Math.max(-85, Math.min(85, g)) * (0.2 + 0.8 * stabilityFactor);
 
             let finalX = 0, finalY = 0;
 
@@ -926,11 +930,20 @@ void main() {
                 framesAnalyzed++;
             }
 
-            // SMART GYRO BLEND: Auto-return to VR 1.2 seconds after user stops touching screen
+            // SMART GYRO BLEND: Sticky Offset System
             let timeSinceTouch = Date.now() - lastTouchTime;
-            if (gyroActive && timeSinceTouch > 1200) {
-                mX += (targetMX - mX) * 0.08;
-                mY += (targetMY - mY) * 0.08;
+            if (gyroActive) {
+                if (timeSinceTouch < 100) {
+                    // While touching, continuously sync the offset so it feels "sticky" on release
+                    offsetMX = mX - targetMX;
+                    offsetMY = mY - targetMY;
+                } else {
+                    // Apply gyro movement relative to where the user last placed the sun
+                    let destX = targetMX + offsetMX;
+                    let destY = targetMY + offsetMY;
+                    mX += (destX - mX) * 0.08;
+                    mY += (destY - mY) * 0.08;
+                }
             }
 
             if (isW) {
