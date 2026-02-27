@@ -650,7 +650,6 @@ void main() {
         let lastTouchTime = 0;
         let targetMX = 0, targetMY = 0;
         
-        // FIX 6: Track previous orientation states to defend against Gimbal Lock flips
         let lastBeta = null;
         let lastGamma = null;
 
@@ -662,7 +661,6 @@ void main() {
             let b = event.beta;
             let g = event.gamma;
 
-            // FIX 6: Gimbal Lock Defense. Discard physically impossible instantaneous sensor snaps (>60deg).
             if (lastBeta !== null && Math.abs(b - lastBeta) > 60) b = lastBeta;
             if (lastGamma !== null && Math.abs(g - lastGamma) > 60) g = lastGamma;
 
@@ -698,6 +696,7 @@ void main() {
             window.addEventListener('deviceorientation', handleOrientation);
         }
 
+        // FIX 9: Consolidated Audio Init ensuring no redundant object generation
         function initExperience() {
             if (audioInit) return;
             audioInit = true;
@@ -712,8 +711,10 @@ void main() {
                     .catch(console.error);
             }
 
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioCtx = new AudioContext();
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
 
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
@@ -756,19 +757,21 @@ void main() {
         document.addEventListener('mousedown', unlockExperience, { once: true });
         document.addEventListener('touchstart', unlockExperience, { once: true });
 
+        // FIX 10: Strict touch-action capture to block iOS safari edge-swiping defaults.
         window.addEventListener('touchstart', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
+            if (e.cancelable) e.preventDefault(); 
             isTouching = true;
             lastTouchTime = Date.now();
             mX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 1.5;
             mY = ((1 - e.touches[0].clientY / window.innerHeight) * 2 - 1) * 0.7;
-        }, { passive: true });
+        }, { passive: false });
 
         window.addEventListener('touchmove', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
+            if (e.cancelable) e.preventDefault();
             isTouching = true;
             lastTouchTime = Date.now();
-            if (e.cancelable) e.preventDefault();
             mX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 1.5;
             mY = ((1 - e.touches[0].clientY / window.innerHeight) * 2 - 1) * 0.7;
         }, { passive: false });
@@ -855,14 +858,11 @@ void main() {
         function engage() {
             if (isW || !gl || document.getElementById('custom-panel').style.display === 'flex') return;
             
-            if (!audioCtx) {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                audioCtx = new AudioContext();
-            }
-            if (audioCtx.state === 'suspended') {
+            // Centralized Audio Startup Logic ensuring browser gestures aren't rejected
+            if (!audioInit) initExperience();
+            if (audioCtx && audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
-            if (!audioInit) initExperience();
 
             isW = true;
             document.getElementById('ui-layer').style.opacity = '0';
@@ -872,8 +872,26 @@ void main() {
             }
             document.getElementById('cinematic-layer').classList.add('active');
 
-            if (isMobile && 'vibrate' in navigator) {
-                navigator.vibrate([30, 200, 50, 150, 80, 100, 120, 50, 200, 50, 1000]);
+            // FIX 8: Universal iOS/Android Haptic Integration
+            if (isMobile) {
+                if ('vibrate' in navigator && typeof navigator.vibrate === 'function') {
+                    navigator.vibrate([30, 200, 50, 150, 80, 100, 120, 50, 200, 50, 1000]);
+                } else if (audioCtx && audioCtx.state === 'running') {
+                    // iOS Haptic Fallback: Deep sub-bass pulse to simulate mechanical thud
+                    let rumble = audioCtx.createOscillator();
+                    let rumbleGain = audioCtx.createGain();
+                    
+                    rumble.type = 'sine'; 
+                    rumble.frequency.setValueAtTime(45, audioCtx.currentTime); 
+                    rumble.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 1.2); 
+                    
+                    rumbleGain.gain.setValueAtTime(1.5, audioCtx.currentTime);
+                    rumbleGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+                    
+                    rumble.connect(rumbleGain).connect(audioCtx.destination);
+                    rumble.start();
+                    rumble.stop(audioCtx.currentTime + 1.2);
+                }
             }
             
             if (waterGain) {
@@ -923,10 +941,8 @@ void main() {
             if (elapsed < frameInterval) return;
             lastTime = now - (elapsed % frameInterval);
 
-            // FIX 5: Frame-rate independence multiplier calculation. Capped at 50ms to prevent massive teleports if tab is frozen.
             let dtFactor = Math.min(elapsed, 50) / 16.666;
 
-            // FIX 4: Cyclical Performance Analyzer. Evaluates lag every ~2 seconds (120 frames).
             if (framesAnalyzed >= 120) {
                 if (droppedFrames > 15 && currentDPR > 1.0) {
                     currentDPR = 1.0;
@@ -946,7 +962,6 @@ void main() {
                     if (isTouching) lastTouchTime = Date.now();
                 } else {
                     if (timeSinceTouch > 2000) {
-                        // FIX 5: Frame-independent decay mapping
                         let decay = Math.pow(0.95, dtFactor);
                         offsetMX *= decay; 
                         offsetMY *= decay;
@@ -954,7 +969,6 @@ void main() {
                     let destX = targetMX + offsetMX;
                     let destY = targetMY + offsetMY;
                     
-                    // FIX 5: Frame-independent smooth lerping for consistent feeling across devices
                     let lerpAmt = 1.0 - Math.pow(0.93, dtFactor);
                     mX += (destX - mX) * lerpAmt;
                     mY += (destY - mY) * lerpAmt;
@@ -997,7 +1011,6 @@ void main() {
 
         if (initGL()) { requestAnimationFrame(render); }
 
-        // --- HIDDEN OVERRIDE MODULE LOGIC ---
         window.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 's') {
                 e.preventDefault();
@@ -1007,12 +1020,19 @@ void main() {
             }
         });
 
-        document.getElementById('auth-input').addEventListener('keydown', (e) => {
+        // FIX 7: Upgraded Authentication to use native Web Crypto API (SHA-256)
+        document.getElementById('auth-input').addEventListener('keydown', async (e) => {
             if (e.key === 'Enter') {
                 const val = e.target.value.trim();
-                const encoded = btoa(val.split('').map(c => String.fromCharCode(c.charCodeAt(0) + 5)).join(''));
+                
+                // Generates hash of user input
+                const msgBuffer = new TextEncoder().encode(val);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-                if (encoded === 'ZmdoZmc2Nzg=') {
+                // Compares against the SHA-256 hash of "abcab123"
+                if (hashHex === '3057e9b04f32c9497e7f62c5db4d93bd579997184282563f10111f1de43c3325') {
                     document.getElementById('auth-modal').style.display = 'none';
                     document.getElementById('custom-panel').style.display = 'flex';
                 } else {
