@@ -709,7 +709,7 @@ void main() {
         syncUIWithConfig();
 
         let audioCtx;
-        let waterSource, waterFilter, waterGain;
+        let waterSource, waterFilter, waterGain, waterPanner; 
         let audioInit = false;
         let gyroActive = false;
         let lastTouchTime = 0;
@@ -808,7 +808,16 @@ void main() {
             waterGain = audioCtx.createGain();
             waterGain.gain.value = 0.0;
 
-            waterSource.connect(waterFilter).connect(waterGain).connect(audioCtx.destination);
+            // 3D SPATIAL AUDIO ROUTING
+            if (audioCtx.createStereoPanner) {
+                waterPanner = audioCtx.createStereoPanner();
+                waterPanner.pan.value = 0;
+                waterSource.connect(waterFilter).connect(waterGain).connect(waterPanner).connect(audioCtx.destination);
+            } else {
+                // Fallback for extremely old browsers
+                waterSource.connect(waterFilter).connect(waterGain).connect(audioCtx.destination);
+            }
+
             waterSource.start(0);
 
             if (!isW) {
@@ -1052,6 +1061,13 @@ void main() {
 
                     let targetRate = 0.4 + (engineConfig.energy * 0.02) + (waveCycle * 0.03);
                     waterSource.playbackRate.value = Math.max(0.1, targetRate);
+
+                    // 3D SPATIAL AUDIO DYNAMIC PANNING
+                    if (waterPanner) {
+                        // Maps the visual horizontal axis directly into left/right ear panning
+                        let panTarget = Math.max(-1.0, Math.min(1.0, mX * 0.8));
+                        waterPanner.pan.setTargetAtTime(panTarget, audioCtx.currentTime, 0.2);
+                    }
                 }
             }
 
