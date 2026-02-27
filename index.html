@@ -408,42 +408,34 @@ void main() {
         document.addEventListener('mousedown', unlockExperience, {once:true});
         document.addEventListener('touchstart', unlockExperience, {once:true});
 
-        // --- ENHANCED LANDSCAPE-AWARE GYROSCOPE MAPPING ---
+        // --- CALIBRATED LANDSCAPE VR MAPPING ---
         function handleOrientation(event) {
             if (event.beta === null || event.gamma === null) return;
             gyroActive = true;
             
-            // Detection of current screen orientation angle
             let angle = (screen.orientation ? screen.orientation.angle : window.orientation) || 0;
-            
-            let b = event.beta;  // Front-to-back tilt [-180, 180]
-            let g = event.gamma; // Left-to-right tilt [-90, 90]
+            let b = event.beta;  
+            let g = event.gamma; 
             
             let finalX = 0, finalY = 0;
+            const restingPitch = 55.0; // Resting tilt angle
 
-            // FIX: Dynamic Coordinate Swapping
-            // Resting position is assumed to be phone held at ~50 degrees towards user.
-            const restingAngle = 50.0;
-
+            // COORDINATE REMAPPING
             if (angle === 90) { 
-                // Landscape Left (Home button to the right)
-                // Side-to-side rotation is now captured by 'beta'
-                // Tilt-to-face (up/down) is captured by 'gamma'
-                finalX = (b - restingAngle) / 45.0; 
-                finalY = (-g - 30.0) / 30.0; 
+                // Landscape Left: Yaw is Beta, Pitch is Gamma
+                finalX = -(b - restingPitch) / 45.0; 
+                finalY = -g / 35.0; 
             } else if (angle === -90 || angle === 270) { 
-                // Landscape Right (Home button to the left)
-                finalX = -(b - restingAngle) / 45.0;
-                finalY = (g - 30.0) / 30.0;
+                // Landscape Right: Yaw is Beta, Pitch is Gamma
+                finalX = (b - restingPitch) / 45.0;
+                finalY = g / 35.0;
             } else {
-                // Portrait (0)
-                // Side-to-side rotation is 'gamma'
-                // Tilt-to-face is 'beta'
+                // Portrait: Yaw is Gamma, Pitch is Beta
                 finalX = g / 30.0;
-                finalY = -(b - restingAngle - 10.0) / 40.0;
+                finalY = -(b - restingPitch) / 40.0;
             }
             
-            // Smooth clamping to prevent sun-teleporting at extreme angles
+            // Apply smoothing and normalization
             targetMX = Math.max(-1.5, Math.min(1.5, finalX));
             targetMY = Math.max(-1.0, Math.min(1.0, finalY));
         }
