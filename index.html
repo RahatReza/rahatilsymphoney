@@ -494,7 +494,6 @@ vec3 GetNormal(vec3 p, bool micro) {
 
 // DYNAMIC PLANAR STAR ENGINE
 float GetStars(vec3 rd, float nightFactor, bool isRef) {
-    if(nightFactor < 0.01) return 0.0;
     vec3 starRd = isRef ? normalize(vec3(rd.x, abs(rd.y), rd.z)) : rd;
     vec2 starUV = starRd.xz / (abs(starRd.y) + 0.001);
     
@@ -509,33 +508,36 @@ float GetStars(vec3 rd, float nightFactor, bool isRef) {
     return stars * twinkle * nightFactor * (isRef ? 0.3 : 1.2) * warpFade;
 }
 
-// --- NEW CLOUD ENGINE (fBm Volumetrics) ---
-float getClouds(vec3 rd, float t) {
+// --- OPTIMIZED CLOUD ENGINE (Dynamic LOD for Reflections) ---
+float getClouds(vec3 rd, float t, bool isRef) {
     if(rd.y < 0.0) return 0.0;
     vec2 uv = rd.xz / (rd.y + 0.001) * 0.4;
-    uv.x -= t * 0.05; // clouds drift slowly sideways
+    uv.x -= t * 0.05; 
     
     float f = noise(uv);
     uv = mat2(1.6, 1.2, -1.2, 1.6) * uv;
     f += 0.5 * noise(uv + t * 0.03);
-    uv = mat2(1.6, 1.2, -1.2, 1.6) * uv;
-    f += 0.25 * noise(uv - t * 0.02);
+    
+    // Performance saver: Skip 3rd octave math for water reflections!
+    if(!isRef) {
+        uv = mat2(1.6, 1.2, -1.2, 1.6) * uv;
+        f += 0.25 * noise(uv - t * 0.02);
+    }
     
     f = smoothstep(0.9, 1.7, f);
-    return f * smoothstep(0.0, 0.15, rd.y); // Fade out softly at the horizon
+    return f * smoothstep(0.0, 0.15, rd.y); 
 }
 
-// Dynamically calculates cloud illumination based on sun phase
 vec3 getCloudColor(vec3 rd, vec3 sunDir) {
     vec3 cloudDay = vec3(0.95, 0.98, 1.0);
     vec3 cloudSunset = vec3(1.0, 0.4, 0.15);
     vec3 cloudNight = vec3(0.01, 0.015, 0.03); 
     
-    float cloudDayFact = smoothstep(-0.1, 0.15, sunDir.y); // Extends daylight slightly longer for clouds
+    float cloudDayFact = smoothstep(-0.1, 0.15, sunDir.y); 
     vec3 cColor = mix(cloudNight, mix(cloudSunset, cloudDay, smoothstep(-0.05, 0.25, sunDir.y)), cloudDayFact);
     
     float sDot = max(0.0, dot(rd, sunDir));
-    cColor += vec3(1.0, 0.6, 0.2) * pow(sDot, 5.0) * smoothstep(-0.1, 0.3, sunDir.y) * 0.5; // Sun bloom inside clouds
+    cColor += vec3(1.0, 0.6, 0.2) * pow(sDot, 5.0) * smoothstep(-0.1, 0.3, sunDir.y) * 0.5; 
     return cColor;
 }
 
@@ -543,14 +545,12 @@ void main() {
     vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
     float t = u_time * 0.3;
     
-    // CAMERA SHAKE MATH 
     float shakeIntensity = pow(u_warp, 5.0) * 0.04;
     vec2 cameraShake = vec2(sin(u_time * 150.0), cos(u_time * 130.0)) * shakeIntensity;
     uv += cameraShake;
 
     float solarEase = u_warp * u_warp * (3.0 - 2.0 * u_warp);
     
-    // FIX 3: Shifted mapping math so `u_mouse.y = 0` creates Daytime by default instead of Sunset.
     float currentSunY = mix(0.5 + u_mouse.y * 1.2, -1.5, solarEase);
     vec3 sunDir = normalize(vec3(u_mouse.x * 1.5, currentSunY, 1.0));
     vec3 moonDir = normalize(vec3(-u_mouse.x * 1.5, -currentSunY + 0.15, -1.0));
@@ -580,20 +580,21 @@ void main() {
     float sunMask = smoothstep(-0.05, 0.02, sunDir.y);
     float moonMask = smoothstep(-0.05, 0.02, moonDir.y);
 
-    vec2 nebUV = rd.xz / (abs(rd.y) + 0.001);
-    float neb = noise(nebUV * 2.0 + u_time * 0.01) * noise(nebUV * 4.0 - u_time * 0.01);
-    vec3 milkyWay = vec3(0.08, 0.03, 0.12) * neb * nightFactor * smoothstep(0.0, 0.3, rd.y) * 0.6;
-    col += milkyWay * (1.0 - smoothstep(0.2, 0.8, u_warp));
-    
-    col += GetStars(rd, nightFactor, false) * smoothstep(-0.1, 0.2, rd.y);
+    // PERFORMANCE OPTIMIZATION: Only calculate galaxy/stars if it is actually night!
+    if(nightFactor > 0.01) {
+        vec2 nebUV = rd.xz / (abs(rd.y) + 0.001);
+        float neb = noise(nebUV * 2.0 + u_time * 0.01) * noise(nebUV * 4.0 - u_time * 0.01);
+        vec3 milkyWay = vec3(0.08, 0.03, 0.12) * neb * nightFactor * smoothstep(0.0, 0.3, rd.y) * 0.6;
+        col += milkyWay * (1.0 - smoothstep(0.2, 0.8, u_warp));
+        
+        col += GetStars(rd, nightFactor, false) * smoothstep(-0.1, 0.2, rd.y);
+    }
 
-    // --- RENDER CLOUDS IN SKY ---
-    float cloudAlpha = getClouds(rd, u_time);
+    float cloudAlpha = getClouds(rd, u_time, false);
     if(cloudAlpha > 0.0) {
         col = mix(col, getCloudColor(rd, sunDir), cloudAlpha * 0.65);
     }
 
-    // --- CINEMATIC VOLUMETRIC SUN SYSTEM (Drawn over clouds so it burns through) ---
     float sunDot = max(0.0, dot(rd, sunDir));
     float sunAlt = max(0.0, sunDir.y);
     
@@ -611,7 +612,6 @@ void main() {
     cinematicSun += mix(vec3(1.0, 0.1, 0.0), glowColor, 0.5) * sunAtmosphere;
     col += cinematicSun * sunMask;
     
-    // --- CINEMATIC MOON SYSTEM ---
     float moonDot = max(0.0, dot(rd, moonDir));
     float moonCore = smoothstep(0.999, 0.9998, moonDot) * 2.5; 
     float moonGlow = pow(moonDot, 120.0) * 0.8 + pow(moonDot, 30.0) * 0.3;
@@ -628,11 +628,14 @@ void main() {
         float refSkyGrad = smoothstep(-0.2, 0.6, reflect(rd, N_smooth).y);
         vec3 reflectedSky = mix(horizon, zenith, refSkyGrad);
         
-        reflectedSky += vec3(0.04, 0.015, 0.06) * noise(refR_Planar.xz * 2.0) * noise(refR_Planar.xz * 4.0) * nightFactor * smoothstep(0.0, 0.3, refR_Planar.y);
-        reflectedSky += GetStars(refR_Planar, nightFactor, true);
+        // PERFORMANCE OPTIMIZATION: Only calculate galaxy/stars for reflections if night!
+        if(nightFactor > 0.01) {
+            reflectedSky += vec3(0.04, 0.015, 0.06) * noise(refR_Planar.xz * 2.0) * noise(refR_Planar.xz * 4.0) * nightFactor * smoothstep(0.0, 0.3, refR_Planar.y);
+            reflectedSky += GetStars(refR_Planar, nightFactor, true);
+        }
 
-        // Reflect clouds in water
-        float refCloudAlpha = getClouds(refR_Planar, u_time);
+        // Generate water reflection clouds (Uses faster LOD setting)
+        float refCloudAlpha = getClouds(refR_Planar, u_time, true);
         if(refCloudAlpha > 0.0) {
             reflectedSky = mix(reflectedSky, getCloudColor(refR_Planar, sunDir), refCloudAlpha * 0.55);
         }
@@ -660,11 +663,9 @@ void main() {
         col = mix(horizon, waterCol, smoothstep(250.0, 5.0, d));
     }
 
-    // CINEMATIC CHROMATIC ABERRATION & HYPER-GLOW
     float hyperGlow = pow(u_warp, 3.5) * 2.5;
     vec3 warpBase = vec3(0.85, 0.95, 1.0) * hyperGlow;
     
-    // Split RGB channels near edges during high velocity
     float caSplit = u_warp * length(uv) * 1.5;
     warpBase += vec3(caSplit, 0.0, -caSplit) * u_warp * 1.5;
     
@@ -675,7 +676,7 @@ void main() {
 }</script>
     <script>
         const canvas = document.getElementById('v');
-        let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.2, redirected = false; // mY initialized higher for day default
+        let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.2, redirected = false; 
         let offsetMX = 0, offsetMY = 0; 
         let isTouching = false; 
         const TARGET = "https://www.linkedin.com/in/rahatreza100/";
@@ -683,7 +684,8 @@ void main() {
         let isPaused = false;
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
 
-        let baseDPR = isMobile ? 1.0 : Math.min(window.devicePixelRatio, 2.0);
+        // SMART DYNAMIC RESOLUTION SCALING
+        let baseDPR = isMobile ? Math.min(window.devicePixelRatio, 1.0) : Math.min(window.devicePixelRatio, 2.0);
         let currentDPR = baseDPR;
 
         if (isMobile) document.getElementById('cursor').style.display = 'none';
@@ -711,7 +713,7 @@ void main() {
         let audioInit = false;
         let gyroActive = false;
         let lastTouchTime = 0;
-        let targetMX = 0, targetMY = 0.2; // target initialized to day
+        let targetMX = 0, targetMY = 0.2; 
         
         let lastBeta = null;
         let lastGamma = null;
@@ -1001,9 +1003,10 @@ void main() {
 
             let dtFactor = Math.min(elapsed, 50) / 16.666;
 
-            if (framesAnalyzed >= 120) {
-                if (droppedFrames > 15 && currentDPR > 1.0) {
-                    currentDPR = 1.0;
+            // SMART AGGRESSIVE MOBILE DRS CHECK
+            if (framesAnalyzed >= 60) {
+                if (droppedFrames > 8 && currentDPR > 0.5) {
+                    currentDPR = Math.max(0.5, currentDPR - 0.25);
                     resizeCanvas();
                 }
                 framesAnalyzed = 0;
