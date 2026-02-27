@@ -12,15 +12,18 @@
         /* STANDARD UI */
         #ui-layer { position: relative; z-index: 10; height: 100vh; width: 100vw; display: flex; flex-direction: column; justify-content: center; align-items: center; pointer-events: none; transition: opacity 0.6s ease; }
         .brand-text { text-align: center; }
-        h1 { font-weight: 100; letter-spacing: 35px; color: #fff; margin: 0; font-size: 3.2rem; text-transform: uppercase; text-shadow: 0 0 30px rgba(255,255,255,0.2); }
-        .btn-init { margin-top: 80px; pointer-events: auto; cursor: pointer; color: #fff; font-size: 0.7rem; letter-spacing: 15px; text-transform: uppercase; opacity: 0.5; transition: 0.4s; position: relative;}
+        
+        /* Adjusted shadow for perfect daylight readability */
+        h1 { font-weight: 100; letter-spacing: 35px; color: #fff; margin: 0; font-size: 3.2rem; text-transform: uppercase; text-shadow: 0 4px 30px rgba(0,0,0,0.35), 0 0 15px rgba(255,255,255,0.2); }
+        
+        .btn-init { margin-top: 80px; pointer-events: auto; cursor: pointer; color: #fff; font-size: 0.7rem; letter-spacing: 15px; text-transform: uppercase; opacity: 0.5; transition: 0.4s; position: relative; text-shadow: 0 2px 10px rgba(0,0,0,0.4); }
         .btn-init::after { content: ''; position: absolute; bottom: -10px; left: 25%; width: 50%; height: 1px; background: #fff; opacity: 0.2; transition: 0.4s; }
         .btn-init:hover { opacity: 1; letter-spacing: 20px; }
         .btn-init:hover::after { width: 100%; left: 0; opacity: 1; }
         
         #cinematic-layer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; gap: 20px; opacity: 0; transition: opacity 0.6s ease; width: 100%; }
-        .cine-title { font-weight: 100; font-size: 2.2rem; color: #fff; letter-spacing: 15px; text-transform: uppercase; text-shadow: 0 0 25px rgba(255,255,255,0.4); opacity: 0; transform: translateY(20px); transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); text-align: center;}
-        .cine-sub { font-size: 0.65rem; color: #aaa; letter-spacing: 12px; text-transform: uppercase; opacity: 0; transform: translateY(15px); transition: all 0.6s ease; text-align: center;}
+        .cine-title { font-weight: 100; font-size: 2.2rem; color: #fff; letter-spacing: 15px; text-transform: uppercase; text-shadow: 0 4px 25px rgba(0,0,0,0.4), 0 0 20px rgba(255,255,255,0.2); opacity: 0; transform: translateY(20px); transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); text-align: center;}
+        .cine-sub { font-size: 0.65rem; color: #ddd; letter-spacing: 12px; text-transform: uppercase; opacity: 0; transform: translateY(15px); transition: all 0.6s ease; text-align: center; text-shadow: 0 2px 10px rgba(0,0,0,0.5);}
         
         #cinematic-layer.active { opacity: 1; }
         #cinematic-layer.active .cine-title { opacity: 1; transform: translateY(0); letter-spacing: 28px; transition-delay: 0.1s; }
@@ -232,7 +235,9 @@ void main() {
     vec3 nightZenith = vec3(0.000, 0.001, 0.005); 
     vec3 nightHorizon = vec3(0.002, 0.008, 0.025);
     vec3 dayZenith = vec3(0.05, 0.15, 0.4);
-    vec3 dayHorizon = vec3(0.6, 0.8, 0.9);
+    
+    // Tamed daytime horizon to prevent white saturation
+    vec3 dayHorizon = vec3(0.35, 0.65, 0.85); 
     vec3 sunsetHorizon = vec3(1.0, 0.35, 0.1);
     
     vec3 zenith = mix(nightZenith, dayZenith, dayFactor);
@@ -247,10 +252,11 @@ void main() {
     float sunMask = smoothstep(-0.05, 0.02, sunDir.y);
     float moonMask = smoothstep(-0.05, 0.02, moonDir.y);
 
-    float sunShape = pow(max(0.0, dot(rd, sunDir)), 2500.0) * 3.0; 
-    float sunHalo = pow(max(0.0, dot(rd, sunDir)), 90.0) * 0.8;    
-    col += vec3(1.0, 0.6, 0.2) * sunShape * sunMask;               
-    col += vec3(1.0, 0.8, 0.4) * sunHalo * sunMask;                
+    // Tamed Sun bloom to keep UI crisp
+    float sunShape = pow(max(0.0, dot(rd, sunDir)), 2500.0) * 1.8; 
+    float sunHalo = pow(max(0.0, dot(rd, sunDir)), 150.0) * 0.45;    
+    col += vec3(1.0, 0.8, 0.6) * sunShape * sunMask;               
+    col += vec3(1.0, 0.9, 0.7) * sunHalo * sunMask;                
     
     float moonShape = pow(max(0.0, dot(rd, moonDir)), 3000.0) * 8.0;
     float moonHalo = pow(max(0.0, dot(rd, moonDir)), 200.0) * 0.8;
@@ -284,7 +290,7 @@ void main() {
         
         float sunSpec = pow(max(0.0, dot(N_sharp, normalize(-rd + sunDir))), 512.0);
         float sunTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), sunDir.xz)), 40.0);
-        waterCol += vec3(1.0, 0.7, 0.3) * sunSpec * 15.0 * sunTrail * sunMask;
+        waterCol += vec3(1.0, 0.8, 0.5) * sunSpec * 10.0 * sunTrail * sunMask; // Tamed reflection bloom
         
         float moonSpec = pow(max(0.0, dot(N_sharp, normalize(-rd + moonDir))), 300.0);
         float moonTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), moonDir.xz)), 30.0);
@@ -408,34 +414,38 @@ void main() {
         document.addEventListener('mousedown', unlockExperience, {once:true});
         document.addEventListener('touchstart', unlockExperience, {once:true});
 
-        // --- CALIBRATED LANDSCAPE VR MAPPING ---
+        // --- ENHANCED LANDSCAPE-AWARE GYROSCOPE MAPPING ---
         function handleOrientation(event) {
             if (event.beta === null || event.gamma === null) return;
             gyroActive = true;
             
+            // Detection of current screen orientation angle
             let angle = (screen.orientation ? screen.orientation.angle : window.orientation) || 0;
-            let b = event.beta;  
-            let g = event.gamma; 
+            
+            let b = event.beta;  // Front-to-back tilt [-180, 180]
+            let g = event.gamma; // Left-to-right tilt [-90, 90]
             
             let finalX = 0, finalY = 0;
-            const restingPitch = 55.0; // Resting tilt angle
 
-            // COORDINATE REMAPPING
+            // FIX: Dynamic Coordinate Swapping
+            // Resting position is assumed to be phone held at ~50 degrees towards user.
+            const restingAngle = 50.0;
+
             if (angle === 90) { 
-                // Landscape Left: Yaw is Beta, Pitch is Gamma
-                finalX = -(b - restingPitch) / 45.0; 
-                finalY = -g / 35.0; 
+                // Landscape Left (Home button to the right)
+                finalX = (b - restingAngle) / 45.0; 
+                finalY = (-g - 30.0) / 30.0; 
             } else if (angle === -90 || angle === 270) { 
-                // Landscape Right: Yaw is Beta, Pitch is Gamma
-                finalX = (b - restingPitch) / 45.0;
-                finalY = g / 35.0;
+                // Landscape Right (Home button to the left)
+                finalX = -(b - restingAngle) / 45.0;
+                finalY = (g - 30.0) / 30.0;
             } else {
-                // Portrait: Yaw is Gamma, Pitch is Beta
+                // Portrait (0)
                 finalX = g / 30.0;
-                finalY = -(b - restingPitch) / 40.0;
+                finalY = -(b - restingAngle - 10.0) / 40.0;
             }
             
-            // Apply smoothing and normalization
+            // Smooth clamping to prevent sun-teleporting at extreme angles
             targetMX = Math.max(-1.5, Math.min(1.5, finalX));
             targetMY = Math.max(-1.0, Math.min(1.0, finalY));
         }
