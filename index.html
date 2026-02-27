@@ -273,7 +273,8 @@ void main() {
     col += GetStars(rd, nightFactor, false) * smoothstep(-0.1, 0.2, rd.y);
 
     if(rd.y < 0.0) {
-        float d = -(ro.y) / rd.y; 
+        // FIX 1: Prevent math explosion for distances on the exact horizon line
+        float d = -(ro.y) / min(rd.y, -0.002); 
         vec3 p = ro + rd * d;
         
         vec3 N_sharp = GetNormal(p, true);  
@@ -291,12 +292,16 @@ void main() {
         vec3 waterBase = mix(vec3(0.000, 0.001, 0.003), u_waterColor, dayFactor);
         vec3 waterCol = mix(waterBase, reflectedSky * 0.85, 0.15 + 0.85 * fresnel);
         
-        float sunSpec = pow(max(0.0, dot(N_sharp, normalize(-rd + sunDir))), 512.0);
-        float sunTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), sunDir.xz)), 40.0);
-        waterCol += vec3(1.0, 0.8, 0.5) * sunSpec * 10.0 * sunTrail * sunMask; // Tamed reflection bloom
+        // FIX 2: Prevent NaN specular explosion when user forces sun/moon below the ocean surface
+        vec3 waterSunDir = normalize(vec3(sunDir.x, max(sunDir.y, 0.001), sunDir.z));
+        vec3 waterMoonDir = normalize(vec3(moonDir.x, max(moonDir.y, 0.001), moonDir.z));
+
+        float sunSpec = pow(max(0.0, dot(N_sharp, normalize(-rd + waterSunDir))), 512.0);
+        float sunTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), waterSunDir.xz)), 40.0);
+        waterCol += vec3(1.0, 0.8, 0.5) * sunSpec * 10.0 * sunTrail * sunMask; 
         
-        float moonSpec = pow(max(0.0, dot(N_sharp, normalize(-rd + moonDir))), 300.0);
-        float moonTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), moonDir.xz)), 30.0);
+        float moonSpec = pow(max(0.0, dot(N_sharp, normalize(-rd + waterMoonDir))), 300.0);
+        float moonTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), waterMoonDir.xz)), 30.0);
         waterCol += vec3(0.6, 0.8, 1.0) * moonSpec * 10.0 * moonTrail * nightFactor * moonMask;
         
         col = mix(horizon, waterCol, smoothstep(250.0, 5.0, d));
