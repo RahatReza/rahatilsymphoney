@@ -414,38 +414,36 @@ void main() {
         document.addEventListener('mousedown', unlockExperience, {once:true});
         document.addEventListener('touchstart', unlockExperience, {once:true});
 
-        // --- ENHANCED LANDSCAPE-AWARE GYROSCOPE MAPPING ---
+        // --- FLAWLESS DYNAMIC LANDSCAPE GYRO MAPPING ---
         function handleOrientation(event) {
             if (event.beta === null || event.gamma === null) return;
             gyroActive = true;
             
-            // Detection of current screen orientation angle
             let angle = (screen.orientation ? screen.orientation.angle : window.orientation) || 0;
-            
-            let b = event.beta;  // Front-to-back tilt [-180, 180]
-            let g = event.gamma; // Left-to-right tilt [-90, 90]
+            let b = event.beta;  //[-180, 180]
+            let g = event.gamma; //[-90, 90]
             
             let finalX = 0, finalY = 0;
 
-            // FIX: Dynamic Coordinate Swapping
-            // Resting position is assumed to be phone held at ~50 degrees towards user.
-            const restingAngle = 50.0;
-
+            // Smart axis swapping & zero-point re-calculation based on rotation state
             if (angle === 90) { 
-                // Landscape Left (Home button to the right)
-                finalX = (b - restingAngle) / 45.0; 
-                finalY = (-g - 30.0) / 30.0; 
+                // Landscape Left (Home button right)
+                // Resting zero-point: beta ~ 0, gamma ~ -45
+                finalX = b / 30.0; 
+                finalY = (g + 45.0) / 40.0; 
             } else if (angle === -90 || angle === 270) { 
-                // Landscape Right (Home button to the left)
-                finalX = -(b - restingAngle) / 45.0;
-                finalY = (g - 30.0) / 30.0;
+                // Landscape Right (Home button left)
+                // Resting zero-point: beta ~ 0, gamma ~ 45
+                finalX = -b / 30.0;
+                finalY = -(g - 45.0) / 40.0;
             } else {
-                // Portrait (0)
+                // Portrait (0 or 180)
+                // Resting zero-point: beta ~ 50, gamma ~ 0
                 finalX = g / 30.0;
-                finalY = -(b - restingAngle - 10.0) / 40.0;
+                finalY = -(b - 50.0) / 40.0;
             }
             
-            // Smooth clamping to prevent sun-teleporting at extreme angles
+            // Smoothly clamp to prevent clipping or erratic jumping
             targetMX = Math.max(-1.5, Math.min(1.5, finalX));
             targetMY = Math.max(-1.0, Math.min(1.0, finalY));
         }
