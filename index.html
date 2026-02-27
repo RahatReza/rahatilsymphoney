@@ -675,11 +675,16 @@ void main() {
     fragColor = vec4(pow(col, vec3(1.0/2.2)), 1.0);
 }</script>
     <script>
+        // =================================================================
+        // ENGINE CONFIGURATION (BUYER SETTINGS)
+        // =================================================================
+        // Set this to your main website, agency site, or product launch page.
+        const TARGET_REDIRECT_URL = "https://www.linkedin.com/in/rahatreza100/";
+
         const canvas = document.getElementById('v');
         let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.2, redirected = false; 
         let offsetMX = 0, offsetMY = 0; 
         let isTouching = false; 
-        const TARGET = "https://www.linkedin.com/in/rahatreza100/";
 
         let isPaused = false;
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
@@ -715,9 +720,7 @@ void main() {
         let lastTouchTime = 0;
         let targetMX = 0, targetMY = 0.2; 
         
-        let lastBeta = null;
-        let lastGamma = null;
-
+        // --- HIGHLY RESPONSIVE GYROSCOPE MAPPING ---
         function handleOrientation(event) {
             if (event.beta === null || event.gamma === null) return;
             gyroActive = true;
@@ -726,31 +729,27 @@ void main() {
             let b = event.beta;
             let g = event.gamma;
 
-            if (lastBeta !== null && Math.abs(b - lastBeta) > 60) b = lastBeta;
-            if (lastGamma !== null && Math.abs(g - lastGamma) > 60) g = lastGamma;
-
-            lastBeta = b;
-            lastGamma = g;
-
-            b = Math.max(-85, Math.min(85, b));
-            g = Math.max(-85, Math.min(85, g));
+            // Smooth Gimbal Lock Prevention without freezing the screen
+            b = Math.max(-89, Math.min(89, b));
+            g = Math.max(-89, Math.min(89, g));
 
             let finalX = 0, finalY = 0;
-            const TILT_DIVISOR = 60.0;
+            const sensitivityX = 40.0; // Highly responsive VR tracking
+            const sensitivityY = 40.0;
 
             if (angle === 90) {
-                finalX = b / TILT_DIVISOR;
-                finalY = (g + 45.0) / TILT_DIVISOR;
+                finalX = b / sensitivityX;
+                finalY = (g + 45.0) / sensitivityY;
             } else if (angle === -90 || angle === 270) {
-                finalX = -b / TILT_DIVISOR;
-                finalY = -(g - 45.0) / TILT_DIVISOR;
+                finalX = -b / sensitivityX;
+                finalY = -(g - 45.0) / sensitivityY;
             } else {
-                finalX = g / TILT_DIVISOR;
-                finalY = (b - 45.0) / TILT_DIVISOR; 
+                finalX = g / sensitivityX;
+                finalY = (b - 45.0) / sensitivityY; 
             }
 
             targetMX = Math.max(-1.5, Math.min(1.5, finalX));
-            targetMY = Math.max(-0.9, Math.min(0.9, finalY));
+            targetMY = Math.max(-1.0, Math.min(1.0, finalY));
         }
 
         if (window.DeviceOrientationEvent) {
@@ -780,9 +779,17 @@ void main() {
                 audioCtx = new AudioContext();
             }
 
+            // iOS/Safari Force Audio Unlock
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
+            
+            // Generate a 1ms silent buffer to permanently unlock mobile audio hardware
+            const unlockBuffer = audioCtx.createBuffer(1, 1, 22050);
+            const unlockSource = audioCtx.createBufferSource();
+            unlockSource.buffer = unlockBuffer;
+            unlockSource.connect(audioCtx.destination);
+            if(unlockSource.start) unlockSource.start(0);
 
             const bufferSize = audioCtx.sampleRate * 2;
             const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
@@ -808,13 +815,16 @@ void main() {
             waterGain = audioCtx.createGain();
             waterGain.gain.value = 0.0;
 
-            // 3D SPATIAL AUDIO ROUTING
+            // 3D SPATIAL AUDIO ROUTING (Safe Fallback)
             if (audioCtx.createStereoPanner) {
-                waterPanner = audioCtx.createStereoPanner();
-                waterPanner.pan.value = 0;
-                waterSource.connect(waterFilter).connect(waterGain).connect(waterPanner).connect(audioCtx.destination);
+                try {
+                    waterPanner = audioCtx.createStereoPanner();
+                    waterPanner.pan.value = 0;
+                    waterSource.connect(waterFilter).connect(waterGain).connect(waterPanner).connect(audioCtx.destination);
+                } catch(e) {
+                    waterSource.connect(waterFilter).connect(waterGain).connect(audioCtx.destination);
+                }
             } else {
-                // Fallback for extremely old browsers
                 waterSource.connect(waterFilter).connect(waterGain).connect(audioCtx.destination);
             }
 
@@ -1050,7 +1060,7 @@ void main() {
 
                 if (warp >= 1.0 && !redirected) {
                     redirected = true;
-                    window.location.href = TARGET;
+                    window.location.href = TARGET_REDIRECT_URL;
                 }
             } else if (audioInit && audioCtx.state === 'running') {
                 if (waterFilter && waterSource) {
@@ -1063,8 +1073,7 @@ void main() {
                     waterSource.playbackRate.value = Math.max(0.1, targetRate);
 
                     // 3D SPATIAL AUDIO DYNAMIC PANNING
-                    if (waterPanner) {
-                        // Maps the visual horizontal axis directly into left/right ear panning
+                    if (waterPanner && waterPanner.pan) {
                         let panTarget = Math.max(-1.0, Math.min(1.0, mX * 0.8));
                         waterPanner.pan.setTargetAtTime(panTarget, audioCtx.currentTime, 0.2);
                     }
