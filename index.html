@@ -413,40 +413,39 @@ void main() {
             if (event.beta === null || event.gamma === null) return;
             gyroActive = true;
             
-            // Orientation angle: 0 (portrait), 90 (left side down), -90 (right side down), 180 (upside down)
+            // Detection of current screen orientation angle
             let angle = (screen.orientation ? screen.orientation.angle : window.orientation) || 0;
             
-            let b = event.beta;  // Pitch: [-180, 180]
-            let g = event.gamma; // Roll: [-90, 90]
+            let b = event.beta;  // Front-to-back tilt [-180, 180]
+            let g = event.gamma; // Left-to-right tilt [-90, 90]
             
-            let p = 0, r = 0;
+            let finalX = 0, finalY = 0;
 
-            // Resting pitch calculation: we expect the user to hold the phone at ~45-50 degrees.
-            const restingPitch = 50.0;
-            
+            // FIX: Dynamic Coordinate Swapping
+            // Resting position is assumed to be phone held at ~50 degrees towards user.
+            const restingAngle = 50.0;
+
             if (angle === 90) { 
-                // Landscape Left (Home button right)
-                p = -g; 
-                r = b - restingPitch;
+                // Landscape Left (Home button to the right)
+                // Side-to-side rotation is now captured by 'beta'
+                // Tilt-to-face (up/down) is captured by 'gamma'
+                finalX = (b - restingAngle) / 45.0; 
+                finalY = (-g - 30.0) / 30.0; 
             } else if (angle === -90 || angle === 270) { 
-                // Landscape Right (Home button left)
-                p = g;
-                r = -(b - restingPitch);
-            } else if (angle === 180) {
-                // Upside Down
-                p = -(b + restingPitch);
-                r = -g;
+                // Landscape Right (Home button to the left)
+                finalX = -(b - restingAngle) / 45.0;
+                finalY = (g - 30.0) / 30.0;
             } else {
                 // Portrait (0)
-                p = b - restingPitch;
-                r = g;
+                // Side-to-side rotation is 'gamma'
+                // Tilt-to-face is 'beta'
+                finalX = g / 30.0;
+                finalY = -(b - restingAngle - 10.0) / 40.0;
             }
             
-            // Map degrees to normalized -1 to 1 range with sensitivity scaling
-            // Pitch sensitivity (Vertical look): divide by 40deg range
-            // Roll sensitivity (Horizontal look): divide by 45deg range
-            targetMX = Math.max(-1.0, Math.min(1.0, r / 45.0));
-            targetMY = Math.max(-1.0, Math.min(1.0, -p / 40.0));
+            // Smooth clamping to prevent sun-teleporting at extreme angles
+            targetMX = Math.max(-1.5, Math.min(1.5, finalX));
+            targetMY = Math.max(-1.0, Math.min(1.0, finalY));
         }
 
         // TOUCH API (Overrides VR temporarily)
