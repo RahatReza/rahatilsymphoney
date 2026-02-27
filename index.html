@@ -662,35 +662,29 @@ void main() {
             let b = event.beta;
             let g = event.gamma;
 
-            // BUG 3 FIXED: Removed aggressive gimbal damping to restore horizontal sensitivity 
-            // It will now safely clamp at 85 degrees without slowing down the environment panning.
             b = Math.max(-85, Math.min(85, b));
             g = Math.max(-85, Math.min(85, g));
 
             let finalX = 0, finalY = 0;
 
             if (angle === 90) {
-                // Landscape Left
                 finalX = b / 45.0;
                 finalY = (g + 45.0) / 45.0;
             } else if (angle === -90 || angle === 270) {
-                // Landscape Right
                 finalX = -b / 45.0;
                 finalY = -(g - 45.0) / 45.0;
             } else if (angle === 180) {
-                // Portrait Upside Down
                 finalX = -g / 45.0;
                 finalY = -((b + 45.0) / 45.0);
             } else {
-                // Portrait Default
-                // BUG 1 FIXED: Removed the negative sign from pitch calculation so tilting phone up reveals sky
                 finalX = g / 45.0;
                 finalY = (b - 45.0) / 45.0; 
             }
 
-            // EXPANDED LIMITS: Allow sun to reach top of screen and deep into water
-            targetMX = Math.max(-2.5, Math.min(2.5, finalX));
-            targetMY = Math.max(-2.5, Math.min(2.5, finalY));
+            // ANTI-LOST PROTOCOL: Tightly limit how far the raw gyroscope can throw the sun
+            // This ensures that even at extreme phone angles, the sun is never thrown completely off-screen.
+            targetMX = Math.max(-1.2, Math.min(1.2, finalX));
+            targetMY = Math.max(-1.2, Math.min(1.2, finalY));
         }
 
         // --- AUTO INIT GYROSCOPE (NO CLICK REQUIRED FOR ANDROID) ---
@@ -935,15 +929,22 @@ void main() {
                 framesAnalyzed++;
             }
 
-            // SMART GYRO BLEND: Sticky Offset System
+            // SMART GYRO BLEND: Auto-Return Decay System
             let timeSinceTouch = Date.now() - lastTouchTime;
             if (gyroActive) {
                 if (isTouching || timeSinceTouch < 150) {
-                    // While touching OR immediately after release, sync the offset
+                    // While touching OR immediately after release, calculate offset
                     offsetMX = mX - targetMX;
                     offsetMY = mY - targetMY;
                     if (isTouching) lastTouchTime = Date.now();
                 } else {
+                    // ANTI-LOST PROTOCOL: If user hasn't touched the screen in 2 seconds, 
+                    // smoothly decay the offset back to 0 so the sun returns to the physical center.
+                    if (timeSinceTouch > 2000) {
+                        offsetMX *= 0.95; 
+                        offsetMY *= 0.95;
+                    }
+
                     // Apply gyro movement relative to the last manual position
                     let destX = targetMX + offsetMX;
                     let destY = targetMY + offsetMY;
@@ -1007,7 +1008,6 @@ void main() {
             }
         });
 
-        // BUG 2 FIXED: Globally initialized the configKeys array so the script runs properly
         const configKeys =['energy', 'height', 'stars', 'r', 'g', 'b'];
         
         configKeys.forEach(k => {
