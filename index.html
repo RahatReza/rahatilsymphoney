@@ -546,7 +546,6 @@ void main() {
     float sunMask = smoothstep(-0.05, 0.02, sunDir.y);
     float moonMask = smoothstep(-0.05, 0.02, moonDir.y);
 
-    // FIX 2: Replaced extreme GPU-crashing pow() exponents with fast hardware smoothsteps
     float sunDot = max(0.0, dot(rd, sunDir));
     float sunShape = smoothstep(0.998, 0.9995, sunDot) * 1.8; 
     float sunHalo = pow(sunDot, 150.0) * 0.45;    
@@ -587,7 +586,6 @@ void main() {
         vec3 waterSunDir = normalize(vec3(sunDir.x, max(sunDir.y, 0.001), sunDir.z));
         vec3 waterMoonDir = normalize(vec3(moonDir.x, max(moonDir.y, 0.001), moonDir.z));
 
-        // FIX 2 (Continued): Reduced max specular exponents safely below 255 mediump limit
         float sunSpec = pow(max(0.0, dot(N_sharp, normalize(-rd + waterSunDir))), 250.0);
         float sunTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), waterSunDir.xz)), 40.0);
         waterCol += vec3(1.0, 0.8, 0.5) * sunSpec * 10.0 * sunTrail * sunMask; 
@@ -614,10 +612,9 @@ void main() {
 }</script>
     <script>
         const canvas = document.getElementById('v');
-        // FIX 3 Init: Track redirection to stop duplicate fire state
         let gl, prg, isW = false, warp = 0, mX = 0, mY = 0, redirected = false; 
-        let offsetMX = 0, offsetMY = 0; // Sticky touch offsets
-        let isTouching = false; // Tracks active touch state
+        let offsetMX = 0, offsetMY = 0; 
+        let isTouching = false; 
         const TARGET = "https://www.linkedin.com/in/rahatreza100/";
 
         let isPaused = false;
@@ -652,6 +649,10 @@ void main() {
         let gyroActive = false;
         let lastTouchTime = 0;
         let targetMX = 0, targetMY = 0;
+        
+        // FIX 6: Track previous orientation states to defend against Gimbal Lock flips
+        let lastBeta = null;
+        let lastGamma = null;
 
         function handleOrientation(event) {
             if (event.beta === null || event.gamma === null) return;
@@ -660,6 +661,13 @@ void main() {
             let angle = (screen.orientation ? screen.orientation.angle : window.orientation) || 0;
             let b = event.beta;
             let g = event.gamma;
+
+            // FIX 6: Gimbal Lock Defense. Discard physically impossible instantaneous sensor snaps (>60deg).
+            if (lastBeta !== null && Math.abs(b - lastBeta) > 60) b = lastBeta;
+            if (lastGamma !== null && Math.abs(g - lastGamma) > 60) g = lastGamma;
+
+            lastBeta = b;
+            lastGamma = g;
 
             b = Math.max(-85, Math.min(85, b));
             g = Math.max(-85, Math.min(85, g));
@@ -915,14 +923,20 @@ void main() {
             if (elapsed < frameInterval) return;
             lastTime = now - (elapsed % frameInterval);
 
-            if (framesAnalyzed < 60) {
-                if (elapsed > 33) droppedFrames++;
-                if (framesAnalyzed === 59 && droppedFrames > 10 && currentDPR > 1.0) {
+            // FIX 5: Frame-rate independence multiplier calculation. Capped at 50ms to prevent massive teleports if tab is frozen.
+            let dtFactor = Math.min(elapsed, 50) / 16.666;
+
+            // FIX 4: Cyclical Performance Analyzer. Evaluates lag every ~2 seconds (120 frames).
+            if (framesAnalyzed >= 120) {
+                if (droppedFrames > 15 && currentDPR > 1.0) {
                     currentDPR = 1.0;
                     resizeCanvas();
                 }
-                framesAnalyzed++;
+                framesAnalyzed = 0;
+                droppedFrames = 0;
             }
+            if (elapsed > 33) droppedFrames++;
+            framesAnalyzed++;
 
             let timeSinceTouch = Date.now() - lastTouchTime;
             if (gyroActive) {
@@ -932,23 +946,24 @@ void main() {
                     if (isTouching) lastTouchTime = Date.now();
                 } else {
                     if (timeSinceTouch > 2000) {
-                        offsetMX *= 0.95; 
-                        offsetMY *= 0.95;
+                        // FIX 5: Frame-independent decay mapping
+                        let decay = Math.pow(0.95, dtFactor);
+                        offsetMX *= decay; 
+                        offsetMY *= decay;
                     }
                     let destX = targetMX + offsetMX;
                     let destY = targetMY + offsetMY;
                     
-                    mX += (destX - mX) * 0.07;
-                    mY += (destY - mY) * 0.07;
+                    // FIX 5: Frame-independent smooth lerping for consistent feeling across devices
+                    let lerpAmt = 1.0 - Math.pow(0.93, dtFactor);
+                    mX += (destX - mX) * lerpAmt;
+                    mY += (destY - mY) * lerpAmt;
                 }
             }
 
             if (isW) {
-                // Maintained a smooth 2.2-second timeline logic for warp ending 
-                warp = Math.min(1.0, warp + 0.008); 
+                warp = Math.min(1.0, warp + (0.008 * dtFactor)); 
 
-                // FIX 3: Frame-synced redirect logic replaces error-prone setTimeouts.
-                // Ensures redirect ONLY fires when warp transition fully finishes, ignoring background tab halts.
                 if (warp >= 1.0 && !redirected) {
                     redirected = true;
                     window.location.href = TARGET;
@@ -958,7 +973,6 @@ void main() {
                     let waveCycle = Math.sin(now * 0.0003 * engineConfig.energy);
                     let targetWaterFreq = 250 + (waveCycle * 100) + (engineConfig.height * 600);
                     
-                    // FIX 1: Direct Assignment of Audio parameters to prevent Audio Thread / Memory Stack overload
                     waterFilter.frequency.value = Math.max(150, targetWaterFreq);
 
                     let targetRate = 0.4 + (engineConfig.energy * 0.02) + (waveCycle * 0.03);
