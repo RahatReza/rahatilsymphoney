@@ -517,9 +517,10 @@ void main() {
     uv += cameraShake;
 
     float solarEase = u_warp * u_warp * (3.0 - 2.0 * u_warp);
-    float currentSunY = mix(0.15 + u_mouse.y * 1.5, -1.5, solarEase);
     
-    vec3 sunDir = normalize(vec3(u_mouse.x * 1.5, currentSunY, 1.0));
+    // FIX: Dampened the shader multipliers (1.5 -> 1.0) to securely fit the sun in the safe zone
+    float currentSunY = mix(0.15 + u_mouse.y * 1.0, -1.5, solarEase);
+    vec3 sunDir = normalize(vec3(u_mouse.x * 1.0, currentSunY, 1.0));
     vec3 moonDir = normalize(vec3(-u_mouse.x * 1.0, -currentSunY + 0.15, -1.0));
 
     vec3 ro = vec3(0, 1.5, t * (2.0 + u_warp * 35.0));
@@ -666,25 +667,27 @@ void main() {
             g = Math.max(-85, Math.min(85, g));
 
             let finalX = 0, finalY = 0;
+            
+            // FIX: Divisor increased to 90.0 to prevent coordinate overflow and lost suns
+            const TILT_DIVISOR = 90.0;
 
             if (angle === 90) {
-                finalX = b / 45.0;
-                finalY = (g + 45.0) / 45.0;
+                finalX = b / TILT_DIVISOR;
+                finalY = (g + 45.0) / TILT_DIVISOR;
             } else if (angle === -90 || angle === 270) {
-                finalX = -b / 45.0;
-                finalY = -(g - 45.0) / 45.0;
+                finalX = -b / TILT_DIVISOR;
+                finalY = -(g - 45.0) / TILT_DIVISOR;
             } else if (angle === 180) {
-                finalX = -g / 45.0;
-                finalY = -((b + 45.0) / 45.0);
+                finalX = -g / TILT_DIVISOR;
+                finalY = -((b + 45.0) / TILT_DIVISOR);
             } else {
-                finalX = g / 45.0;
-                finalY = (b - 45.0) / 45.0; 
+                finalX = g / TILT_DIVISOR;
+                finalY = (b - 45.0) / TILT_DIVISOR; 
             }
 
-            // ANTI-LOST PROTOCOL: Tightly limit how far the raw gyroscope can throw the sun
-            // This ensures that even at extreme phone angles, the sun is never thrown completely off-screen.
-            targetMX = Math.max(-1.2, Math.min(1.2, finalX));
-            targetMY = Math.max(-1.2, Math.min(1.2, finalY));
+            // ANTI-LOST PROTOCOL: Tightly limit to keep in the safe zone
+            targetMX = Math.max(-1.0, Math.min(1.0, finalX));
+            targetMY = Math.max(-1.0, Math.min(1.0, finalY));
         }
 
         // --- AUTO INIT GYROSCOPE (NO CLICK REQUIRED FOR ANDROID) ---
@@ -758,12 +761,13 @@ void main() {
         document.addEventListener('touchstart', unlockExperience, { once: true });
 
         // TOUCH API (Overrides VR temporarily)
+        // FIX: Applied 0.6 scalar directly to touches for cinematic mapped drag
         window.addEventListener('touchstart', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
             isTouching = true;
             lastTouchTime = Date.now();
-            mX = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
-            mY = (1 - e.touches[0].clientY / window.innerHeight) * 2 - 1;
+            mX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 0.6;
+            mY = ((1 - e.touches[0].clientY / window.innerHeight) * 2 - 1) * 0.6;
         }, { passive: true });
 
         window.addEventListener('touchmove', (e) => {
@@ -771,8 +775,8 @@ void main() {
             isTouching = true;
             lastTouchTime = Date.now();
             if (e.cancelable) e.preventDefault();
-            mX = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
-            mY = (1 - e.touches[0].clientY / window.innerHeight) * 2 - 1;
+            mX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 0.6;
+            mY = ((1 - e.touches[0].clientY / window.innerHeight) * 2 - 1) * 0.6;
         }, { passive: false });
 
         window.addEventListener('touchend', () => { isTouching = false; });
@@ -780,8 +784,8 @@ void main() {
 
         window.onmousemove = (e) => {
             if (isMobile) return;
-            mX = (e.clientX / window.innerWidth) * 2 - 1;
-            mY = (1 - e.clientY / window.innerHeight) * 2 - 1;
+            mX = ((e.clientX / window.innerWidth) * 2 - 1) * 0.6;
+            mY = ((1 - e.clientY / window.innerHeight) * 2 - 1) * 0.6;
             const cur = document.getElementById('cursor');
             if (cur) {
                 cur.style.left = e.clientX + 'px';
@@ -948,8 +952,10 @@ void main() {
                     // Apply gyro movement relative to the last manual position
                     let destX = targetMX + offsetMX;
                     let destY = targetMY + offsetMY;
-                    mX += (destX - mX) * 0.12;
-                    mY += (destY - mY) * 0.12;
+                    
+                    // FIX: Replaced twitchy 0.12 interpolation with smoother 0.07 Low-Pass Filter
+                    mX += (destX - mX) * 0.07;
+                    mY += (destY - mY) * 0.07;
                 }
             }
 
