@@ -472,8 +472,8 @@ float GetWaterHeight(vec3 p, bool micro) {
     if(m_rd.y < -0.05) {
         vec3 ro_m = vec3(0.0, 1.5, u_time * 0.3 * (2.0 + u_warp * 35.0));
         
-        // FIX: Prevent math explosion when sun hits horizon line
-        float safeY = min(m_rd.y, -0.15); 
+        // STABILITY CAP: Prevent math explosion at deep vertical angles
+        float safeY = clamp(m_rd.y, -0.85, -0.15); 
         vec3 m_p = ro_m - m_rd * (1.5 / safeY); 
         
         float dist = length(p.xz - m_p.xz);
@@ -517,7 +517,7 @@ void main() {
     uv += cameraShake;
 
     float solarEase = u_warp * u_warp * (3.0 - 2.0 * u_warp);
-    float currentSunY = mix(0.15 + u_mouse.y * 0.3, -1.5, solarEase);
+    float currentSunY = mix(0.15 + u_mouse.y * 1.5, -1.5, solarEase);
     
     vec3 sunDir = normalize(vec3(u_mouse.x * 1.5, currentSunY, 1.0));
     vec3 moonDir = normalize(vec3(-u_mouse.x * 1.0, -currentSunY + 0.15, -1.0));
@@ -617,6 +617,7 @@ void main() {
         const canvas = document.getElementById('v');
         let gl, prg, isW = false, warp = 0, mX = 0, mY = 0;
         let offsetMX = 0, offsetMY = 0; // Sticky touch offsets
+        let isTouching = false; // Tracks active touch state
         const TARGET = "https://www.linkedin.com/in/rahatreza100/";
 
         let isPaused = false;
@@ -652,7 +653,7 @@ void main() {
         let lastTouchTime = 0;
         let targetMX = 0, targetMY = 0;
 
-        // --- FLAWLESS DYNAMIC LANDSCAPE GYRO MAPPING ---
+        // --- HARDCORE STABILIZED ORIENTATION MAPPING ---
         function handleOrientation(event) {
             if (event.beta === null || event.gamma === null) return;
             gyroActive = true;
@@ -661,36 +662,36 @@ void main() {
             let b = event.beta;
             let g = event.gamma;
 
-            // GIMBAL LOCK GUARD: Prevent violent coordinate flipping on extreme angles
-            // When looking straight down (b -> 90), gamma becomes unstable. 
-            // We damp the X movement influence as we approach vertical angles.
-            let stabilityFactor = Math.cos(Math.min(Math.abs(b), 90) * Math.PI / 180);
+            // CORRECT GIMBAL LOCK DAMPING: 
+            // Damp side-to-side (gamma) when phone is flat (beta 0 or 180).
+            // Full precision when vertical (beta 90).
+            let stabilityFactor = Math.pow(Math.sin(b * Math.PI / 180), 2);
             b = Math.max(-85, Math.min(85, b));
-            g = Math.max(-85, Math.min(85, g)) * (0.2 + 0.8 * stabilityFactor);
+            g = Math.max(-85, Math.min(85, g)) * (0.1 + 0.9 * stabilityFactor);
 
             let finalX = 0, finalY = 0;
 
             if (angle === 90) {
                 // Landscape Left
-                finalX = b / 30.0;
-                finalY = (g + 45.0) / 40.0;
+                finalX = b / 45.0;
+                finalY = (g + 45.0) / 45.0;
             } else if (angle === -90 || angle === 270) {
                 // Landscape Right
-                finalX = -b / 30.0;
-                finalY = -(g - 45.0) / 40.0;
+                finalX = -b / 45.0;
+                finalY = -(g - 45.0) / 45.0;
             } else if (angle === 180) {
                 // Portrait Upside Down
-                finalX = -g / 30.0;
-                finalY = -((b + 50.0) / 40.0);
+                finalX = -g / 45.0;
+                finalY = -((b + 45.0) / 45.0);
             } else {
                 // Portrait Default
-                finalX = g / 30.0;
-                finalY = -(b - 50.0) / 40.0;
+                finalX = g / 45.0;
+                finalY = -(b - 45.0) / 45.0;
             }
 
-            // Limit how far down the sun can physically go to prevent math errors
-            targetMX = Math.max(-1.5, Math.min(1.5, finalX));
-            targetMY = Math.max(-0.8, Math.min(1.0, finalY));
+            // EXPANDED LIMITS: Allow sun to reach top of screen and deep into water
+            targetMX = Math.max(-2.5, Math.min(2.5, finalX));
+            targetMY = Math.max(-2.5, Math.min(2.5, finalY));
         }
 
         // --- AUTO INIT GYROSCOPE (NO CLICK REQUIRED FOR ANDROID) ---
@@ -766,6 +767,7 @@ void main() {
         // TOUCH API (Overrides VR temporarily)
         window.addEventListener('touchstart', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
+            isTouching = true;
             lastTouchTime = Date.now();
             mX = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
             mY = (1 - e.touches[0].clientY / window.innerHeight) * 2 - 1;
@@ -773,11 +775,15 @@ void main() {
 
         window.addEventListener('touchmove', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
+            isTouching = true;
             lastTouchTime = Date.now();
             if (e.cancelable) e.preventDefault();
             mX = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
             mY = (1 - e.touches[0].clientY / window.innerHeight) * 2 - 1;
         }, { passive: false });
+
+        window.addEventListener('touchend', () => { isTouching = false; });
+        window.addEventListener('touchcancel', () => { isTouching = false; });
 
         window.onmousemove = (e) => {
             if (isMobile) return;
@@ -933,16 +939,17 @@ void main() {
             // SMART GYRO BLEND: Sticky Offset System
             let timeSinceTouch = Date.now() - lastTouchTime;
             if (gyroActive) {
-                if (timeSinceTouch < 100) {
-                    // While touching, continuously sync the offset so it feels "sticky" on release
+                if (isTouching || timeSinceTouch < 150) {
+                    // While touching OR immediately after release, sync the offset
                     offsetMX = mX - targetMX;
                     offsetMY = mY - targetMY;
+                    if (isTouching) lastTouchTime = Date.now();
                 } else {
-                    // Apply gyro movement relative to where the user last placed the sun
+                    // Apply gyro movement relative to the last manual position
                     let destX = targetMX + offsetMX;
                     let destY = targetMY + offsetMY;
-                    mX += (destX - mX) * 0.08;
-                    mY += (destY - mY) * 0.08;
+                    mX += (destX - mX) * 0.12;
+                    mY += (destY - mY) * 0.12;
                 }
             }
 
