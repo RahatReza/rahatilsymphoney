@@ -638,7 +638,7 @@ void main() {
         } catch (e) { console.error(e); }
 
         function syncUIWithConfig() {
-            let configKeysUI = ['energy', 'height', 'stars', 'r', 'g', 'b'];
+            let configKeysUI =['energy', 'height', 'stars', 'r', 'g', 'b'];
             configKeysUI.forEach(k => {
                 document.getElementById(`inp-${k}`).value = engineConfig[k];
                 document.getElementById(`val-${k}`).innerText = parseFloat(engineConfig[k]).toFixed(k === 'stars' ? 0 : 2);
@@ -662,12 +662,10 @@ void main() {
             let b = event.beta;
             let g = event.gamma;
 
-            // CORRECT GIMBAL LOCK DAMPING: 
-            // Damp side-to-side (gamma) when phone is flat (beta 0 or 180).
-            // Full precision when vertical (beta 90).
-            let stabilityFactor = Math.pow(Math.sin(b * Math.PI / 180), 2);
+            // BUG 3 FIXED: Removed aggressive gimbal damping to restore horizontal sensitivity 
+            // It will now safely clamp at 85 degrees without slowing down the environment panning.
             b = Math.max(-85, Math.min(85, b));
-            g = Math.max(-85, Math.min(85, g)) * (0.1 + 0.9 * stabilityFactor);
+            g = Math.max(-85, Math.min(85, g));
 
             let finalX = 0, finalY = 0;
 
@@ -685,8 +683,9 @@ void main() {
                 finalY = -((b + 45.0) / 45.0);
             } else {
                 // Portrait Default
+                // BUG 1 FIXED: Removed the negative sign from pitch calculation so tilting phone up reveals sky
                 finalX = g / 45.0;
-                finalY = -(b - 45.0) / 45.0;
+                finalY = (b - 45.0) / 45.0; 
             }
 
             // EXPANDED LIMITS: Allow sun to reach top of screen and deep into water
@@ -1008,6 +1007,9 @@ void main() {
             }
         });
 
+        // BUG 2 FIXED: Globally initialized the configKeys array so the script runs properly
+        const configKeys =['energy', 'height', 'stars', 'r', 'g', 'b'];
+        
         configKeys.forEach(k => {
             document.getElementById(`inp-${k}`).addEventListener('input', (e) => {
                 lastTouchTime = Date.now(); // Prevents gyro fighting while sliding
