@@ -482,15 +482,12 @@ float GetWaterHeight(vec3 p, bool micro) {
     return h - (u_waveHeight * 0.5); 
 }
 
-// FIX 1: RESTORE TIDAL WAVE VISIBILITY
-// By tightening the normal calculation, the shadows and highlights of the waves
-// become perfectly pronounced again, stopping the water from looking like a flat mirror.
 vec3 GetNormal(vec3 p, bool micro) {
     vec2 e = vec2(0.02, 0.0); 
     float h = GetWaterHeight(p, micro);
     return normalize(vec3(
         h - GetWaterHeight(p - e.xyy, micro), 
-        0.05, // Restored steep mathematical depth
+        0.05, 
         h - GetWaterHeight(p - e.yxy, micro)
     ));
 }
@@ -512,6 +509,36 @@ float GetStars(vec3 rd, float nightFactor, bool isRef) {
     return stars * twinkle * nightFactor * (isRef ? 0.3 : 1.2) * warpFade;
 }
 
+// --- NEW CLOUD ENGINE (fBm Volumetrics) ---
+float getClouds(vec3 rd, float t) {
+    if(rd.y < 0.0) return 0.0;
+    vec2 uv = rd.xz / (rd.y + 0.001) * 0.4;
+    uv.x -= t * 0.05; // clouds drift slowly sideways
+    
+    float f = noise(uv);
+    uv = mat2(1.6, 1.2, -1.2, 1.6) * uv;
+    f += 0.5 * noise(uv + t * 0.03);
+    uv = mat2(1.6, 1.2, -1.2, 1.6) * uv;
+    f += 0.25 * noise(uv - t * 0.02);
+    
+    f = smoothstep(0.9, 1.7, f);
+    return f * smoothstep(0.0, 0.15, rd.y); // Fade out softly at the horizon
+}
+
+// Dynamically calculates cloud illumination based on sun phase
+vec3 getCloudColor(vec3 rd, vec3 sunDir) {
+    vec3 cloudDay = vec3(0.95, 0.98, 1.0);
+    vec3 cloudSunset = vec3(1.0, 0.4, 0.15);
+    vec3 cloudNight = vec3(0.01, 0.015, 0.03); 
+    
+    float cloudDayFact = smoothstep(-0.1, 0.15, sunDir.y); // Extends daylight slightly longer for clouds
+    vec3 cColor = mix(cloudNight, mix(cloudSunset, cloudDay, smoothstep(-0.05, 0.25, sunDir.y)), cloudDayFact);
+    
+    float sDot = max(0.0, dot(rd, sunDir));
+    cColor += vec3(1.0, 0.6, 0.2) * pow(sDot, 5.0) * smoothstep(-0.1, 0.3, sunDir.y) * 0.5; // Sun bloom inside clouds
+    return cColor;
+}
+
 void main() {
     vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
     float t = u_time * 0.3;
@@ -522,7 +549,9 @@ void main() {
     uv += cameraShake;
 
     float solarEase = u_warp * u_warp * (3.0 - 2.0 * u_warp);
-    float currentSunY = mix(0.15 + u_mouse.y * 1.0, -1.5, solarEase);
+    
+    // FIX 3: Shifted mapping math so `u_mouse.y = 0` creates Daytime by default instead of Sunset.
+    float currentSunY = mix(0.5 + u_mouse.y * 1.2, -1.5, solarEase);
     vec3 sunDir = normalize(vec3(u_mouse.x * 1.5, currentSunY, 1.0));
     vec3 moonDir = normalize(vec3(-u_mouse.x * 1.5, -currentSunY + 0.15, -1.0));
 
@@ -551,7 +580,20 @@ void main() {
     float sunMask = smoothstep(-0.05, 0.02, sunDir.y);
     float moonMask = smoothstep(-0.05, 0.02, moonDir.y);
 
-    // --- CINEMATIC VOLUMETRIC SUN SYSTEM ---
+    vec2 nebUV = rd.xz / (abs(rd.y) + 0.001);
+    float neb = noise(nebUV * 2.0 + u_time * 0.01) * noise(nebUV * 4.0 - u_time * 0.01);
+    vec3 milkyWay = vec3(0.08, 0.03, 0.12) * neb * nightFactor * smoothstep(0.0, 0.3, rd.y) * 0.6;
+    col += milkyWay * (1.0 - smoothstep(0.2, 0.8, u_warp));
+    
+    col += GetStars(rd, nightFactor, false) * smoothstep(-0.1, 0.2, rd.y);
+
+    // --- RENDER CLOUDS IN SKY ---
+    float cloudAlpha = getClouds(rd, u_time);
+    if(cloudAlpha > 0.0) {
+        col = mix(col, getCloudColor(rd, sunDir), cloudAlpha * 0.65);
+    }
+
+    // --- CINEMATIC VOLUMETRIC SUN SYSTEM (Drawn over clouds so it burns through) ---
     float sunDot = max(0.0, dot(rd, sunDir));
     float sunAlt = max(0.0, sunDir.y);
     
@@ -575,13 +617,6 @@ void main() {
     float moonGlow = pow(moonDot, 120.0) * 0.8 + pow(moonDot, 30.0) * 0.3;
     col += vec3(0.8, 0.9, 1.0) * (moonCore + moonGlow) * nightFactor * moonMask;
 
-    vec2 nebUV = rd.xz / (abs(rd.y) + 0.001);
-    float neb = noise(nebUV * 2.0 + u_time * 0.01) * noise(nebUV * 4.0 - u_time * 0.01);
-    vec3 milkyWay = vec3(0.08, 0.03, 0.12) * neb * nightFactor * smoothstep(0.0, 0.3, rd.y) * 0.6;
-    col += milkyWay * (1.0 - smoothstep(0.2, 0.8, u_warp));
-    
-    col += GetStars(rd, nightFactor, false) * smoothstep(-0.1, 0.2, rd.y);
-
     if(rd.y < 0.0) {
         float d = -(ro.y) / min(rd.y, -0.002); 
         vec3 p = ro + rd * d;
@@ -596,14 +631,17 @@ void main() {
         reflectedSky += vec3(0.04, 0.015, 0.06) * noise(refR_Planar.xz * 2.0) * noise(refR_Planar.xz * 4.0) * nightFactor * smoothstep(0.0, 0.3, refR_Planar.y);
         reflectedSky += GetStars(refR_Planar, nightFactor, true);
 
+        // Reflect clouds in water
+        float refCloudAlpha = getClouds(refR_Planar, u_time);
+        if(refCloudAlpha > 0.0) {
+            reflectedSky = mix(reflectedSky, getCloudColor(refR_Planar, sunDir), refCloudAlpha * 0.55);
+        }
+
         float fresnel = pow(1.0 - max(0.0, dot(-rd, N_sharp)), 5.0);
         
         vec3 waterBase = mix(vec3(0.000, 0.001, 0.003), u_waterColor, dayFactor);
         vec3 waterCol = mix(waterBase, reflectedSky * 0.85, 0.15 + 0.85 * fresnel);
         
-        // FIX 2: REMOVE ARTIFICIAL SUN CLAMP
-        // We now use direct sunDir without clamping Y to 0.001. 
-        // This prevents the blinding infinite streak glitch when the sun sets below the horizon!
         float specDot = max(0.0, dot(N_sharp, normalize(-rd + sunDir)));
         float smoothSpecDot = max(0.0, dot(N_smooth, normalize(-rd + sunDir)));
         
@@ -637,7 +675,7 @@ void main() {
 }</script>
     <script>
         const canvas = document.getElementById('v');
-        let gl, prg, isW = false, warp = 0, mX = 0, mY = 0, redirected = false; 
+        let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.2, redirected = false; // mY initialized higher for day default
         let offsetMX = 0, offsetMY = 0; 
         let isTouching = false; 
         const TARGET = "https://www.linkedin.com/in/rahatreza100/";
@@ -673,7 +711,7 @@ void main() {
         let audioInit = false;
         let gyroActive = false;
         let lastTouchTime = 0;
-        let targetMX = 0, targetMY = 0;
+        let targetMX = 0, targetMY = 0.2; // target initialized to day
         
         let lastBeta = null;
         let lastGamma = null;
