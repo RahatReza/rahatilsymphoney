@@ -675,17 +675,22 @@ void main() {
     fragColor = vec4(pow(col, vec3(1.0/2.2)), 1.0);
 }</script>
     <script>
+        // =================================================================
+        // ENGINE CONFIGURATION (BUYER SETTINGS)
+        // =================================================================
+        // Set this to your main website, agency site, or product launch page.
+        const TARGET_REDIRECT_URL = "https://www.linkedin.com/in/rahatreza100/";
+
         const canvas = document.getElementById('v');
         let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.2, redirected = false; 
         let offsetMX = 0, offsetMY = 0; 
         let isTouching = false; 
-        const TARGET = "https://www.linkedin.com/in/rahatreza100/";
 
         let isPaused = false;
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
 
-        // SMART DYNAMIC RESOLUTION SCALING
-        let baseDPR = isMobile ? Math.min(window.devicePixelRatio, 1.0) : Math.min(window.devicePixelRatio, 2.0);
+        // RESOLUTION SCALING: Floor set to 1.0 to prevent mobile blurring
+        let baseDPR = Math.min(window.devicePixelRatio, 2.0);
         let currentDPR = baseDPR;
 
         if (isMobile) document.getElementById('cursor').style.display = 'none';
@@ -709,15 +714,13 @@ void main() {
         syncUIWithConfig();
 
         let audioCtx;
-        let waterSource, waterFilter, waterGain;
+        let waterSource, waterFilter, waterGain, waterPanner; 
         let audioInit = false;
         let gyroActive = false;
         let lastTouchTime = 0;
         let targetMX = 0, targetMY = 0.2; 
         
-        let lastBeta = null;
-        let lastGamma = null;
-
+        // --- HIGHLY RESPONSIVE GYROSCOPE MAPPING ---
         function handleOrientation(event) {
             if (event.beta === null || event.gamma === null) return;
             gyroActive = true;
@@ -726,31 +729,23 @@ void main() {
             let b = event.beta;
             let g = event.gamma;
 
-            if (lastBeta !== null && Math.abs(b - lastBeta) > 60) b = lastBeta;
-            if (lastGamma !== null && Math.abs(g - lastGamma) > 60) g = lastGamma;
-
-            lastBeta = b;
-            lastGamma = g;
-
-            b = Math.max(-85, Math.min(85, b));
-            g = Math.max(-85, Math.min(85, g));
-
             let finalX = 0, finalY = 0;
-            const TILT_DIVISOR = 60.0;
+            const sensitivityX = 35.0; // Highly responsive VR tracking
+            const sensitivityY = 35.0;
 
             if (angle === 90) {
-                finalX = b / TILT_DIVISOR;
-                finalY = (g + 45.0) / TILT_DIVISOR;
+                finalX = b / sensitivityX;
+                finalY = (g + 45.0) / sensitivityY;
             } else if (angle === -90 || angle === 270) {
-                finalX = -b / TILT_DIVISOR;
-                finalY = -(g - 45.0) / TILT_DIVISOR;
+                finalX = -b / sensitivityX;
+                finalY = -(g - 45.0) / sensitivityY;
             } else {
-                finalX = g / TILT_DIVISOR;
-                finalY = (b - 45.0) / TILT_DIVISOR; 
+                finalX = g / sensitivityX;
+                finalY = (b - 45.0) / sensitivityY; 
             }
 
             targetMX = Math.max(-1.5, Math.min(1.5, finalX));
-            targetMY = Math.max(-0.9, Math.min(0.9, finalY));
+            targetMY = Math.max(-1.0, Math.min(1.0, finalY));
         }
 
         if (window.DeviceOrientationEvent) {
@@ -761,28 +756,32 @@ void main() {
             window.addEventListener('deviceorientation', handleOrientation);
         }
 
-        function initExperience() {
+        // --- BULLETPROOF AUDIO UNLOCK (Hacks iOS/Android Sandbox) ---
+        function unlockAudio() {
             if (audioInit) return;
-            audioInit = true;
-
-            if (isMobile && typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission()
-                    .then(permissionState => {
-                        if (permissionState === 'granted') {
-                            window.addEventListener('deviceorientation', handleOrientation);
-                        }
-                    })
-                    .catch(console.error);
-            }
-
-            if (!audioCtx) {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                audioCtx = new AudioContext();
-            }
+            
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+            
+            // Fire an empty sound immediately to forcefully unlock the phone's audio chip
+            const unlockSource = audioCtx.createBufferSource();
+            unlockSource.buffer = audioCtx.createBuffer(1, 1, 22050);
+            unlockSource.connect(audioCtx.destination);
+            if(unlockSource.start) unlockSource.start(0);
 
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
+
+            initExperience();
+        }
+
+        // Must attach to passive touch/click events to legally unlock audio on mobile
+        document.addEventListener('touchstart', unlockAudio, { once: true, passive: true });
+        document.addEventListener('mousedown', unlockAudio, { once: true });
+
+        function initExperience() {
+            audioInit = true;
 
             const bufferSize = audioCtx.sampleRate * 2;
             const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
@@ -808,18 +807,102 @@ void main() {
             waterGain = audioCtx.createGain();
             waterGain.gain.value = 0.0;
 
-            waterSource.connect(waterFilter).connect(waterGain).connect(audioCtx.destination);
+            // 3D SPATIAL AUDIO ROUTING (Safe Fallback)
+            if (audioCtx.createStereoPanner) {
+                try {
+                    waterPanner = audioCtx.createStereoPanner();
+                    waterPanner.pan.value = 0;
+                    waterSource.connect(waterFilter).connect(waterGain).connect(waterPanner).connect(audioCtx.destination);
+                } catch(e) {
+                    waterSource.connect(waterFilter).connect(waterGain).connect(audioCtx.destination);
+                }
+            } else {
+                waterSource.connect(waterFilter).connect(waterGain).connect(audioCtx.destination);
+            }
+
             waterSource.start(0);
 
             if (!isW) {
-                waterGain.gain.setValueAtTime(0.0, audioCtx.currentTime);
-                waterGain.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 1.5);
+                // Boosted volume for mobile speakers, ramps up smoothly when screen is touched
+                waterGain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+                waterGain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 1.5);
             }
         }
 
-        const unlockExperience = () => { initExperience(); };
-        document.addEventListener('mousedown', unlockExperience, { once: true });
-        document.addEventListener('touchstart', unlockExperience, { once: true });
+        function engage() {
+            if (isW || !gl || document.getElementById('custom-panel').style.display === 'flex') return;
+            
+            if (!audioInit) unlockAudio();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            isW = true;
+            document.getElementById('ui-layer').style.opacity = '0';
+            if (!isMobile) {
+                document.getElementById('cursor').style.transform = 'translate(-50%, -50%) scale(2.0)';
+                document.getElementById('cursor').style.opacity = '0.3';
+            }
+            document.getElementById('cinematic-layer').classList.add('active');
+
+            if (isMobile) {
+                if ('vibrate' in navigator && typeof navigator.vibrate === 'function') {
+                    navigator.vibrate([30, 200, 50, 150, 80, 100, 120, 50, 200, 50, 1000]);
+                } else if (audioCtx && audioCtx.state === 'running') {
+                    let rumble = audioCtx.createOscillator();
+                    let rumbleGain = audioCtx.createGain();
+                    
+                    rumble.type = 'sine'; 
+                    rumble.frequency.setValueAtTime(45, audioCtx.currentTime); 
+                    rumble.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 1.2); 
+                    
+                    rumbleGain.gain.setValueAtTime(1.5, audioCtx.currentTime);
+                    rumbleGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+                    
+                    rumble.connect(rumbleGain).connect(audioCtx.destination);
+                    rumble.start();
+                    rumble.stop(audioCtx.currentTime + 1.2);
+                }
+            }
+            
+            if (waterGain) {
+                waterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+                waterGain.gain.setValueAtTime(waterGain.gain.value, audioCtx.currentTime);
+                waterGain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 1.5); // Fades out water when initializing
+            }
+
+            if (audioCtx) {
+                const playBell = (freq, delay) => {
+                    let osc1 = audioCtx.createOscillator();
+                    let osc2 = audioCtx.createOscillator();
+                    let noteGain = audioCtx.createGain();
+
+                    osc1.type = 'sine';
+                    osc2.type = 'triangle';
+                    osc1.frequency.value = freq;
+                    osc2.frequency.value = freq * 1.005;
+
+                    let t = audioCtx.currentTime + delay;
+
+                    noteGain.gain.setValueAtTime(0, t);
+                    noteGain.gain.linearRampToValueAtTime(0.15, t + 0.05);
+                    noteGain.gain.exponentialRampToValueAtTime(0.001, t + 2.5);
+
+                    osc1.connect(noteGain).connect(audioCtx.destination);
+                    osc2.connect(noteGain).connect(audioCtx.destination);
+
+                    osc1.start(t); osc1.stop(t + 2.5);
+                    osc2.start(t); osc2.stop(t + 2.5);
+                };
+
+                playBell(261.63, 0.0);
+                playBell(392.00, 0.2);
+                playBell(493.88, 0.4);
+                playBell(587.33, 0.6);
+                playBell(659.25, 0.8);
+                playBell(1046.50, 1.2);
+            }
+        }
 
         window.addEventListener('touchstart', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
@@ -918,81 +1001,6 @@ void main() {
         canvas.addEventListener("webglcontextlost", (e) => { e.preventDefault(); isPaused = true; }, false);
         canvas.addEventListener("webglcontextrestored", () => { initGL(); isPaused = false; }, false);
 
-        function engage() {
-            if (isW || !gl || document.getElementById('custom-panel').style.display === 'flex') return;
-            
-            if (!audioInit) initExperience();
-            if (audioCtx && audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-
-            isW = true;
-            document.getElementById('ui-layer').style.opacity = '0';
-            if (!isMobile) {
-                document.getElementById('cursor').style.transform = 'translate(-50%, -50%) scale(2.0)';
-                document.getElementById('cursor').style.opacity = '0.3';
-            }
-            document.getElementById('cinematic-layer').classList.add('active');
-
-            if (isMobile) {
-                if ('vibrate' in navigator && typeof navigator.vibrate === 'function') {
-                    navigator.vibrate([30, 200, 50, 150, 80, 100, 120, 50, 200, 50, 1000]);
-                } else if (audioCtx && audioCtx.state === 'running') {
-                    let rumble = audioCtx.createOscillator();
-                    let rumbleGain = audioCtx.createGain();
-                    
-                    rumble.type = 'sine'; 
-                    rumble.frequency.setValueAtTime(45, audioCtx.currentTime); 
-                    rumble.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 1.2); 
-                    
-                    rumbleGain.gain.setValueAtTime(1.5, audioCtx.currentTime);
-                    rumbleGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
-                    
-                    rumble.connect(rumbleGain).connect(audioCtx.destination);
-                    rumble.start();
-                    rumble.stop(audioCtx.currentTime + 1.2);
-                }
-            }
-            
-            if (waterGain) {
-                waterGain.gain.cancelScheduledValues(audioCtx.currentTime);
-                waterGain.gain.setValueAtTime(waterGain.gain.value, audioCtx.currentTime);
-                waterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5);
-            }
-
-            if (audioCtx) {
-                const playBell = (freq, delay) => {
-                    let osc1 = audioCtx.createOscillator();
-                    let osc2 = audioCtx.createOscillator();
-                    let noteGain = audioCtx.createGain();
-
-                    osc1.type = 'sine';
-                    osc2.type = 'triangle';
-                    osc1.frequency.value = freq;
-                    osc2.frequency.value = freq * 1.005;
-
-                    let t = audioCtx.currentTime + delay;
-
-                    noteGain.gain.setValueAtTime(0, t);
-                    noteGain.gain.linearRampToValueAtTime(0.15, t + 0.05);
-                    noteGain.gain.exponentialRampToValueAtTime(0.001, t + 2.5);
-
-                    osc1.connect(noteGain).connect(audioCtx.destination);
-                    osc2.connect(noteGain).connect(audioCtx.destination);
-
-                    osc1.start(t); osc1.stop(t + 2.5);
-                    osc2.start(t); osc2.stop(t + 2.5);
-                };
-
-                playBell(261.63, 0.0);
-                playBell(392.00, 0.2);
-                playBell(493.88, 0.4);
-                playBell(587.33, 0.6);
-                playBell(659.25, 0.8);
-                playBell(1046.50, 1.2);
-            }
-        }
-
         function render(now) {
             requestAnimationFrame(render);
             if (isPaused || !gl) return;
@@ -1003,10 +1011,10 @@ void main() {
 
             let dtFactor = Math.min(elapsed, 50) / 16.666;
 
-            // SMART AGGRESSIVE MOBILE DRS CHECK
+            // SMART AGGRESSIVE MOBILE DRS CHECK (Floor fixed to 1.0 to prevent blur)
             if (framesAnalyzed >= 60) {
-                if (droppedFrames > 8 && currentDPR > 0.5) {
-                    currentDPR = Math.max(0.5, currentDPR - 0.25);
+                if (droppedFrames > 10 && currentDPR > 1.0) {
+                    currentDPR = 1.0; 
                     resizeCanvas();
                 }
                 framesAnalyzed = 0;
@@ -1041,7 +1049,7 @@ void main() {
 
                 if (warp >= 1.0 && !redirected) {
                     redirected = true;
-                    window.location.href = TARGET;
+                    window.location.href = TARGET_REDIRECT_URL;
                 }
             } else if (audioInit && audioCtx.state === 'running') {
                 if (waterFilter && waterSource) {
@@ -1052,6 +1060,12 @@ void main() {
 
                     let targetRate = 0.4 + (engineConfig.energy * 0.02) + (waveCycle * 0.03);
                     waterSource.playbackRate.value = Math.max(0.1, targetRate);
+
+                    // 3D SPATIAL AUDIO DYNAMIC PANNING
+                    if (waterPanner && waterPanner.pan) {
+                        let panTarget = Math.max(-1.0, Math.min(1.0, mX * 0.8));
+                        waterPanner.pan.setTargetAtTime(panTarget, audioCtx.currentTime, 0.2);
+                    }
                 }
             }
 
