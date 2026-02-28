@@ -685,7 +685,7 @@ void main() {
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
 
         // SMART DYNAMIC RESOLUTION SCALING
-        let baseDPR = isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2.0);
+        let baseDPR = isMobile ? Math.min(window.devicePixelRatio, 1.25) : Math.min(window.devicePixelRatio, 2.0);
         let currentDPR = baseDPR;
         let totalFrames = 0;
 
@@ -1007,9 +1007,9 @@ void main() {
 
             // SMART AGGRESSIVE MOBILE DRS CHECK
             totalFrames++;
-            if (totalFrames > 120) {
+            if (totalFrames > 60) {
                 if (framesAnalyzed >= 60) {
-                    if (droppedFrames > 15 && currentDPR > 0.75) {
+                    if (droppedFrames > 10 && currentDPR > 0.75) {
                         currentDPR = Math.max(0.75, currentDPR - 0.25);
                         resizeCanvas();
                     }
@@ -1017,6 +1017,13 @@ void main() {
                     droppedFrames = 0;
                 }
                 if (elapsed > 33) droppedFrames++;
+
+                // PANIC-DROP: If a single frame takes > 100ms, immediately scale down
+                if (elapsed > 100 && currentDPR > 0.75) {
+                    currentDPR = Math.max(0.75, currentDPR - 0.25);
+                    resizeCanvas();
+                    droppedFrames = 0; // Reset analysis window after panic
+                }
                 framesAnalyzed++;
             }
 
