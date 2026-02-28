@@ -676,21 +676,22 @@ void main() {
 }</script>
     <script>
         const canvas = document.getElementById('v');
-        let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.2, redirected = false; 
-        let offsetMX = 0, offsetMY = 0; 
-        let isTouching = false; 
+        let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.2, redirected = false;
+        let offsetMX = 0, offsetMY = 0;
+        let isTouching = false;
         const TARGET = "https://www.linkedin.com/in/rahatreza100/";
 
         let isPaused = false;
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
 
         // SMART DYNAMIC RESOLUTION SCALING
-        let baseDPR = isMobile ? Math.min(window.devicePixelRatio, 1.0) : Math.min(window.devicePixelRatio, 2.0);
+        let baseDPR = isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2.0);
         let currentDPR = baseDPR;
+        let totalFrames = 0;
 
         if (isMobile) document.getElementById('cursor').style.display = 'none';
 
-        const configKeys =['energy', 'height', 'stars', 'r', 'g', 'b'];
+        const configKeys = ['energy', 'height', 'stars', 'r', 'g', 'b'];
         let uLocs = {};
         const defaultConfig = { energy: 2.2, height: 0.05, stars: 600.0, r: 0.01, g: 0.04, b: 0.08 };
         let engineConfig = { ...defaultConfig };
@@ -713,8 +714,8 @@ void main() {
         let audioInit = false;
         let gyroActive = false;
         let lastTouchTime = 0;
-        let targetMX = 0, targetMY = 0.2; 
-        
+        let targetMX = 0, targetMY = 0.2;
+
         let lastBeta = null;
         let lastGamma = null;
 
@@ -746,7 +747,7 @@ void main() {
                 finalY = -(g - 45.0) / TILT_DIVISOR;
             } else {
                 finalX = g / TILT_DIVISOR;
-                finalY = (b - 45.0) / TILT_DIVISOR; 
+                finalY = (b - 45.0) / TILT_DIVISOR;
             }
 
             targetMX = Math.max(-1.5, Math.min(1.5, finalX));
@@ -823,7 +824,7 @@ void main() {
 
         window.addEventListener('touchstart', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
-            if (e.cancelable) e.preventDefault(); 
+            if (e.cancelable) e.preventDefault();
             isTouching = true;
             lastTouchTime = Date.now();
             mX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 1.5;
@@ -920,7 +921,7 @@ void main() {
 
         function engage() {
             if (isW || !gl || document.getElementById('custom-panel').style.display === 'flex') return;
-            
+
             if (!audioInit) initExperience();
             if (audioCtx && audioCtx.state === 'suspended') {
                 audioCtx.resume();
@@ -940,20 +941,20 @@ void main() {
                 } else if (audioCtx && audioCtx.state === 'running') {
                     let rumble = audioCtx.createOscillator();
                     let rumbleGain = audioCtx.createGain();
-                    
-                    rumble.type = 'sine'; 
-                    rumble.frequency.setValueAtTime(45, audioCtx.currentTime); 
-                    rumble.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 1.2); 
-                    
+
+                    rumble.type = 'sine';
+                    rumble.frequency.setValueAtTime(45, audioCtx.currentTime);
+                    rumble.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 1.2);
+
                     rumbleGain.gain.setValueAtTime(1.5, audioCtx.currentTime);
                     rumbleGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
-                    
+
                     rumble.connect(rumbleGain).connect(audioCtx.destination);
                     rumble.start();
                     rumble.stop(audioCtx.currentTime + 1.2);
                 }
             }
-            
+
             if (waterGain) {
                 waterGain.gain.cancelScheduledValues(audioCtx.currentTime);
                 waterGain.gain.setValueAtTime(waterGain.gain.value, audioCtx.currentTime);
@@ -1004,16 +1005,19 @@ void main() {
             let dtFactor = Math.min(elapsed, 50) / 16.666;
 
             // SMART AGGRESSIVE MOBILE DRS CHECK
-            if (framesAnalyzed >= 60) {
-                if (droppedFrames > 8 && currentDPR > 0.5) {
-                    currentDPR = Math.max(0.5, currentDPR - 0.25);
-                    resizeCanvas();
+            totalFrames++;
+            if (totalFrames > 120) {
+                if (framesAnalyzed >= 60) {
+                    if (droppedFrames > 15 && currentDPR > 0.75) {
+                        currentDPR = Math.max(0.75, currentDPR - 0.25);
+                        resizeCanvas();
+                    }
+                    framesAnalyzed = 0;
+                    droppedFrames = 0;
                 }
-                framesAnalyzed = 0;
-                droppedFrames = 0;
+                if (elapsed > 33) droppedFrames++;
+                framesAnalyzed++;
             }
-            if (elapsed > 33) droppedFrames++;
-            framesAnalyzed++;
 
             let timeSinceTouch = Date.now() - lastTouchTime;
             if (gyroActive) {
@@ -1024,12 +1028,12 @@ void main() {
                 } else {
                     if (timeSinceTouch > 2000) {
                         let decay = Math.pow(0.95, dtFactor);
-                        offsetMX *= decay; 
+                        offsetMX *= decay;
                         offsetMY *= decay;
                     }
                     let destX = targetMX + offsetMX;
                     let destY = targetMY + offsetMY;
-                    
+
                     let lerpAmt = 1.0 - Math.pow(0.93, dtFactor);
                     mX += (destX - mX) * lerpAmt;
                     mY += (destY - mY) * lerpAmt;
@@ -1037,7 +1041,7 @@ void main() {
             }
 
             if (isW) {
-                warp = Math.min(1.0, warp + (0.008 * dtFactor)); 
+                warp = Math.min(1.0, warp + (0.008 * dtFactor));
 
                 if (warp >= 1.0 && !redirected) {
                     redirected = true;
@@ -1047,7 +1051,7 @@ void main() {
                 if (waterFilter && waterSource) {
                     let waveCycle = Math.sin(now * 0.0003 * engineConfig.energy);
                     let targetWaterFreq = 250 + (waveCycle * 100) + (engineConfig.height * 600);
-                    
+
                     waterFilter.frequency.value = Math.max(150, targetWaterFreq);
 
                     let targetRate = 0.4 + (engineConfig.energy * 0.02) + (waveCycle * 0.03);
@@ -1084,7 +1088,7 @@ void main() {
         document.getElementById('auth-input').addEventListener('keydown', async (e) => {
             if (e.key === 'Enter') {
                 const val = e.target.value.trim();
-                
+
                 const msgBuffer = new TextEncoder().encode(val);
                 const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
                 const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -1102,7 +1106,7 @@ void main() {
 
         configKeys.forEach(k => {
             document.getElementById(`inp-${k}`).addEventListener('input', (e) => {
-                lastTouchTime = Date.now(); 
+                lastTouchTime = Date.now();
                 const val = parseFloat(e.target.value);
                 document.getElementById(`val-${k}`).innerText = val.toFixed(k === 'stars' ? 0 : 2);
                 engineConfig[k] = val;
