@@ -716,8 +716,7 @@ void main() {
         let lastTouchTime = 0;
         let targetMX = 0, targetMY = 0.2;
 
-        let lastBeta = null;
-        let lastGamma = null;
+
 
         function handleOrientation(event) {
             if (event.beta === null || event.gamma === null) return;
@@ -727,31 +726,33 @@ void main() {
             let b = event.beta;
             let g = event.gamma;
 
-            if (lastBeta !== null && Math.abs(b - lastBeta) > 60) b = lastBeta;
-            if (lastGamma !== null && Math.abs(g - lastGamma) > 60) g = lastGamma;
-
-            lastBeta = b;
-            lastGamma = g;
-
-            b = Math.max(-85, Math.min(85, b));
-            g = Math.max(-85, Math.min(85, g));
-
             let finalX = 0, finalY = 0;
-            const TILT_DIVISOR = 60.0;
+            const SENSITIVITY = 50.0;
+
+            // REMOVED: Delta checking that caused "stuck" behavior at rotation boundaries.
+            // Let the smoothing lerp in the render loop handle transitions.
 
             if (angle === 90) {
-                finalX = b / TILT_DIVISOR;
-                finalY = (g + 45.0) / TILT_DIVISOR;
+                // Landscape Left: Beta maps to Horizontal, Gamma maps to Vertical
+                finalX = b / SENSITIVITY;
+                finalY = (g + 35.0) / SENSITIVITY;
             } else if (angle === -90 || angle === 270) {
-                finalX = -b / TILT_DIVISOR;
-                finalY = -(g - 45.0) / TILT_DIVISOR;
+                // Landscape Right: Negative Beta maps to Horizontal, Negative Gamma maps to Vertical
+                finalX = -b / SENSITIVITY;
+                finalY = -(g - 35.0) / SENSITIVITY;
+            } else if (angle === 180) {
+                // Portrait Upside Down
+                finalX = -g / SENSITIVITY;
+                finalY = -(b + 45.0) / SENSITIVITY;
             } else {
-                finalX = g / TILT_DIVISOR;
-                finalY = (b - 45.0) / TILT_DIVISOR;
+                // Standard Portrait: Gamma maps to Horizontal, Beta maps to Vertical
+                finalX = g / SENSITIVITY;
+                finalY = (b - 45.0) / SENSITIVITY;
             }
 
-            targetMX = Math.max(-1.5, Math.min(1.5, finalX));
-            targetMY = Math.max(-0.9, Math.min(0.9, finalY));
+            // Proportional scaling for a natural field of view
+            targetMX = Math.max(-2.0, Math.min(2.0, finalX * 1.5));
+            targetMY = Math.max(-1.1, Math.min(1.1, finalY * 0.8));
         }
 
         if (window.DeviceOrientationEvent) {
