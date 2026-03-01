@@ -79,7 +79,6 @@
             text-align: center;
         }
 
-        /* Adjusted shadow for perfect daylight readability */
         h1 {
             font-weight: 100;
             letter-spacing: 35px;
@@ -234,11 +233,11 @@
             letter-spacing: 5px;
             padding: 10px;
             width: 300px;
-            text-transform: uppercase;
         }
 
         #auth-input::placeholder {
             color: rgba(255, 255, 255, 0.3);
+            text-transform: uppercase;
         }
 
         .panel-box {
@@ -248,6 +247,8 @@
             padding: 30px;
             width: 400px;
             max-width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
             color: #fff;
             font-family: 'Inter', sans-serif;
             box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
@@ -257,8 +258,23 @@
             box-sizing: border-box;
         }
 
+        /* Custom Scrollbar for Panel */
+        .panel-box::-webkit-scrollbar {
+            width: 6px;
+        }
+        .panel-box::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .panel-box::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        .panel-box::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
         .panel-box h3 {
-            margin: 0 0 10px 0;
+            margin: 0 0 5px 0;
             font-weight: 100;
             letter-spacing: 8px;
             text-transform: uppercase;
@@ -310,6 +326,26 @@
             cursor: pointer;
             background: rgba(255, 255, 255, 0.2);
             border-radius: 1px;
+        }
+
+        .text-input {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            padding: 8px;
+            width: 100%;
+            border-radius: 4px;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s;
+            margin-top: 4px;
+        }
+
+        .text-input:focus {
+            border-color: rgba(255, 255, 255, 0.7);
+            background: rgba(0, 0, 0, 0.6);
         }
 
         .panel-buttons {
@@ -395,22 +431,17 @@
     <div id="cursor"></div>
     <canvas id="v"></canvas>
 
-    <!-- DESKTOP IMMERSION GATEWAY -->
-    <div id="intro-layer">
-        <div class="intro-text">Click to Immerse</div>
-    </div>
-
     <div id="ui-layer">
         <div class="brand-text">
-            <h1>RAHATIL</h1>
-            <div class="btn-init" onclick="engage()">Initialize</div>
+            <h1 id="ui-mainTitle">RAHATIL</h1>
+            <div class="btn-init" id="ui-btnText" onclick="engage()">Initialize</div>
         </div>
     </div>
 
     <div id="cinematic-layer">
-        <div class="cine-title">Welcome, Rahatil</div>
-        <div class="cine-sub">Calibrating Tidal Engine...</div>
-        <div class="cine-sub">Redirecting to Terminal</div>
+        <div class="cine-title" id="ui-cineTitle">Welcome, Rahatil</div>
+        <div class="cine-sub" id="ui-cineSub1">Calibrating Tidal Engine...</div>
+        <div class="cine-sub" id="ui-cineSub2">Redirecting to Terminal</div>
     </div>
 
     <!-- ADMIN AUTHORIZATION MODAL -->
@@ -429,7 +460,7 @@
             </div>
             <div class="slider-group">
                 <label>Wave Height <span id="val-height">0.05</span></label>
-                <input type="range" id="inp-height" min="0" max="0.2" step="0.01" value="0.05">
+                <input type="range" id="inp-height" min="0" max="0.5" step="0.01" value="0.05">
             </div>
             <div class="slider-group">
                 <label>Star Density (Lower = More) <span id="val-stars">600</span></label>
@@ -448,8 +479,35 @@
                 <input type="range" id="inp-b" min="0" max="1" step="0.01" value="0.08">
             </div>
 
+            <h3 style="margin-top: 15px; font-size: 1rem;">System Text & Links</h3>
+
+            <div class="slider-group">
+                <label>Main Title</label>
+                <input type="text" id="inp-mainTitle" class="text-input">
+            </div>
+            <div class="slider-group">
+                <label>Button Action</label>
+                <input type="text" id="inp-btnText" class="text-input">
+            </div>
+            <div class="slider-group">
+                <label>Cinematic Title</label>
+                <input type="text" id="inp-cineTitle" class="text-input">
+            </div>
+            <div class="slider-group">
+                <label>Subtext 1</label>
+                <input type="text" id="inp-cineSub1" class="text-input">
+            </div>
+            <div class="slider-group">
+                <label>Subtext 2</label>
+                <input type="text" id="inp-cineSub2" class="text-input">
+            </div>
+            <div class="slider-group">
+                <label>Redirect URL</label>
+                <input type="text" id="inp-targetUrl" class="text-input">
+            </div>
+
             <div class="panel-buttons">
-                <button class="btn-panel btn-reset" onclick="resetAdminPanel()">Reset Default</button>
+                <button class="btn-panel btn-reset" onclick="resetAdminPanel()">Reset</button>
                 <button class="btn-panel" onclick="closeAdminPanel()">Sync & Close</button>
             </div>
         </div>
@@ -468,11 +526,11 @@ out vec4 fragColor;
 uniform vec2 u_res;
 uniform float u_time;
 uniform vec2 u_mouse;
-uniform float u_warp; 
+uniform float u_warp;
+uniform float u_waveTime;
 
 // CUSTOMIZATION UNIFORMS
 uniform vec3 u_waterColor;
-uniform float u_waveEnergy;
 uniform float u_waveHeight;
 uniform float u_starDensity;
 
@@ -485,52 +543,92 @@ float noise(vec2 p) {
     return mix(mix(hash(i), hash(i+vec2(1,0)), u.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), u.x), u.y);
 }
 
-// MULTI-OCTAVE GERSTNER WAVE FORMULA WITH TIDAL DISPLACEMENT
-float GetWaterHeight(vec3 p, bool micro) {
-    float t = u_time * u_waveEnergy; 
+// TRUE GERSTNER WAVES WITH HORIZONTAL DISPLACEMENT
+vec3 GetGerstnerWave(vec2 pos, float steepness, float wavelength, vec2 direction, float time, out float height) {
+    float k = 2.0 * PI / wavelength;
+    float c = sqrt(9.8 / k);
+    vec2 d = normalize(direction);
+    float f = k * (dot(d, pos) - c * time);
+    float a = steepness / k;
+    
+    height = a * sin(f);
+    return vec3(d.x * a * cos(f), height, d.y * a * cos(f));
+}
+
+vec2 GetWaterDisplacement(vec2 pos, float time) {
+    vec2 disp = vec2(0.0);
     float h = 0.0;
     
-    vec2 uv = p.xz * 0.75; 
+    float noiseVal = noise(pos * 0.3 + time * 0.1);
+    
+    vec3 w1 = GetGerstnerWave(pos, 0.25 * u_waveHeight, 4.0, vec2(1.0, 1.2), time * 0.8, h);
+    disp += w1.xz * (0.85 + 0.3 * noiseVal);
+    
+    vec3 w2 = GetGerstnerWave(pos, 0.2 * u_waveHeight, 2.5, vec2(-1.0, 0.8), time * 1.2, h);
+    disp += w2.xz * (0.9 + 0.2 * noise(pos * 2.0 - time * 0.15));
+    
+    vec3 w3 = GetGerstnerWave(pos, 0.15 * u_waveHeight, 1.5, vec2(0.3, -1.5), time * 1.5, h);
+    disp += w3.xz;
+    
+    vec3 w4 = GetGerstnerWave(pos, 0.1 * u_waveHeight, 3.0, vec2(-0.7, -0.5), time * 0.6, h);
+    disp += w4.xz * (0.8 + 0.4 * noiseVal);
+    
+    vec3 w5 = GetGerstnerWave(pos, 0.08 * u_waveHeight, 0.8, vec2(0.9, -0.3), time * 2.0, h);
+    disp += w5.xz;
+    
+    return disp;
+}
+
+float GetWaterHeight(vec3 p, bool micro) {
+    float t = u_waveTime;
+    float h = 0.0;
+    
+    vec2 uv = p.xz * 0.75;
+    float noiseVal = noise(uv * 0.3 + t * 0.1);
     
     vec2 d1 = normalize(vec2(1.0, 1.2));
-    h += u_waveHeight * 1.5 * pow(sin(dot(uv, d1) * 1.5 + t) * 0.5 + 0.5, 2.0);
+    float wave1 = sin(dot(uv, d1) * 1.5 + t * 0.8) * 0.5 + 0.5;
+    h += u_waveHeight * 1.5 * pow(wave1, 1.6) * (0.85 + 0.3 * noiseVal);
     
     vec2 d2 = normalize(vec2(-1.0, 0.8));
-    h += (u_waveHeight * 0.8) * pow(sin(dot(uv, d2) * 2.8 - t * 1.2) * 0.5 + 0.5, 2.5);
+    float wave2 = sin(dot(uv, d2) * 2.8 - t * 1.2) * 0.5 + 0.5;
+    h += (u_waveHeight * 0.8) * pow(wave2, 1.8) * (0.9 + 0.2 * noise(uv * 2.0 - t * 0.15));
     
     vec2 d3 = normalize(vec2(0.3, -1.5));
-    h += (u_waveHeight * 0.4) * pow(sin(dot(uv, d3) * 5.0 + t * 1.5) * 0.5 + 0.5, 3.0);
+    float wave3 = sin(dot(uv, d3) * 5.0 + t * 1.5) * 0.5 + 0.5;
+    h += (u_waveHeight * 0.4) * pow(wave3, 2.0);
+    
+    vec2 d4 = normalize(vec2(-0.7, -0.5));
+    float wave4 = sin(dot(uv, d4) * 3.5 + t * 0.6) * 0.5 + 0.5;
+    h += (u_waveHeight * 0.25) * pow(wave4, 2.2) * (0.8 + 0.4 * noiseVal);
+    
+    vec2 d5 = normalize(vec2(0.9, -0.3));
+    float wave5 = sin(dot(uv, d5) * 8.0 - t * 2.0) * 0.5 + 0.5;
+    h += (u_waveHeight * 0.15) * pow(wave5, 2.5);
 
-    if(micro) h += noise(uv * 10.0 + t) * (u_waveHeight * 0.25);
-    
-    // 3D MOUSE WAKE / LIQUID RIPPLES
-    vec2 m_uv = u_mouse * vec2(u_res.x / u_res.y, 1.0) * 0.5;
-    vec3 m_rd = normalize(vec3(m_uv.x, m_uv.y - 0.1, 1.1 + u_warp * 0.6));
-    
-    if(m_rd.y < -0.05) {
-        vec3 ro_m = vec3(0.0, 1.5, u_time * 0.3 * (2.0 + u_warp * 35.0));
-        float safeY = clamp(m_rd.y, -0.85, -0.15); 
-        vec3 m_p = ro_m - m_rd * (1.5 / safeY); 
-        
-        float dist = length(p.xz - m_p.xz);
-        float wake = smoothstep(3.5, 0.0, dist) * cos(dist * 7.0 - u_time * 12.0) * 0.06;
-        h += wake * (1.0 - smoothstep(0.0, 0.5, u_warp)); 
+    if(micro) {
+        vec2 uv1 = mat2(0.8, -0.6, 0.6, 0.8) * uv * 8.0;
+        vec2 uv2 = mat2(0.6, 0.8, -0.8, 0.6) * uv * 15.0;
+        vec2 uv3 = uv * 25.0 + t * 0.5;
+        h += (noise(uv1 + t) * 0.5 + noise(uv2 - t * 0.7) * 0.35 + noise(uv3) * 0.15) * (u_waveHeight * 0.18);
     }
-
-    return h - (u_waveHeight * 0.5); 
+    
+    return h - (u_waveHeight * 0.5);
 }
 
 vec3 GetNormal(vec3 p, bool micro) {
-    vec2 e = vec2(0.02, 0.0); 
+    vec2 e = vec2(0.02, 0.0);
     float h = GetWaterHeight(p, micro);
+    
+    float naturalY = 0.04 + (u_waveHeight * 0.4); 
+    
     return normalize(vec3(
         h - GetWaterHeight(p - e.xyy, micro), 
-        0.04, 
+        naturalY, 
         h - GetWaterHeight(p - e.yxy, micro)
     ));
 }
 
-// DYNAMIC PLANAR STAR ENGINE
 float GetStars(vec3 rd, float nightFactor, bool isRef) {
     if(nightFactor < 0.01) return 0.0;
     vec3 starRd = isRef ? normalize(vec3(rd.x, abs(rd.y), rd.z)) : rd;
@@ -539,19 +637,18 @@ float GetStars(vec3 rd, float nightFactor, bool isRef) {
     float baseHash = hash(starUV);
     float stars = pow(baseHash, isRef ? u_starDensity * 1.33 : u_starDensity);
     
-    float starPhase = hash(starUV + vec2(45.2, 12.8)) * PI * 2.0; 
-    float starFreq = hash(starUV + vec2(9.3, 74.1)) * 2.5 + 0.5; 
+    float starPhase = hash(starUV + vec2(45.2, 12.8)) * PI * 2.0;
+    float starFreq = hash(starUV + vec2(9.3, 74.1)) * 2.5 + 0.5;
     float twinkle = 0.5 + 0.5 * sin(u_time * starFreq + starPhase);
     
     float warpFade = 1.0 - smoothstep(0.1, 0.7, u_warp);
     return stars * twinkle * nightFactor * (isRef ? 0.3 : 1.2) * warpFade;
 }
 
-// OPTIMIZED CLOUD ENGINE 
 float getClouds(vec3 rd, float t, bool isRef) {
     if(rd.y < 0.0) return 0.0;
     vec2 uv = rd.xz / (rd.y + 0.001) * 0.4;
-    uv.x -= t * 0.05; 
+    uv.x -= t * 0.05;      
     
     float f = noise(uv);
     uv = mat2(1.6, 1.2, -1.2, 1.6) * uv;
@@ -563,19 +660,20 @@ float getClouds(vec3 rd, float t, bool isRef) {
     }
     
     f = smoothstep(0.9, 1.7, f);
-    return f * smoothstep(0.0, 0.15, rd.y); 
+    return f * smoothstep(0.0, 0.15, rd.y);
 }
 
 vec3 getCloudColor(vec3 rd, vec3 sunDir) {
     vec3 cloudDay = vec3(0.95, 0.98, 1.0);
     vec3 cloudSunset = vec3(1.0, 0.4, 0.15);
-    vec3 cloudNight = vec3(0.01, 0.015, 0.03); 
+    vec3 cloudNight = vec3(0.01, 0.015, 0.03);      
     
-    float cloudDayFact = smoothstep(-0.1, 0.15, sunDir.y); 
+    float cloudDayFact = smoothstep(-0.1, 0.15, sunDir.y);
     vec3 cColor = mix(cloudNight, mix(cloudSunset, cloudDay, smoothstep(-0.05, 0.25, sunDir.y)), cloudDayFact);
     
     float sDot = max(0.0, dot(rd, sunDir));
-    cColor += vec3(1.0, 0.6, 0.2) * pow(sDot, 5.0) * smoothstep(-0.1, 0.3, sunDir.y) * 0.5; 
+    cColor += vec3(1.0, 0.6, 0.2) * pow(sDot, 5.0) * smoothstep(-0.1, 0.3, sunDir.y) * 0.5;
+
     return cColor;
 }
 
@@ -583,31 +681,28 @@ void main() {
     vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
     float t = u_time * 0.3;
     
-    // CAMERA SHAKE MATH 
     float shakeIntensity = pow(u_warp, 5.0) * 0.04;
     vec2 cameraShake = vec2(sin(u_time * 150.0), cos(u_time * 130.0)) * shakeIntensity;
     uv += cameraShake;
 
     float solarEase = u_warp * u_warp * (3.0 - 2.0 * u_warp);
     float currentSunY = mix(0.15 + u_mouse.y * 1.0, -1.5, solarEase);
-    
-    // MOON FIX: Changed Z to 1.0 so it is in front of the camera, and perfectly inverted the Y/X axes.
     vec3 sunDir = normalize(vec3(u_mouse.x * 1.5, currentSunY, 1.0));
-    vec3 moonDir = normalize(vec3(-u_mouse.x * 1.5, -currentSunY, 1.0));
+    
+    vec3 moonDir = normalize(vec3(-u_mouse.x * 1.5, -currentSunY - 0.1, 1.0));
 
     vec3 ro = vec3(0, 1.5, t * (2.0 + u_warp * 35.0));
-    vec3 rd = normalize(vec3(uv.x, uv.y - 0.1, 1.1 + u_warp * 0.6)); 
-
+    vec3 rd = normalize(vec3(uv.x, uv.y - 0.1, 1.1 + u_warp * 0.6));  
+    
     float dayFactor = smoothstep(-0.02, 0.15, sunDir.y);
     float nightFactor = 1.0 - dayFactor;
+    float trueNight = smoothstep(-0.02, -0.15, sunDir.y);
     
-    float moonAlt = max(0.0, moonDir.y);
-    vec3 nightZenith = vec3(0.001, 0.003, 0.008); 
-    vec3 nightHorizon = mix(vec3(0.002, 0.008, 0.025), vec3(0.04, 0.1, 0.2), moonAlt * 0.5);
-    
-    vec3 dayZenith = vec3(0.05, 0.15, 0.4);
+    vec3 nightZenith = vec3(0.0, 0.0005, 0.002); 
+    vec3 nightHorizon = vec3(0.001, 0.004, 0.012);
+    vec3 dayZenith = vec3(0.05, 0.15, 0.4);     
     vec3 dayHorizon = vec3(0.35, 0.65, 0.85); 
-    vec3 sunsetHorizon = vec3(1.0, 0.35, 0.1);
+    vec3 sunsetHorizon = vec3(1.0, 0.35, 0.1);    
     
     vec3 zenith = mix(nightZenith, dayZenith, dayFactor);
     vec3 horizon = mix(nightHorizon, mix(sunsetHorizon, dayHorizon, smoothstep(0.0, 0.4, sunDir.y)), dayFactor);
@@ -637,15 +732,15 @@ void main() {
 
     // --- CINEMATIC VOLUMETRIC SUN SYSTEM ---
     float sunDot = max(0.0, dot(rd, sunDir));
-    float sunAltD = max(0.0, sunDir.y);
+    float sunAlt = max(0.0, sunDir.y);
     
-    vec3 coreColor = mix(vec3(1.0, 0.7, 0.4), vec3(1.0, 0.98, 0.95), smoothstep(0.0, 0.3, sunAltD));
-    vec3 glowColor = mix(vec3(1.0, 0.25, 0.05), vec3(1.0, 0.8, 0.5), smoothstep(0.0, 0.4, sunAltD));
+    vec3 coreColor = mix(vec3(1.0, 0.7, 0.4), vec3(1.0, 0.98, 0.95), smoothstep(0.0, 0.3, sunAlt));
+    vec3 glowColor = mix(vec3(1.0, 0.25, 0.05), vec3(1.0, 0.8, 0.5), smoothstep(0.0, 0.4, sunAlt));
     
     float sunCore = smoothstep(0.9985, 0.9998, sunDot) * 2.5; 
     float sunInnerGlow = pow(sunDot, 180.0) * 1.5;            
     float sunOuterGlow = pow(sunDot, 50.0) * 0.8;             
-    float sunAtmosphere = pow(sunDot, 12.0) * 0.4;            
+    float sunAtmosphere = pow(sunDot, 12.0) * 0.4;                 
     
     vec3 cinematicSun = coreColor * sunCore;
     cinematicSun += glowColor * sunInnerGlow;
@@ -653,22 +748,53 @@ void main() {
     cinematicSun += mix(vec3(1.0, 0.1, 0.0), glowColor, 0.5) * sunAtmosphere;
     col += cinematicSun * sunMask;
     
-    // --- ETHEREAL MOON AURA UPDATE ---
+    // --- REALISTIC PROCEDURAL MOON SYSTEM ---
     float moonDot = max(0.0, dot(rd, moonDir));
-    float moonCore = smoothstep(0.999, 0.9998, moonDot) * 2.5; 
-    float moonGlow = pow(moonDot, 120.0) * 0.8 + pow(moonDot, 30.0) * 0.4 + pow(moonDot, 6.0) * 0.2; 
-    col += vec3(0.7, 0.85, 1.0) * (moonCore + moonGlow) * nightFactor * moonMask;
+    
+    vec3 moonRight = normalize(cross(vec3(0.0, 1.0, 0.0), moonDir));
+    vec3 moonUp = cross(moonDir, moonRight);
+    vec2 moonUV = vec2(dot(rd, moonRight), dot(rd, moonUp)) * 45.0;
+    
+    float craters = noise(moonUV * 8.0) * 0.6 + noise(moonUV * 20.0) * 0.4;
+    vec3 moonSurface = mix(vec3(0.5, 0.55, 0.6), vec3(1.0, 0.98, 0.95), craters);
+    
+    float mRadius = 0.9993; 
+    float moonDist = clamp((1.0 - moonDot) / (1.0 - mRadius), 0.0, 1.0);
+    float moonSphere = sqrt(1.0 - moonDist * moonDist); 
+    
+    float moonCoreMask = smoothstep(mRadius, mRadius + 0.00015, moonDot);
+    
+    // FIX 1: Applied correct variable name `moonSurface` instead of the old `lunarTex`
+    vec3 moonCore = moonSurface * moonSphere * moonCoreMask * 2.2; 
+    
+    float moonInnerGlow = pow(moonDot, 250.0) * 1.2;
+    float moonMidGlow   = pow(moonDot, 70.0) * 0.5;
+    float moonOuterGlow = pow(moonDot, 15.0) * 0.2;
+    float moonAtmo = moonInnerGlow + moonMidGlow + moonOuterGlow;
+    
+    vec3 cinematicMoon = moonCore;
+    cinematicMoon += vec3(0.7, 0.85, 1.0) * moonAtmo;
+    
+    col += cinematicMoon * trueNight * moonMask;
+    
+    float moonSkyGlow = pow(moonDot, 8.0) * 0.15 + pow(moonDot, 25.0) * 0.08;
+    col += vec3(0.04, 0.05, 0.1) * moonSkyGlow * trueNight;
 
     if(rd.y < 0.0) {
         float d = -(ro.y) / min(rd.y, -0.002); 
         vec3 p = ro + rd * d;
         
-        // --- 3D TIDAL PARALLAX (FAKE RAYMARCH) ---
+        vec2 gerstnerDisp = GetWaterDisplacement(p.xz, u_waveTime);
         float hOffset = GetWaterHeight(p, false);
-        p += rd * (hOffset / max(abs(rd.y), 0.05));
         
-        vec3 N_sharp = GetNormal(p, true);  
-        vec3 N_smooth = GetNormal(p, false); 
+        vec3 displacedP = p + vec3(gerstnerDisp.x * 0.5, hOffset, gerstnerDisp.y * 0.5);
+        
+        float parallaxFade = exp(-d * 0.015);
+        
+        vec3 N_sharp = GetNormal(displacedP, true);  
+        vec3 N_smooth = GetNormal(displacedP, false);          
+        
+        vec3 N_spec = normalize(mix(N_smooth, N_sharp, 0.9)); 
         
         vec3 refR_Planar = reflect(rd, vec3(0, 1, 0)); 
         float refSkyGrad = smoothstep(-0.2, 0.6, reflect(rd, N_smooth).y);
@@ -686,51 +812,64 @@ void main() {
 
         float fresnel = pow(1.0 - max(0.0, dot(-rd, N_sharp)), 5.0);
         
-        // --- SUBSURFACE SCATTERING WITH MOONLIT TINT ---
-        float waveLocalH = GetWaterHeight(p, false);
-        vec3 tidalColor = mix(u_waterColor * 0.2, u_waterColor * 2.2, smoothstep(-u_waveHeight, u_waveHeight * 1.5, waveLocalH));
+        float waveLocalH = GetWaterHeight(displacedP, false);
+        float waveSlope = abs(GetWaterHeight(displacedP + vec3(0.1, 0.0, 0.0), false) - waveLocalH) * 8.0;
         
-        vec3 nightWater = mix(vec3(0.000, 0.001, 0.003), vec3(0.01, 0.03, 0.08), max(0.0, moonDir.y));
-        vec3 waterBase = mix(nightWater, tidalColor, dayFactor);
+        float foamNoise = noise(displacedP.xz * 3.0 + u_time * 0.3) * 0.5 + 0.5;
+        foamNoise *= noise(displacedP.xz * 8.0 - u_time * 0.2) * 0.5 + 0.5;
+        
+        vec3 tidalColor = mix(u_waterColor * 0.2, u_waterColor * 2.2, smoothstep(-u_waveHeight, u_waveHeight * 1.5, waveLocalH));
+        vec3 waterBase = mix(vec3(0.000, 0.001, 0.003), tidalColor, dayFactor);
+        
+        float waveFoam = smoothstep(0.15, 0.45, waveSlope + foamNoise * 0.3);
+        vec3 foamColorDay = vec3(0.8, 0.85, 0.9);
+        waterBase += foamColorDay * waveFoam * dayFactor * 0.25 * smoothstep(0.0, 0.15, rd.y);
         
         vec3 waterCol = mix(waterBase, reflectedSky * 0.85, 0.15 + 0.85 * fresnel);
         
         vec3 waterSunDir = normalize(vec3(sunDir.x, max(sunDir.y, 0.001), sunDir.z));
         vec3 waterMoonDir = normalize(vec3(moonDir.x, max(moonDir.y, 0.001), moonDir.z));
 
-        // --- CINEMATIC LIQUID REFLECTIONS ---
-        float specDot = max(0.0, dot(N_sharp, normalize(-rd + waterSunDir)));
+        float specDot = max(0.0, dot(N_spec, normalize(-rd + waterSunDir)));
         float smoothSpecDot = max(0.0, dot(N_smooth, normalize(-rd + waterSunDir)));
         
-        float sunSpecCore = pow(specDot, 180.0) * 5.0; 
-        float sunSpecGlow = pow(smoothSpecDot, 40.0) * 2.0; 
-        float sunTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), waterSunDir.xz)), 35.0);
+        float sunSpecCore = pow(specDot, 400.0) * 4.5; 
+        float sunSpecGlow = pow(smoothSpecDot, 80.0) * 0.8; 
         
         vec3 waterSpecColor = mix(vec3(1.0, 0.3, 0.05), vec3(1.0, 0.9, 0.7), smoothstep(0.0, 0.3, waterSunDir.y));
-        waterCol += waterSpecColor * (sunSpecCore + sunSpecGlow) * sunTrail * sunMask; 
+        waterCol += waterSpecColor * (sunSpecCore + sunSpecGlow) * sunMask;
         
-        // --- WIDE SHIMMERING MOON PATH ---
-        float moonSpecDot = max(0.0, dot(N_sharp, normalize(-rd + waterMoonDir)));
-        float moonSmoothSpecDot = max(0.0, dot(N_smooth, normalize(-rd + waterMoonDir)));
+        float moonSpecDot = max(0.0, dot(N_spec, normalize(-rd + waterMoonDir)));
+        float smoothMoonSpecDot = max(0.0, dot(N_smooth, normalize(-rd + waterMoonDir)));
         
-        float moonSpecCore = pow(moonSpecDot, 150.0) * 3.0;
-        float moonSpecGlow = pow(moonSmoothSpecDot, 25.0) * 1.5; 
-        float moonTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), waterMoonDir.xz)), 15.0); 
+        float moonSpecCore = pow(moonSpecDot, 500.0) * 2.5;
+        float moonSpecGlow = pow(smoothMoonSpecDot, 80.0) * 0.8;
+        float moonSpecWide = pow(smoothMoonSpecDot, 20.0) * 0.15;
         
-        waterCol += vec3(0.65, 0.85, 1.0) * (moonSpecCore + moonSpecGlow) * moonTrail * nightFactor * moonMask;
-        waterCol += vec3(0.05, 0.15, 0.3) * max(0.0, waterMoonDir.y) * 0.1 * nightFactor;
+        vec3 waterMoonSpecColor = vec3(0.5, 0.65, 0.85);
         
-        col = mix(horizon, waterCol, smoothstep(250.0, 5.0, d));
+        float waveHighlight = smoothstep(0.3, 0.8, waveSlope) * smoothstep(0.0, 0.5, moonDot);
+        float moonSpecIntensity = (moonSpecCore + moonSpecGlow + moonSpecWide) * (0.5 + waveHighlight * 2.0);
+        waterCol += waterMoonSpecColor * moonSpecIntensity * trueNight * moonMask;
+        
+        float diffuseMoon = max(0.0, dot(N_smooth, waterMoonDir)) * 0.08;
+        waterCol += vec3(0.02, 0.028, 0.05) * diffuseMoon * trueNight;
+        
+        vec3 moonScatter = vec3(0.005, 0.008, 0.018) * trueNight * moonMask;
+        waterCol += moonScatter;
+        
+        float nightFog = smoothstep(30.0, 150.0, d) * trueNight * 0.6;
+        waterCol = mix(waterCol, horizon * 0.5, nightFog);
+        
+        float horizonBlend = smoothstep(180.0, 5.0, d);
+        col = mix(horizon, waterCol, horizonBlend);
     }
 
-    // CINEMATIC CHROMATIC ABERRATION & HYPER-GLOW
     float hyperGlow = pow(u_warp, 3.5) * 2.5;
     vec3 warpBase = vec3(0.85, 0.95, 1.0) * hyperGlow;
     
-    // Split RGB channels near edges during high velocity
     float caSplit = u_warp * length(uv) * 1.5;
     warpBase += vec3(caSplit, 0.0, -caSplit) * u_warp * 1.5;
-    
     col += warpBase;
 
     col = (col*(2.51*col+0.03))/(col*(2.43*col+0.59)+0.14);
@@ -738,10 +877,15 @@ void main() {
 }</script>
     <script>
         const canvas = document.getElementById('v');
-        let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.2, redirected = false; 
-        let offsetMX = 0, offsetMY = 0; 
-        let isTouching = false; 
-        const TARGET = "https://www.linkedin.com/in/rahatreza100/";
+        let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.2, redirected = false;
+
+        let offsetMX = 0, offsetMY = 0;
+        let isTouching = false;
+        
+        let waveTime = 0;
+        let lastTimeJS = 0;
+
+        let TARGET = "https://www.linkedin.com/in/rahatreza100/";
 
         let isPaused = false;
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
@@ -752,8 +896,16 @@ void main() {
         if (isMobile) document.getElementById('cursor').style.display = 'none';
 
         const configKeys =['energy', 'height', 'stars', 'r', 'g', 'b'];
+        const textKeys =['mainTitle', 'btnText', 'cineTitle', 'cineSub1', 'cineSub2', 'targetUrl'];
+        
+        const defaultConfig = { 
+            energy: 2.2, height: 0.05, stars: 600.0, r: 0.01, g: 0.04, b: 0.08,
+            mainTitle: "RAHATIL", btnText: "Initialize", cineTitle: "Welcome, Rahatil",
+            cineSub1: "Calibrating Tidal Engine...", cineSub2: "Redirecting to Terminal",
+            targetUrl: "https://www.linkedin.com/in/rahatreza100/"
+        };
+        
         let uLocs = {};
-        const defaultConfig = { energy: 2.2, height: 0.05, stars: 600.0, r: 0.01, g: 0.04, b: 0.08 };
         let engineConfig = { ...defaultConfig };
 
         try {
@@ -761,40 +913,43 @@ void main() {
             if (savedData) { engineConfig = { ...defaultConfig, ...JSON.parse(savedData) }; }
         } catch (e) { console.error(e); }
 
+        function applyTextConfig() {
+            document.getElementById('ui-mainTitle').innerText = engineConfig.mainTitle;
+            document.getElementById('ui-btnText').innerText = engineConfig.btnText;
+            document.getElementById('ui-cineTitle').innerText = engineConfig.cineTitle;
+            document.getElementById('ui-cineSub1').innerText = engineConfig.cineSub1;
+            document.getElementById('ui-cineSub2').innerText = engineConfig.cineSub2;
+            TARGET = engineConfig.targetUrl;
+        }
+
         function syncUIWithConfig() {
             configKeys.forEach(k => {
                 document.getElementById(`inp-${k}`).value = engineConfig[k];
                 document.getElementById(`val-${k}`).innerText = parseFloat(engineConfig[k]).toFixed(k === 'stars' ? 0 : 2);
             });
+            textKeys.forEach(k => {
+                document.getElementById(`inp-${k}`).value = engineConfig[k] || '';
+            });
+            applyTextConfig();
         }
         syncUIWithConfig();
 
         let audioCtx;
         let waterSource, waterFilter, waterGain;
+        let windSource, windFilter, windGain;
+        let ambientSource, ambientFilter, ambientGain;
+        let nightSource, nightFilter, nightGain;
+        let droneSource, droneOsc, droneGain;
         let audioInit = false;
         let gyroActive = false;
         let lastTouchTime = 0;
-        let targetMX = 0, targetMY = 0.2; 
+        let targetMX = 0, targetMY = 0.2;
         
+        let currentDayFactor = 0.5;
+        let currentNightFactor = 0.5;
+
         let lastBeta = null;
         let lastGamma = null;
-
-        const introLayer = document.getElementById('intro-layer');
-        const uiLayer = document.getElementById('ui-layer');
-
-        if (isMobile) {
-            if (introLayer) introLayer.style.display = 'none';
-            uiLayer.style.opacity = '1';
-        } else {
-            uiLayer.style.opacity = '0';
-            introLayer.addEventListener('click', () => {
-                initExperience();
-                introLayer.style.opacity = '0';
-                introLayer.style.backdropFilter = 'blur(0px)';
-                setTimeout(() => { introLayer.style.display = 'none'; }, 1500);
-                uiLayer.style.opacity = '1';
-            }, { once: true });
-        }
 
         function handleOrientation(event) {
             if (event.beta === null || event.gamma === null) return;
@@ -824,7 +979,7 @@ void main() {
                 finalY = -(g - 45.0) / TILT_DIVISOR;
             } else {
                 finalX = g / TILT_DIVISOR;
-                finalY = (b - 45.0) / TILT_DIVISOR; 
+                finalY = (b - 45.0) / TILT_DIVISOR;
             }
 
             targetMX = Math.max(-1.5, Math.min(1.5, finalX));
@@ -858,24 +1013,21 @@ void main() {
                 audioCtx = new AudioContext();
             }
 
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-
             const bufferSize = audioCtx.sampleRate * 2;
-            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const output = noiseBuffer.getChannelData(0);
-
+            
+            // === WATER SOUND LAYER ===
+            const waterBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const waterOut = waterBuffer.getChannelData(0);
             let lastOut = 0;
             for (let i = 0; i < bufferSize; i++) {
                 let white = Math.random() * 2 - 1;
-                output[i] = (lastOut + (0.02 * white)) / 1.02;
-                lastOut = output[i];
-                output[i] *= 3.5;
+                waterOut[i] = (lastOut + (0.02 * white)) / 1.02;
+                lastOut = waterOut[i];
+                waterOut[i] *= 3.5;
             }
 
             waterSource = audioCtx.createBufferSource();
-            waterSource.buffer = noiseBuffer;
+            waterSource.buffer = waterBuffer;
             waterSource.loop = true;
 
             waterFilter = audioCtx.createBiquadFilter();
@@ -889,10 +1041,146 @@ void main() {
             waterSource.connect(waterFilter).connect(waterGain).connect(audioCtx.destination);
             waterSource.start(0);
 
-            if (!isW) {
-                waterGain.gain.setValueAtTime(0.0, audioCtx.currentTime);
-                waterGain.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 1.5);
+            // === WIND SOUND LAYER ===
+            const windBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const windOut = windBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                let n = Math.random() * 2 - 1;
+                windOut[i] = n * 0.5;
             }
+
+            windSource = audioCtx.createBufferSource();
+            windSource.buffer = windBuffer;
+            windSource.loop = true;
+
+            windFilter = audioCtx.createBiquadFilter();
+            windFilter.type = 'bandpass';
+            windFilter.frequency.value = 800;
+            windFilter.Q.value = 0.3;
+
+            windGain = audioCtx.createGain();
+            windGain.gain.value = 0.0;
+
+            windSource.connect(windFilter).connect(windGain).connect(audioCtx.destination);
+            windSource.start(0);
+
+            // === AMBIENT PAD LAYER ===
+            const ambientBuffer = audioCtx.createBuffer(2, bufferSize, audioCtx.sampleRate);
+            for (let c = 0; c < 2; c++) {
+                const ambOut = ambientBuffer.getChannelData(c);
+                for (let i = 0; i < bufferSize; i++) {
+                    let t = i / audioCtx.sampleRate;
+                    let pad = Math.sin(t * 55 * Math.PI * 2) * 0.1 + 
+                              Math.sin(t * 82.5 * Math.PI * 2) * 0.08 +
+                              Math.sin(t * 110 * Math.PI * 2) * 0.06;
+                    pad *= 0.3;
+                    ambOut[i] = pad + (Math.random() * 2 - 1) * 0.02;
+                }
+            }
+
+            ambientSource = audioCtx.createBufferSource();
+            ambientSource.buffer = ambientBuffer;
+            ambientSource.loop = true;
+
+            ambientFilter = audioCtx.createBiquadFilter();
+            ambientFilter.type = 'lowpass';
+            ambientFilter.frequency.value = 2000;
+
+            ambientGain = audioCtx.createGain();
+            ambientGain.gain.value = 0.0;
+
+            ambientSource.connect(ambientFilter).connect(ambientGain).connect(audioCtx.destination);
+            ambientSource.start(0);
+
+            // === NIGHT OCEAN AMBIENCE LAYER ===
+            const nightBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const nightOut = nightBuffer.getChannelData(0);
+            let lastNight = 0;
+            for (let i = 0; i < bufferSize; i++) {
+                let t = i / audioCtx.sampleRate;
+                // Soft ocean swell - lower, gentler than day water
+                let swell = Math.sin(t * 0.3) * 0.5 + 0.5;
+                swell *= Math.sin(t * 0.17) * 0.5 + 0.5;
+                // Add gentle filtered noise for texture
+                let n = Math.random() * 2 - 1;
+                let filtered = (lastNight + (0.01 * n)) / 1.01;
+                lastNight = filtered;
+                filtered *= 0.8;
+                // Combine swell with soft rumble
+                let nightSound = filtered * swell * 0.4 + filtered * 0.2;
+                // Add distant low frequency pulse
+                nightSound += Math.sin(t * 2.5 * Math.PI * 2) * 0.02 * swell;
+                nightOut[i] = nightSound * 0.6;
+            }
+
+            nightSource = audioCtx.createBufferSource();
+            nightSource.buffer = nightBuffer;
+            nightSource.loop = true;
+
+            nightFilter = audioCtx.createBiquadFilter();
+            nightFilter.type = 'lowpass';
+            nightFilter.frequency.value = 400;
+            nightFilter.Q.value = 0.5;
+
+            nightGain = audioCtx.createGain();
+            nightGain.gain.value = 0.0;
+
+            nightSource.connect(nightFilter).connect(nightGain).connect(audioCtx.destination);
+            nightSource.start(0);
+
+            // === DEEP DRONE LAYER ===
+            droneOsc = audioCtx.createOscillator();
+            droneOsc.type = 'sine';
+            droneOsc.frequency.value = 40;
+
+            const droneOsc2 = audioCtx.createOscillator();
+            droneOsc2.type = 'sine';
+            droneOsc2.frequency.value = 60;
+
+            const droneOsc3 = audioCtx.createOscillator();
+            droneOsc3.type = 'triangle';
+            droneOsc3.frequency.value = 80;
+
+            droneGain = audioCtx.createGain();
+            droneGain.gain.value = 0.0;
+
+            const droneFilter = audioCtx.createBiquadFilter();
+            droneFilter.type = 'lowpass';
+            droneFilter.frequency.value = 100;
+
+            droneOsc.connect(droneGain);
+            droneOsc2.connect(droneGain);
+            droneOsc3.connect(droneGain);
+            droneGain.connect(droneFilter).connect(audioCtx.destination);
+            droneOsc.start(0);
+            droneOsc2.start(0);
+            droneOsc3.start(0);
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().then(() => {
+                    startAllAudio();
+                });
+            } else {
+                startAllAudio();
+            }
+        }
+
+        function startAllAudio() {
+            let ct = audioCtx.currentTime;
+            
+            waterGain.gain.setValueAtTime(0.0, ct);
+            waterGain.gain.linearRampToValueAtTime(0.15, ct + 2.0);
+            
+            windGain.gain.setValueAtTime(0.0, ct);
+            windGain.gain.linearRampToValueAtTime(0.06, ct + 2.5);
+            
+            ambientGain.gain.setValueAtTime(0.0, ct);
+            ambientGain.gain.linearRampToValueAtTime(0.04, ct + 3.0);
+            
+            nightGain.gain.setValueAtTime(0.0, ct);
+            
+            droneGain.gain.setValueAtTime(0.0, ct);
+            droneGain.gain.linearRampToValueAtTime(0.03, ct + 3.0);
         }
 
         const unlockExperience = () => { initExperience(); };
@@ -901,7 +1189,8 @@ void main() {
 
         window.addEventListener('touchstart', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
-            if (e.cancelable) e.preventDefault(); 
+            if (e.cancelable) e.preventDefault();
+
             isTouching = true;
             lastTouchTime = Date.now();
             mX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 1.5;
@@ -936,7 +1225,7 @@ void main() {
         let lastTime = 0;
         let framesAnalyzed = 0;
         let droppedFrames = 0;
-        let totalFrames = 0; 
+        let totalFrames = 0;
 
         document.addEventListener("visibilitychange", () => { isPaused = document.hidden; });
 
@@ -984,9 +1273,8 @@ void main() {
             uLocs.time = gl.getUniformLocation(prg, 'u_time');
             uLocs.mouse = gl.getUniformLocation(prg, 'u_mouse');
             uLocs.warp = gl.getUniformLocation(prg, 'u_warp');
-
+            uLocs.wTime = gl.getUniformLocation(prg, 'u_waveTime'); 
             uLocs.wColor = gl.getUniformLocation(prg, 'u_waterColor');
-            uLocs.wEnergy = gl.getUniformLocation(prg, 'u_waveEnergy');
             uLocs.wHeight = gl.getUniformLocation(prg, 'u_waveHeight');
             uLocs.sDensity = gl.getUniformLocation(prg, 'u_starDensity');
 
@@ -999,7 +1287,7 @@ void main() {
 
         function engage() {
             if (isW || !gl || document.getElementById('custom-panel').style.display === 'flex') return;
-            
+
             if (!audioInit) initExperience();
             if (audioCtx && audioCtx.state === 'suspended') {
                 audioCtx.resume();
@@ -1019,24 +1307,46 @@ void main() {
                 } else if (audioCtx && audioCtx.state === 'running') {
                     let rumble = audioCtx.createOscillator();
                     let rumbleGain = audioCtx.createGain();
-                    
-                    rumble.type = 'sine'; 
-                    rumble.frequency.setValueAtTime(45, audioCtx.currentTime); 
-                    rumble.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 1.2); 
-                    
+
+                    rumble.type = 'sine';
+                    rumble.frequency.setValueAtTime(45, audioCtx.currentTime);
+                    rumble.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 1.2);
+
                     rumbleGain.gain.setValueAtTime(1.5, audioCtx.currentTime);
                     rumbleGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
-                    
+
                     rumble.connect(rumbleGain).connect(audioCtx.destination);
                     rumble.start();
                     rumble.stop(audioCtx.currentTime + 1.2);
                 }
             }
-            
-            if (waterGain) {
-                waterGain.gain.cancelScheduledValues(audioCtx.currentTime);
-                waterGain.gain.setValueAtTime(waterGain.gain.value, audioCtx.currentTime);
-                waterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5);
+
+            if (waterGain && audioCtx) {
+                let ct = audioCtx.currentTime;
+                waterGain.gain.cancelScheduledValues(ct);
+                waterGain.gain.setValueAtTime(waterGain.gain.value, ct);
+                waterGain.gain.linearRampToValueAtTime(0, ct + 1.5);
+                
+                if (windGain) {
+                    windGain.gain.cancelScheduledValues(ct);
+                    windGain.gain.setValueAtTime(windGain.gain.value, ct);
+                    windGain.gain.linearRampToValueAtTime(0, ct + 1.5);
+                }
+                if (ambientGain) {
+                    ambientGain.gain.cancelScheduledValues(ct);
+                    ambientGain.gain.setValueAtTime(ambientGain.gain.value, ct);
+                    ambientGain.gain.linearRampToValueAtTime(0, ct + 1.5);
+                }
+                if (nightGain) {
+                    nightGain.gain.cancelScheduledValues(ct);
+                    nightGain.gain.setValueAtTime(nightGain.gain.value, ct);
+                    nightGain.gain.linearRampToValueAtTime(0, ct + 1.0);
+                }
+                if (droneGain) {
+                    droneGain.gain.cancelScheduledValues(ct);
+                    droneGain.gain.setValueAtTime(droneGain.gain.value, ct);
+                    droneGain.gain.linearRampToValueAtTime(0, ct + 2.0);
+                }
             }
 
             if (audioCtx) {
@@ -1080,6 +1390,10 @@ void main() {
             if (elapsed < frameInterval) return;
             lastTime = now - (elapsed % frameInterval);
 
+            let dtJS = Math.min(now - (lastTimeJS || now), 50); 
+            lastTimeJS = now;
+            waveTime += (dtJS * 0.001) * engineConfig.energy;
+
             let dtFactor = Math.min(elapsed, 50) / 16.666;
 
             totalFrames++;
@@ -1105,45 +1419,93 @@ void main() {
                 } else {
                     if (timeSinceTouch > 2000) {
                         let decay = Math.pow(0.95, dtFactor);
-                        offsetMX *= decay; 
+                        offsetMX *= decay;
                         offsetMY *= decay;
                     }
                     let destX = targetMX + offsetMX;
                     let destY = targetMY + offsetMY;
-                    
+
                     let lerpAmt = 1.0 - Math.pow(0.93, dtFactor);
                     mX += (destX - mX) * lerpAmt;
                     mY += (destY - mY) * lerpAmt;
                 }
             }
 
-            if (isW) {
-                warp = Math.min(1.0, warp + (0.008 * dtFactor)); 
+            // Calculate sun/moon position from mouse (matching shader logic)
+            let solarEase = warp * warp * (3.0 - 2.0 * warp);
+            let currentSunY = 0.15 + mY * 1.0;
+            let sunY = currentSunY * (1 - solarEase) + (-1.5) * solarEase;
+            
+            let dayFactor = Math.max(0, Math.min(1, (sunY + 0.02) / 0.17));
+            let nightFactor = 1.0 - dayFactor;
+            let trueNight = Math.max(0, Math.min(1, (sunY + 0.02) / -0.13));
+            
+            currentDayFactor = currentDayFactor + (dayFactor - currentDayFactor) * 0.05;
+            currentNightFactor = currentNightFactor + (nightFactor - currentNightFactor) * 0.05;
+            
+            let isSunset = (sunY > -0.1 && sunY < 0.15) ? 1.0 : 0.0;
+            let sunsetFactor = isSunset * (1.0 - Math.abs(sunY - 0.02) / 0.15);
 
+            if (isW) {
+                warp = Math.min(1.0, warp + (0.008 * dtFactor));
                 if (warp >= 1.0 && !redirected) {
                     redirected = true;
                     window.location.href = TARGET;
                 }
             } else if (audioInit && audioCtx.state === 'running') {
-                if (waterFilter && waterSource && waterGain) {
-                    let waveCycle = Math.sin(now * 0.0003 * engineConfig.energy);
+                let waveCycle = Math.sin(waveTime * 0.3); 
+                
+                // === WATER: Base layer, always present ===
+                if (waterFilter && waterSource) {
+                    let targetWaterFreq = 250 + (waveCycle * 100) + (engineConfig.height * 600) - (mY * 150);
+                    waterFilter.frequency.setTargetAtTime(Math.max(150, targetWaterFreq), audioCtx.currentTime, 0.1);
                     
-                    let sunY = mY + 0.15;
-                    let sunFactor = Math.max(0.0, Math.min(1.0, (sunY + 0.1) / 0.5));
+                    let targetRate = 0.4 + (engineConfig.energy * 0.02) + (waveCycle * 0.03);
+                    waterSource.playbackRate.setTargetAtTime(Math.max(0.1, targetRate), audioCtx.currentTime, 0.1);
                     
-                    let baseFreq = 120 + (800 - 120) * sunFactor;
-                    let targetWaterFreq = baseFreq + (waveCycle * 100) + (engineConfig.height * 600);
+                    // Water volume: stronger during day, quieter at night
+                    let waterVol = 0.12 + currentDayFactor * 0.08;
+                    waterGain.gain.setTargetAtTime(waterVol, audioCtx.currentTime, 0.3);
+                }
+                
+                // === WIND: Stronger during day, subtle at night ===
+                if (windFilter && windGain) {
+                    let windFreq = 600 + currentDayFactor * 600 + sunsetFactor * 400;
+                    windFilter.frequency.setTargetAtTime(windFreq, audioCtx.currentTime, 0.3);
                     
-                    let baseRate = 0.2 + (0.6 - 0.2) * sunFactor;
-                    let targetRate = baseRate + (engineConfig.energy * 0.02) + (waveCycle * 0.03);
+                    let windVol = 0.03 + currentDayFactor * 0.05 + sunsetFactor * 0.04;
+                    windGain.gain.setTargetAtTime(windVol, audioCtx.currentTime, 0.3);
+                }
+                
+                // === AMBIENT PAD: Emotional layer, shifts with time ===
+                if (ambientFilter && ambientGain) {
+                    // Warm filter during day, cooler at night
+                    let ambientFreq = 1500 + currentDayFactor * 1000 - currentNightFactor * 500;
+                    ambientFilter.frequency.setTargetAtTime(ambientFreq, audioCtx.currentTime, 0.5);
                     
-                    let targetVol = 0.03 + (0.20 - 0.03) * sunFactor;
-
-                    let audioLerp = 1.0 - Math.pow(0.85, dtFactor);
+                    // Richer during sunset
+                    let ambientVol = 0.03 + currentDayFactor * 0.03 + sunsetFactor * 0.04;
+                    ambientGain.gain.setTargetAtTime(ambientVol, audioCtx.currentTime, 0.3);
+                }
+                
+                // === NIGHT AMBIENCE: Crickets, night sounds ===
+                if (nightFilter && nightGain) {
+                    // Only active at night
+                    let nightVol = currentNightFactor * 0.12;
+                    nightGain.gain.setTargetAtTime(nightVol, audioCtx.currentTime, 0.5);
                     
-                    waterFilter.frequency.value += (Math.max(100, targetWaterFreq) - waterFilter.frequency.value) * audioLerp;
-                    waterSource.playbackRate.value += (Math.max(0.1, targetRate) - waterSource.playbackRate.value) * audioLerp;
-                    waterGain.gain.value += (targetVol - waterGain.gain.value) * (audioLerp * 0.5);
+                    // Filter opens slightly with moon for more detail
+                    let nightFreq = 300 + Math.abs(mY) * 150;
+                    nightFilter.frequency.setTargetAtTime(nightFreq, audioCtx.currentTime, 0.3);
+                }
+                
+                // === DEEP DRONE: Sub bass for immersion ===
+                if (droneGain) {
+                    // Drone increases at night for eerie feel
+                    let droneVol = 0.02 + currentNightFactor * 0.04;
+                    // Slight warmth during sunset
+                    droneVol += sunsetFactor * 0.02;
+                    droneGain.gain.setTargetAtTime(droneVol, audioCtx.currentTime, 0.5);
                 }
             }
 
@@ -1153,9 +1515,8 @@ void main() {
             gl.uniform1f(uLocs.time, now * 0.001);
             gl.uniform2f(uLocs.mouse, mX, mY);
             gl.uniform1f(uLocs.warp, warp);
-
+            gl.uniform1f(uLocs.wTime, waveTime); 
             gl.uniform3f(uLocs.wColor, engineConfig.r, engineConfig.g, engineConfig.b);
-            gl.uniform1f(uLocs.wEnergy, engineConfig.energy);
             gl.uniform1f(uLocs.wHeight, engineConfig.height);
             gl.uniform1f(uLocs.sDensity, engineConfig.stars);
 
@@ -1173,18 +1534,14 @@ void main() {
             }
         });
 
-        document.getElementById('auth-input').addEventListener('keydown', async (e) => {
+        document.getElementById('auth-input').addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 const val = e.target.value.trim();
                 
-                const msgBuffer = new TextEncoder().encode(val);
-                const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-                const hashArray = Array.from(new Uint8Array(hashBuffer));
-                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-                if (hashHex === '3057e9b04f32c9497e7f62c5db4d93bd579997184282563f10111f1de43c3325') {
+                if (val === 'abcab123') {
                     document.getElementById('auth-modal').style.display = 'none';
                     document.getElementById('custom-panel').style.display = 'flex';
+                    e.target.value = '';
                 } else {
                     e.target.style.color = '#ff4444';
                     setTimeout(() => e.target.style.color = '#fff', 600);
@@ -1194,10 +1551,18 @@ void main() {
 
         configKeys.forEach(k => {
             document.getElementById(`inp-${k}`).addEventListener('input', (e) => {
-                lastTouchTime = Date.now(); 
+                lastTouchTime = Date.now();
                 const val = parseFloat(e.target.value);
                 document.getElementById(`val-${k}`).innerText = val.toFixed(k === 'stars' ? 0 : 2);
                 engineConfig[k] = val;
+                try { localStorage.setItem('rahatil_engine_config', JSON.stringify(engineConfig)); } catch (err) { }
+            });
+        });
+
+        textKeys.forEach(k => {
+            document.getElementById(`inp-${k}`).addEventListener('input', (e) => {
+                engineConfig[k] = e.target.value;
+                applyTextConfig();
                 try { localStorage.setItem('rahatil_engine_config', JSON.stringify(engineConfig)); } catch (err) { }
             });
         });
