@@ -1,3 +1,19 @@
+﻿# AI READY CODEBASE
+> **LAST SYNC:** 22:27:12
+> **TRIGGER:** index.html
+
+## PROJECT STRUCTURE
+``text
+├── .qodo
+│   ├── agents
+│   └── workflows
+└── index.html
+``
+
+## SOURCE CODE
+---
+### File: index.html
+``text
 <!DOCTYPE html>
 <html>
 
@@ -1811,3 +1827,4 @@ void main() {
 </body>
 
 </html>
+``
