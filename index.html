@@ -1064,7 +1064,11 @@ void main() {
         let tmpVec3 = new Float32Array(3);
         let tmpVec2 = new Float32Array(2);
 
-        if (isMobile) document.getElementById('cursor').style.display = 'none';
+        if (isMobile) {
+            document.getElementById('cursor').style.display = 'none';
+            document.getElementById('intro-layer').style.display = 'none';
+            if (!audioInit) initExperience();
+        }
 
         const configKeys =['energy', 'height', 'stars', 'r', 'g', 'b'];
         const textKeys =['mainTitle', 'btnText', 'cineTitle', 'cineSub1', 'cineSub2', 'targetUrl'];
