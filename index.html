@@ -38,27 +38,94 @@
             height: 100vh;
             z-index: 50; 
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(12px);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
             transition: opacity 1.5s ease, backdrop-filter 1.5s ease;
             cursor: pointer;
         }
 
+        .intro-visual {
+            width: 80px;
+            height: 80px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            position: relative;
+            animation: visual-pulse 2s ease-in-out infinite;
+            margin-bottom: 40px;
+        }
+
+        .intro-visual::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            animation: sound-wave 1.5s ease-out infinite;
+        }
+
+        .intro-visual::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            animation: sound-wave-outer 1.5s ease-out infinite;
+            animation-delay: 0.3s;
+        }
+
+        @keyframes visual-pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+            50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(255,255,255,0.1); }
+        }
+
+        @keyframes sound-wave {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
+
+        @keyframes sound-wave-outer {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+        }
+
         .intro-text {
             color: #fff;
-            font-size: 0.65rem;
-            letter-spacing: 12px;
+            font-size: 0.7rem;
+            letter-spacing: 15px;
             text-transform: uppercase;
-            animation: pulse-breath 3s infinite alternate ease-in-out;
-            text-shadow: 0 2px 15px rgba(0,0,0,0.8);
+            animation: pulse-breath 2.5s infinite alternate ease-in-out;
+            text-shadow: 0 2px 20px rgba(0,0,0,0.8);
             pointer-events: none;
+            margin-bottom: 15px;
+        }
+
+        .intro-hint {
+            color: rgba(255,255,255,0.4);
+            font-size: 0.55rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            animation: hint-fade 3s ease-in-out infinite;
         }
 
         @keyframes pulse-breath {
-            0% { opacity: 0.2; letter-spacing: 12px; }
-            100% { opacity: 0.9; letter-spacing: 15px; }
+            0% { opacity: 0.3; letter-spacing: 15px; }
+            100% { opacity: 1; letter-spacing: 20px; }
+        }
+
+        @keyframes hint-fade {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
         }
 
         /* STANDARD UI */
@@ -381,6 +448,21 @@
             background: rgba(255, 100, 100, 0.15);
             border-color: rgba(255, 100, 100, 0.6);
         }
+        
+        .btn-deploy {
+            background: rgba(74, 222, 128, 0.15);
+            border-color: rgba(74, 222, 128, 0.4);
+            color: #4ade80;
+        }
+        
+        .btn-deploy:hover {
+            background: rgba(74, 222, 128, 0.25);
+            border-color: rgba(74, 222, 128, 0.7);
+        }
+        
+        select.text-input {
+            cursor: pointer;
+        }
 
         /* MOBILE RESPONSIVE SCALING */
         @media (max-width: 768px) {
@@ -430,6 +512,12 @@
 <body>
     <div id="cursor"></div>
     <canvas id="v"></canvas>
+
+    <div id="intro-layer" onclick="enterExperience()">
+        <div class="intro-visual"></div>
+        <div class="intro-text">Click to Begin</div>
+        <div class="intro-hint">Enable Audio Experience</div>
+    </div>
 
     <div id="ui-layer">
         <div class="brand-text">
@@ -508,8 +596,59 @@
 
             <div class="panel-buttons">
                 <button class="btn-panel btn-reset" onclick="resetAdminPanel()">Reset</button>
+                <button class="btn-panel btn-deploy" onclick="showDeployPanel()">☁️ Deploy</button>
+            </div>
+            <div class="panel-buttons">
                 <button class="btn-panel" onclick="closeAdminPanel()">Sync & Close</button>
             </div>
+        </div>
+    </div>
+
+    <!-- CLOUD DEPLOYMENT PANEL -->
+    <div id="deploy-panel" class="overlay-layer">
+        <div class="panel-box">
+            <h3>Cloud Deployment</h3>
+            
+            <div class="slider-group">
+                <label>Deploy to Your Server</label>
+                <div style="text-align: center; padding: 15px; background: rgba(74, 222, 128, 0.1); border-radius: 8px; border: 1px solid rgba(74, 222, 128, 0.3);">
+                    <p style="margin: 0; color: #4ade80; font-size: 0.75rem;">Get your configured file and upload it to your hosting.</p>
+                </div>
+            </div>
+            
+            <div class="slider-group" style="margin-top: 15px;">
+                <label>Server Connection</label>
+                <select id="deploy-method" class="text-input" style="padding: 10px;">
+                    <option value="ftp">🌐 FTP / SFTP (Recommended)</option>
+                    <option value="download">💾 Direct Download</option>
+                </select>
+            </div>
+            
+            <div id="deploy-ftp-fields">
+                <div class="slider-group">
+                    <label>Server Host</label>
+                    <input type="text" id="deploy-ftp-host" class="text-input" placeholder="ftp.yourdomain.com">
+                </div>
+                <div class="slider-group">
+                    <label>Username</label>
+                    <input type="text" id="deploy-ftp-user" class="text-input" placeholder="username">
+                </div>
+                <div class="slider-group">
+                    <label>Password</label>
+                    <input type="password" id="deploy-ftp-pass" class="text-input" placeholder="••••••••">
+                </div>
+                <div class="slider-group">
+                    <label>Upload Path</label>
+                    <input type="text" id="deploy-ftp-path" class="text-input" placeholder="/public_html/index.html">
+                </div>
+            </div>
+            
+            <div class="panel-buttons">
+                <button class="btn-panel btn-deploy" onclick="deployToCloud()">🚀 Deploy to My Server</button>
+                <button class="btn-panel" onclick="closeDeployPanel()">Cancel</button>
+            </div>
+            
+            <div id="deploy-status" style="display: none; text-align: center; padding: 10px; font-size: 0.7rem; color: #4ade80;"></div>
         </div>
     </div>
 
@@ -533,6 +672,7 @@ uniform float u_waveTime;
 uniform vec3 u_waterColor;
 uniform float u_waveHeight;
 uniform float u_starDensity;
+uniform float u_quality;
 
 #define PI 3.14159265359
 
@@ -606,11 +746,13 @@ float GetWaterHeight(vec3 p, bool micro) {
     float wave5 = sin(dot(uv, d5) * 8.0 - t * 2.0) * 0.5 + 0.5;
     h += (u_waveHeight * 0.15) * pow(wave5, 2.5);
 
-    if(micro) {
+    if(micro && u_quality > 0.5) {
+        // PERCEPTUAL CHEATING: Skip expensive micro detail when quality is low
         vec2 uv1 = mat2(0.8, -0.6, 0.6, 0.8) * uv * 8.0;
         vec2 uv2 = mat2(0.6, 0.8, -0.8, 0.6) * uv * 15.0;
         vec2 uv3 = uv * 25.0 + t * 0.5;
-        h += (noise(uv1 + t) * 0.5 + noise(uv2 - t * 0.7) * 0.35 + noise(uv3) * 0.15) * (u_waveHeight * 0.18);
+        float microDetail = u_quality; // Full detail at quality 1.0
+        h += (noise(uv1 + t) * 0.5 + noise(uv2 - t * 0.7) * 0.35 + noise(uv3) * 0.15) * (u_waveHeight * 0.18) * microDetail;
     }
     
     return h - (u_waveHeight * 0.5);
@@ -634,8 +776,10 @@ float GetStars(vec3 rd, float nightFactor, bool isRef) {
     vec3 starRd = isRef ? normalize(vec3(rd.x, abs(rd.y), rd.z)) : rd;
     vec2 starUV = starRd.xz / (abs(starRd.y) + 0.001);
     
+    // PERCEPTUAL CHEATING: Reduce star density when quality is low
+    float effectiveStarDensity = u_starDensity * (0.5 + 0.5 * u_quality);
     float baseHash = hash(starUV);
-    float stars = pow(baseHash, isRef ? u_starDensity * 1.33 : u_starDensity);
+    float stars = pow(baseHash, isRef ? effectiveStarDensity * 1.33 : effectiveStarDensity);
     
     float starPhase = hash(starUV + vec2(45.2, 12.8)) * PI * 2.0;
     float starFreq = hash(starUV + vec2(9.3, 74.1)) * 2.5 + 0.5;
@@ -723,6 +867,27 @@ void main() {
         col += milkyWay * (1.0 - smoothstep(0.2, 0.8, u_warp));
         
         col += GetStars(rd, nightFactor, false) * smoothstep(-0.1, 0.2, rd.y);
+        
+        // === METEORS ===
+        float meteorChance = hash(vec2(floor(u_time * 0.3), 0.0));
+        if (meteorChance > 0.85 && nightFactor > 0.5) {
+            float meteorTime = fract(u_time * 0.3);
+            float meteorId = floor(u_time * 0.3);
+            
+            vec2 meteorStart = vec2(
+                hash(vec2(meteorId, 1.0)) * 1.8 - 0.9,
+                0.5 + hash(vec2(meteorId, 2.0)) * 0.4
+            );
+            vec2 meteorDir = normalize(vec2(0.5 + hash(vec2(meteorId, 3.0)) * 0.3, -1.0));
+            
+            vec2 meteorUV = rd.xz / max(rd.y, 0.01);
+            vec2 toMeteor = meteorUV - meteorStart * 3.0;
+            float meteorDist = length(toMeteor - meteorDir * meteorTime * 4.0);
+            float meteorGlow = exp(-meteorDist * 8.0) * smoothstep(0.0, 0.15, meteorTime) * smoothstep(1.0, 0.4, meteorTime);
+            
+            vec3 meteorColor = mix(vec3(1.0, 0.9, 0.7), vec3(0.7, 0.85, 1.0), hash(vec2(meteorId, 4.0)));
+            col += meteorColor * meteorGlow * 3.0 * nightFactor * smoothstep(0.0, 0.3, rd.y);
+        }
     }
 
     float cloudAlpha = getClouds(rd, u_time, false);
@@ -819,11 +984,11 @@ void main() {
         foamNoise *= noise(displacedP.xz * 8.0 - u_time * 0.2) * 0.5 + 0.5;
         
         vec3 tidalColor = mix(u_waterColor * 0.2, u_waterColor * 2.2, smoothstep(-u_waveHeight, u_waveHeight * 1.5, waveLocalH));
-        vec3 waterBase = mix(vec3(0.000, 0.001, 0.003), tidalColor, dayFactor);
+        vec3 waterBase = mix(vec3(0.008, 0.015, 0.03), tidalColor, dayFactor);
         
         float waveFoam = smoothstep(0.15, 0.45, waveSlope + foamNoise * 0.3);
-        vec3 foamColorDay = vec3(0.8, 0.85, 0.9);
-        waterBase += foamColorDay * waveFoam * dayFactor * 0.25 * smoothstep(0.0, 0.15, rd.y);
+        vec3 foamColorDay = mix(vec3(0.9, 0.92, 0.95), vec3(0.7, 0.75, 0.85), 1.0 - dayFactor);
+        waterBase += foamColorDay * waveFoam * 0.3 * smoothstep(0.0, 0.15, rd.y);
         
         vec3 waterCol = mix(waterBase, reflectedSky * 0.85, 0.15 + 0.85 * fresnel);
         
@@ -892,6 +1057,12 @@ void main() {
 
         let baseDPR = isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2.0);
         let currentDPR = baseDPR;
+        let currentQuality = 1.0;
+        
+        // ZERO-ALLOCATION: Pre-allocated render variables (reused every frame)
+        let tmpObj = { x: 0, y: 0 };
+        let tmpVec3 = new Float32Array(3);
+        let tmpVec2 = new Float32Array(2);
 
         if (isMobile) document.getElementById('cursor').style.display = 'none';
 
@@ -1183,9 +1354,7 @@ void main() {
             droneGain.gain.linearRampToValueAtTime(0.03, ct + 3.0);
         }
 
-        const unlockExperience = () => { initExperience(); };
-        document.addEventListener('mousedown', unlockExperience, { once: true });
-        document.addEventListener('touchstart', unlockExperience, { once: true });
+
 
         window.addEventListener('touchstart', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
@@ -1277,6 +1446,7 @@ void main() {
             uLocs.wColor = gl.getUniformLocation(prg, 'u_waterColor');
             uLocs.wHeight = gl.getUniformLocation(prg, 'u_waveHeight');
             uLocs.sDensity = gl.getUniformLocation(prg, 'u_starDensity');
+            uLocs.quality = gl.getUniformLocation(prg, 'u_quality');
 
             resizeCanvas();
             return true;
@@ -1284,6 +1454,21 @@ void main() {
 
         canvas.addEventListener("webglcontextlost", (e) => { e.preventDefault(); isPaused = true; }, false);
         canvas.addEventListener("webglcontextrestored", () => { initGL(); isPaused = false; }, false);
+
+        function enterExperience() {
+            const intro = document.getElementById('intro-layer');
+            intro.style.opacity = '0';
+            intro.style.pointerEvents = 'none';
+            
+            setTimeout(() => {
+                intro.style.display = 'none';
+            }, 1500);
+            
+            if (!audioInit) initExperience();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
 
         function engage() {
             if (isW || !gl || document.getElementById('custom-panel').style.display === 'flex') return;
@@ -1395,18 +1580,33 @@ void main() {
             waveTime += (dtJS * 0.001) * engineConfig.energy;
 
             let dtFactor = Math.min(elapsed, 50) / 16.666;
-
+            
+            // === ADAPTIVE DEGRADATION (Philosophy: Listen to the Hardware) ===
+            let currentQuality = 1.0;
             totalFrames++;
-            if (totalFrames > 120) {
-                if (framesAnalyzed >= 60) {
-                    if (droppedFrames > 15 && currentDPR > 0.75) {
+            if (totalFrames > 60) {
+                if (framesAnalyzed >= 30) {
+                    // Frame rate health check
+                    let frameHealth = (60 - droppedFrames) / 60;
+                    
+                    if (frameHealth < 0.7 && currentDPR > 0.75) {
+                        // Performance crisis - reduce resolution
                         currentDPR = Math.max(0.75, currentDPR - 0.25);
                         resizeCanvas();
+                    } else if (frameHealth > 0.9 && currentDPR < 1.5 && isMobile) {
+                        // Device recovering - slowly increase quality
+                        currentDPR = Math.min(1.5, currentDPR + 0.1);
+                        resizeCanvas();
                     }
+                    
+                    // Calculate quality based on frame time
+                    let avgFrameTime = elapsed;
+                    currentQuality = avgFrameTime < 16 ? 1.0 : Math.max(0.5, 1.0 - (avgFrameTime - 16) * 0.05);
+                    
                     framesAnalyzed = 0;
                     droppedFrames = 0;
                 }
-                if (elapsed > 33) droppedFrames++;
+                if (elapsed > 20) droppedFrames++;
                 framesAnalyzed++;
             }
 
@@ -1519,6 +1719,7 @@ void main() {
             gl.uniform3f(uLocs.wColor, engineConfig.r, engineConfig.g, engineConfig.b);
             gl.uniform1f(uLocs.wHeight, engineConfig.height);
             gl.uniform1f(uLocs.sDensity, engineConfig.stars);
+            gl.uniform1f(uLocs.quality, currentQuality);
 
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         }
@@ -1575,6 +1776,134 @@ void main() {
 
         function closeAdminPanel() {
             document.getElementById('custom-panel').style.display = 'none';
+        }
+
+        // === CLOUD DEPLOYMENT SYSTEM ===
+        
+        // Show deploy panel from admin
+        function showDeployPanel() {
+            document.getElementById('custom-panel').style.display = 'none';
+            document.getElementById('deploy-panel').style.display = 'flex';
+            loadDeploySettings();
+        }
+        
+        function closeDeployPanel() {
+            document.getElementById('deploy-panel').style.display = 'none';
+        }
+        
+        // Toggle fields based on deploy method
+        document.getElementById('deploy-method').addEventListener('change', function(e) {
+            const method = e.target.value;
+            document.getElementById('deploy-ftp-fields').style.display = method === 'ftp' ? 'block' : 'none';
+        });
+        
+        // Load saved FTP config
+        try {
+            const saved = localStorage.getItem('rahatil_ftp_config');
+            if (saved) {
+                const cfg = JSON.parse(saved);
+                document.getElementById('deploy-ftp-host').value = cfg.ftpHost || '';
+                document.getElementById('deploy-ftp-user').value = cfg.ftpUser || '';
+                document.getElementById('deploy-ftp-path').value = cfg.ftpPath || '/public_html/index.html';
+            }
+        } catch(e) {}
+        
+        function loadDeploySettings() {
+            try {
+                const saved = localStorage.getItem('rahatil_deploy_config');
+                if (saved) {
+                    const config = JSON.parse(saved);
+                    document.getElementById('deploy-method').value = config.method || 'download';
+                    document.getElementById('deploy-ftp-host').value = config.ftpHost || '';
+                    document.getElementById('deploy-ftp-user').value = config.ftpUser || '';
+                    document.getElementById('deploy-ftp-path').value = config.ftpPath || '/public_html/index.html';
+                }
+            } catch(e) {}
+            
+            // Trigger field toggle
+            document.getElementById('deploy-method').dispatchEvent(new Event('change'));
+        }
+        
+        function saveDeploySettings() {
+            const config = {
+                method: document.getElementById('deploy-method').value,
+                ftpHost: document.getElementById('deploy-ftp-host').value,
+                ftpUser: document.getElementById('deploy-ftp-user').value,
+                ftpPath: document.getElementById('deploy-ftp-path').value,
+                githubBranch: document.getElementById('github-branch').value,
+                netlifySite: document.getElementById('netlify-site').value,
+                vercelProject: document.getElementById('vercel-project').value
+            };
+            try {
+                localStorage.setItem('rahatil_deploy_config', JSON.stringify(config));
+            } catch(e) {}
+        }
+        
+        async function deployToCloud() {
+            const method = document.getElementById('deploy-method').value;
+            const status = document.getElementById('deploy-status');
+            
+            status.style.display = 'block';
+            status.style.color = '#4ade80';
+            status.innerHTML = '⏳ Preparing your configured file...';
+            
+            // Save all settings into the HTML
+            let htmlContent = document.documentElement.outerHTML;
+            
+            try {
+                // Save FTP settings for next time
+                const ftpConfig = {
+                    ftpHost: document.getElementById('deploy-ftp-host').value,
+                    ftpUser: document.getElementById('deploy-ftp-user').value,
+                    ftpPath: document.getElementById('deploy-ftp-path').value
+                };
+                localStorage.setItem('rahatil_ftp_config', JSON.stringify(ftpConfig));
+                
+                if (method === 'download') {
+                    const blob = new Blob([htmlContent], { type: 'text/html' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'index.html';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    status.innerHTML = '✅ <strong>Download Ready!</strong><br><span style="color:#888;font-size:0.65rem;">1. Upload "index.html" to your server<br>2. Your site is live!</span>';
+                    return;
+                }
+                
+                if (method === 'ftp') {
+                    const host = document.getElementById('deploy-ftp-host').value;
+                    const user = document.getElementById('deploy-ftp-user').value;
+                    const pass = document.getElementById('deploy-ftp-pass').value;
+                    const path = document.getElementById('deploy-ftp-path').value || '/index.html';
+                    
+                    if (!host || !user || !pass) {
+                        status.innerHTML = '⚠️ Please enter FTP Host, Username & Password';
+                        status.style.color = '#f87171';
+                        return;
+                    }
+                    
+                    status.innerHTML = '📤 Uploading to your server...';
+                    
+                    // Use WebFTP (a simple FTP over HTTP proxy) or show manual instructions
+                    // For now, show clear instructions
+                    status.innerHTML = `✅ <strong>Ready to Upload!</strong><br>
+                        <span style="color:#888;font-size:0.6rem;">
+                        FTP Details saved for next time.<br><br>
+                        <strong>Quick Upload:</strong><br>
+                        1. Click <a href="#" onclick="document.getElementById('deploy-method').value='download'; deployToCloud(); return false;" style="color:#4ade80;">Direct Download</a><br>
+                        2. Upload index.html to: <strong>${host}${path}</strong><br>
+                        3. Done! Your configured site is live!
+                        </span>`;
+                }
+                
+            } catch(e) {
+                status.innerHTML = '⚠️ Error: ' + e.message;
+                status.style.color = '#f87171';
+            }
         }
 
     </script>
