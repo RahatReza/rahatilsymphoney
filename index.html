@@ -23,7 +23,7 @@
             font-family: 'Inter', sans-serif;
             cursor: none;
             touch-action: none;
-            -webkit-touch-callout: none;
+            -webkit-touch-callout: none
         }
 
         canvas {
@@ -34,7 +34,7 @@
             z-index: 1;
             filter: contrast(1.05);
             opacity: 0;
-            transition: opacity 2s ease;
+            transition: opacity 2s ease
         }
 
         #intro-layer {
@@ -48,20 +48,20 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, .85);
             backdrop-filter: blur(20px);
             transition: opacity 1.5s ease, backdrop-filter 1.5s ease;
-            cursor: pointer;
+            cursor: pointer
         }
 
         .intro-visual {
             width: 80px;
             height: 80px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, .2);
             border-radius: 50%;
             position: relative;
             animation: visual-pulse 2s ease-in-out infinite;
-            margin-bottom: 40px;
+            margin-bottom: 40px
         }
 
         .intro-visual::before {
@@ -72,9 +72,9 @@
             transform: translate(-50%, -50%);
             width: 20px;
             height: 20px;
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, .8);
             border-radius: 50%;
-            animation: sound-wave 1.5s ease-out infinite;
+            animation: sound-wave 1.5s ease-out infinite
         }
 
         .intro-visual::after {
@@ -85,10 +85,10 @@
             transform: translate(-50%, -50%);
             width: 40px;
             height: 40px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, .3);
             border-radius: 50%;
             animation: sound-wave-outer 1.5s ease-out infinite;
-            animation-delay: 0.3s;
+            animation-delay: .3s
         }
 
         @keyframes visual-pulse {
@@ -96,67 +96,67 @@
             0%,
             100% {
                 transform: scale(1);
-                opacity: 0.8;
+                opacity: .8
             }
 
             50% {
                 transform: scale(1.05);
-                opacity: 1;
+                opacity: 1
             }
         }
 
         @keyframes sound-wave {
             0% {
-                transform: translate(-50%, -50%) scale(0.5);
-                opacity: 1;
+                transform: translate(-50%, -50%) scale(.5);
+                opacity: 1
             }
 
             100% {
                 transform: translate(-50%, -50%) scale(2);
-                opacity: 0;
+                opacity: 0
             }
         }
 
         @keyframes sound-wave-outer {
             0% {
-                transform: translate(-50%, -50%) scale(0.5);
-                opacity: 0.8;
+                transform: translate(-50%, -50%) scale(.5);
+                opacity: .8
             }
 
             100% {
                 transform: translate(-50%, -50%) scale(2.5);
-                opacity: 0;
+                opacity: 0
             }
         }
 
         .intro-text {
             color: #fff;
-            font-size: 0.7rem;
+            font-size: .7rem;
             letter-spacing: 15px;
             text-transform: uppercase;
             animation: pulse-breath 2.5s infinite alternate ease-in-out;
-            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.8);
+            text-shadow: 0 2px 20px rgba(0, 0, 0, .8);
             pointer-events: none;
-            margin-bottom: 15px;
+            margin-bottom: 15px
         }
 
         .intro-hint {
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 0.55rem;
+            color: rgba(255, 255, 255, .4);
+            font-size: .55rem;
             letter-spacing: 4px;
             text-transform: uppercase;
-            animation: hint-fade 3s ease-in-out infinite;
+            animation: hint-fade 3s ease-in-out infinite
         }
 
         @keyframes pulse-breath {
             0% {
-                opacity: 0.3;
-                transform: scale(1);
+                opacity: .3;
+                transform: scale(1)
             }
 
             100% {
                 opacity: 1;
-                transform: scale(1.02);
+                transform: scale(1.02)
             }
         }
 
@@ -164,11 +164,11 @@
 
             0%,
             100% {
-                opacity: 0.3;
+                opacity: .3
             }
 
             50% {
-                opacity: 0.8;
+                opacity: .8
             }
         }
 
@@ -182,11 +182,11 @@
             justify-content: center;
             align-items: center;
             pointer-events: none;
-            transition: opacity 1.2s ease;
+            transition: opacity 1.2s ease
         }
 
         .brand-text {
-            text-align: center;
+            text-align: center
         }
 
         h1 {
@@ -196,7 +196,7 @@
             margin: 0;
             font-size: 3.2rem;
             text-transform: uppercase;
-            text-shadow: 0 4px 30px rgba(0, 0, 0, 0.35), 0 0 15px rgba(255, 255, 255, 0.2);
+            text-shadow: 0 4px 30px rgba(0, 0, 0, .35), 0 0 15px rgba(255, 255, 255, .2)
         }
 
         .btn-init {
@@ -204,13 +204,13 @@
             pointer-events: auto;
             cursor: pointer;
             color: #fff;
-            font-size: 0.7rem;
+            font-size: .7rem;
             letter-spacing: 15px;
             text-transform: uppercase;
-            opacity: 0.5;
-            transition: 0.4s;
+            opacity: .5;
+            transition: .4s;
             position: relative;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, .4)
         }
 
         .btn-init::after {
@@ -221,19 +221,19 @@
             width: 50%;
             height: 1px;
             background: #fff;
-            opacity: 0.2;
-            transition: 0.4s;
+            opacity: .2;
+            transition: .4s
         }
 
         .btn-init:hover {
             opacity: 1;
-            letter-spacing: 20px;
+            letter-spacing: 20px
         }
 
         .btn-init:hover::after {
             width: 100%;
             left: 0;
-            opacity: 1;
+            opacity: 1
         }
 
         #cinematic-layer {
@@ -249,8 +249,8 @@
             pointer-events: none;
             gap: 20px;
             opacity: 0;
-            transition: opacity 0.6s ease;
-            width: 100%;
+            transition: opacity .6s ease;
+            width: 100%
         }
 
         .cine-title {
@@ -259,47 +259,47 @@
             color: #fff;
             letter-spacing: 15px;
             text-transform: uppercase;
-            text-shadow: 0 4px 25px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 255, 255, 0.2);
+            text-shadow: 0 4px 25px rgba(0, 0, 0, .4), 0 0 20px rgba(255, 255, 255, .2);
             opacity: 0;
             transform: translateY(20px);
-            transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-            text-align: center;
+            transition: all .8s cubic-bezier(.2, .8, .2, 1);
+            text-align: center
         }
 
         .cine-sub {
-            font-size: 0.65rem;
+            font-size: .65rem;
             color: #ddd;
             letter-spacing: 12px;
             text-transform: uppercase;
             opacity: 0;
             transform: translateY(15px);
-            transition: all 0.6s ease;
+            transition: all .6s ease;
             text-align: center;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, .5)
         }
 
         #cinematic-layer.active {
-            opacity: 1;
+            opacity: 1
         }
 
         #cinematic-layer.active .cine-title {
             opacity: 1;
             transform: translateY(0);
             letter-spacing: 28px;
-            transition-delay: 0.1s;
+            transition-delay: .1s
         }
 
         #cinematic-layer.active .cine-sub:nth-child(2) {
             opacity: 1;
             transform: translateY(0);
-            transition-delay: 0.4s;
+            transition-delay: .4s
         }
 
         #cinematic-layer.active .cine-sub:nth-child(3) {
             opacity: 1;
             transform: translateY(0);
             color: #fff;
-            transition-delay: 0.8s;
+            transition-delay: .8s
         }
 
         #cursor {
@@ -312,10 +312,9 @@
             border-radius: 50%;
             transform: translate(-50%, -50%);
             mix-blend-mode: difference;
-            transition: transform 0.2s ease;
+            transition: transform .2s ease
         }
 
-        /* ENGINEERING OVERRIDE PANEL UI */
         .overlay-layer {
             position: absolute;
             top: 0;
@@ -326,9 +325,9 @@
             display: none;
             justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, .6);
             backdrop-filter: blur(8px);
-            pointer-events: auto;
+            pointer-events: auto
         }
 
         #auth-input {
@@ -343,16 +342,16 @@
             letter-spacing: 5px;
             padding: 10px;
             width: 300px;
-            text-transform: uppercase;
+            text-transform: uppercase
         }
 
         #auth-input::placeholder {
-            color: rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, .3)
         }
 
         .panel-box {
-            background: rgba(10, 10, 15, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(10, 10, 15, .8);
+            border: 1px solid rgba(255, 255, 255, .1);
             border-radius: 8px;
             padding: 30px;
             width: 400px;
@@ -361,29 +360,28 @@
             overflow-y: auto;
             color: #fff;
             font-family: 'Inter', sans-serif;
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 40px rgba(0, 0, 0, .8);
             display: flex;
             flex-direction: column;
             gap: 15px;
-            box-sizing: border-box;
+            box-sizing: border-box
         }
 
-        /* Custom Scrollbar for Panel */
         .panel-box::-webkit-scrollbar {
-            width: 6px;
+            width: 6px
         }
 
         .panel-box::-webkit-scrollbar-track {
-            background: transparent;
+            background: transparent
         }
 
         .panel-box::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
+            background: rgba(255, 255, 255, .2);
+            border-radius: 4px
         }
 
         .panel-box::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, .4)
         }
 
         .panel-box h3 {
@@ -393,33 +391,33 @@
             text-transform: uppercase;
             font-size: 1.2rem;
             text-align: center;
-            color: #aaa;
+            color: #aaa
         }
 
         .slider-group {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 5px
         }
 
         .slider-group label {
-            font-size: 0.7rem;
+            font-size: .7rem;
             letter-spacing: 2px;
             text-transform: uppercase;
             color: #888;
             display: flex;
-            justify-content: space-between;
+            justify-content: space-between
         }
 
         .slider-group span {
-            color: #fff;
+            color: #fff
         }
 
         input[type=range] {
             -webkit-appearance: none;
             appearance: none;
             width: 100%;
-            background: transparent;
+            background: transparent
         }
 
         input[type=range]::-webkit-slider-thumb {
@@ -430,132 +428,128 @@
             border-radius: 50%;
             background: #fff;
             cursor: pointer;
-            margin-top: -7px;
+            margin-top: -7px
         }
 
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
             height: 2px;
             cursor: pointer;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 1px;
+            background: rgba(255, 255, 255, .2);
+            border-radius: 1px
         }
 
         .text-input {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, .4);
+            border: 1px solid rgba(255, 255, 255, .2);
             color: #fff;
             font-family: 'Inter', sans-serif;
-            font-size: 0.75rem;
+            font-size: .75rem;
             padding: 8px;
             width: 100%;
             border-radius: 4px;
             box-sizing: border-box;
             outline: none;
-            transition: 0.3s;
-            margin-top: 4px;
+            transition: .3s;
+            margin-top: 4px
         }
 
         .text-input:focus {
-            border-color: rgba(255, 255, 255, 0.7);
-            background: rgba(0, 0, 0, 0.6);
+            border-color: rgba(255, 255, 255, .7);
+            background: rgba(0, 0, 0, .6)
         }
 
         .panel-buttons {
             display: flex;
             gap: 10px;
-            margin-top: 15px;
+            margin-top: 15px
         }
 
         .btn-panel {
             flex: 1;
             padding: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, .1);
+            border: 1px solid rgba(255, 255, 255, .2);
             color: #fff;
             cursor: pointer;
             text-transform: uppercase;
             letter-spacing: 3px;
             font-family: 'Inter';
-            font-size: 0.65rem;
-            transition: 0.3s;
+            font-size: .65rem;
+            transition: .3s
         }
 
         .btn-panel:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, .2)
         }
 
         .btn-reset {
             color: #ffa0a0;
-            border-color: rgba(255, 100, 100, 0.3);
+            border-color: rgba(255, 100, 100, .3)
         }
 
         .btn-reset:hover {
-            background: rgba(255, 100, 100, 0.15);
-            border-color: rgba(255, 100, 100, 0.6);
+            background: rgba(255, 100, 100, .15);
+            border-color: rgba(255, 100, 100, .6)
         }
 
         .btn-deploy {
-            background: rgba(74, 222, 128, 0.15);
-            border-color: rgba(74, 222, 128, 0.4);
-            color: #4ade80;
+            background: rgba(74, 222, 128, .15);
+            border-color: rgba(74, 222, 128, .4);
+            color: #4ade80
         }
 
         .btn-deploy:hover {
-            background: rgba(74, 222, 128, 0.25);
-            border-color: rgba(74, 222, 128, 0.7);
+            background: rgba(74, 222, 128, .25);
+            border-color: rgba(74, 222, 128, .7)
         }
 
         select.text-input {
-            cursor: pointer;
+            cursor: pointer
         }
 
-        /* MOBILE RESPONSIVE SCALING */
-        @media (max-width: 768px) {
+        @media (max-width:768px) {
             h1 {
                 font-size: 2.2rem;
                 letter-spacing: 18px;
-                margin-left: 18px;
+                margin-left: 18px
             }
 
             .btn-init {
-                font-size: 0.6rem;
+                font-size: .6rem;
                 letter-spacing: 10px;
-                margin-top: 50px;
+                margin-top: 50px
             }
 
             .btn-init:hover {
-                letter-spacing: 12px;
+                letter-spacing: 12px
             }
 
             .cine-title {
                 font-size: 1.5rem;
-                letter-spacing: 8px;
+                letter-spacing: 8px
             }
 
             .cine-sub {
-                font-size: 0.5rem;
-                letter-spacing: 6px;
+                font-size: .5rem;
+                letter-spacing: 6px
             }
 
             #cinematic-layer.active .cine-title {
-                letter-spacing: 15px;
+                letter-spacing: 15px
             }
 
             .panel-box {
                 padding: 20px;
-                gap: 12px;
+                gap: 12px
             }
 
             .panel-box h3 {
                 font-size: 1rem;
-                letter-spacing: 5px;
+                letter-spacing: 5px
             }
         }
     </style>
-</head>
-
-<body>
     <div id="cursor"></div>
     <canvas id="v"></canvas>
 
@@ -1067,383 +1061,18 @@ void main() {
     col = (col*(2.51*col+0.03))/(col*(2.43*col+0.59)+0.14);
     fragColor = vec4(pow(col, vec3(1.0/2.2)), 1.0);
 }</script>
-    <script>
-        const CLOUD_SAVE_ENDPOINT = "https://your-api-endpoint.com/v1/config";
-        const CLOUD_AUTH_BEARER = "";
+    <script>const CLOUD_SAVE_ENDPOINT = "https://your-api-endpoint.com/v1/config", CLOUD_AUTH_BEARER = "", canvas = document.getElementById('v'); let gl, prg, isW = !1, warp = 0, mX = 0, mY = .2, redirected = !1, offsetMX = 0, offsetMY = 0, isTouching = !1, waveTime = 0, lastTimeJS = 0, TARGET = "https://www.linkedin.com/in/rahatreza100/", isPaused = !1, isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768, baseDPR = isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2), currentDPR = baseDPR, globalQuality = 1, totalFrames = 0; const configKeys = ['energy', 'height', 'stars', 'r', 'g', 'b'], textKeys = ['mainTitle', 'btnText', 'cineTitle', 'cineSub1', 'cineSub2', 'targetUrl'], defaultConfig = { energy: 2.2, height: .05, stars: 600, r: .01, g: .04, b: .08, mainTitle: "RAHATIL", btnText: "Initialize", cineTitle: "Welcome, Rahatil", cineSub1: "Calibrating Tidal Engine...", cineSub2: "Redirecting to Terminal", targetUrl: "https://www.linkedin.com/in/rahatreza100/" }, uLocs = {}; let engineConfig = { ...defaultConfig }; try { const savedData = localStorage.getItem('rahatil_engine_config'); if (savedData) engineConfig = { ...defaultConfig, ...JSON.parse(savedData) } } catch (e) { } function applyTextConfig() { document.getElementById('ui-mainTitle').innerText = engineConfig.mainTitle; document.getElementById('ui-btnText').innerText = engineConfig.btnText; document.getElementById('ui-cineTitle').innerText = engineConfig.cineTitle; document.getElementById('ui-cineSub1').innerText = engineConfig.cineSub1; document.getElementById('ui-cineSub2').innerText = engineConfig.cineSub2; TARGET = engineConfig.targetUrl } function syncUIWithConfig() { configKeys.forEach(k => { document.getElementById(`inp-${k}`).value = engineConfig[k]; document.getElementById(`val-${k}`).innerText = parseFloat(engineConfig[k]).toFixed(k === 'stars' ? 0 : 2) }); textKeys.forEach(k => { document.getElementById(`inp-${k}`).value = engineConfig[k] || '' }); applyTextConfig() } syncUIWithConfig();
 
-        const canvas = document.getElementById('v');
-        let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.2, redirected = false;
 
-        let offsetMX = 0, offsetMY = 0;
-        let isTouching = false;
+        let audioCtx, waterSource, waterFilter, waterGain, windSource, windFilter, windGain, ambientSource, ambientFilter, ambientGain, nightSource, nightFilter, nightGain, droneSource, droneOsc, droneGain, masterPanner, audioInit = !1, gyroActive = !1, lastTouchTime = 0, targetMX = 0, targetMY = .2, currentDayFactor = .5, currentNightFactor = .5, lastBeta = null, lastGamma = null; function enterExperience() { const intro = document.getElementById('intro-layer'), uiL = document.getElementById('ui-layer'); if (intro) { intro.style.opacity = '0'; intro.style.pointerEvents = 'none'; intro.style.backdropFilter = 'blur(0px)'; setTimeout(() => { intro.style.display = 'none' }, 1500) } if (uiL) uiL.style.opacity = '1'; unlockAudio(); if (initGL()) requestAnimationFrame(render) } if (isMobile) { document.getElementById('cursor').style.display = 'none'; const iL = document.getElementById('intro-layer'), uL = document.getElementById('ui-layer'); if (iL) iL.style.display = 'none'; if (uL) uL.style.display = 'flex' }
 
-        let waveTime = 0;
-        let lastTimeJS = 0;
+        function handleOrientation(e) { if (null === e.beta || null === e.gamma) return; gyroActive = !0; let a = (screen.orientation ? screen.orientation.angle : window.orientation) || 0, l = e.beta, t = e.gamma; null !== lastBeta && Math.abs(l - lastBeta) > 60 && (l = lastBeta), null !== lastGamma && Math.abs(t - lastGamma) > 60 && (t = lastGamma), lastBeta = l, lastGamma = t, l = Math.max(-85, Math.min(85, l)), t = Math.max(-85, Math.min(85, t)); let o = 0, r = 0; 90 === a ? (o = l / 60, r = (t + 45) / 60) : -90 === a || 270 === a ? (o = -l / 60, r = -(t - 45) / 60) : (o = t / 60, r = (l - 45) / 60), targetMX = Math.max(-1.5, Math.min(1.5, o)), targetMY = Math.max(-.9, Math.min(.9, r)) } function unlockAudio() { if (audioInit) return; audioInit = !0; if (isMobile && "undefined" != typeof DeviceOrientationEvent) { if ("function" == typeof DeviceOrientationEvent.requestPermission) { DeviceOrientationEvent.requestPermission().then(r => { "granted" === r && window.addEventListener("deviceorientation", handleOrientation) }) } else { window.addEventListener("deviceorientation", handleOrientation) } } const e = window.AudioContext || window.webkitAudioContext; audioCtx = new e; const a = audioCtx.createBufferSource(); a.buffer = audioCtx.createBuffer(1, 1, 22050), a.connect(audioCtx.destination), a.start && a.start(0), "suspended" === audioCtx.state && audioCtx.resume(), setTimeout(() => { buildAudioGraph() }, 20) }
 
-        let TARGET = "https://www.linkedin.com/in/rahatreza100/";
+        function buildAudioGraph() { const e = 2 * audioCtx.sampleRate; if (audioCtx.createStereoPanner) try { masterPanner = audioCtx.createStereoPanner(), masterPanner.pan.value = 0, masterPanner.connect(audioCtx.destination) } catch (e) { } let a = masterPanner ? masterPanner : audioCtx.destination; const l = audioCtx.createBuffer(1, e, audioCtx.sampleRate), t = l.getChannelData(0); let o = 0; for (let a = 0; a < e; a++) { let l = 2 * Math.random() - 1; t[a] = (o + .02 * l) / 1.02, o = t[a], t[a] *= 3.5 } waterSource = audioCtx.createBufferSource(), waterSource.buffer = l, waterSource.loop = !0, waterFilter = audioCtx.createBiquadFilter(), waterFilter.type = "lowpass", waterFilter.frequency.value = 400, waterFilter.Q.value = .5, waterGain = audioCtx.createGain(), waterGain.gain.value = 0, waterSource.connect(waterFilter).connect(waterGain).connect(a), waterSource.start(0); const r = audioCtx.createBuffer(1, e, audioCtx.sampleRate), n = r.getChannelData(0); for (let a = 0; a < e; a++)n[a] = .5 * (2 * Math.random() - 1); windSource = audioCtx.createBufferSource(), windSource.buffer = r, windSource.loop = !0, windFilter = audioCtx.createBiquadFilter(), windFilter.type = "bandpass", windFilter.frequency.value = 800, windFilter.Q.value = .3, windGain = audioCtx.createGain(), windGain.gain.value = 0, windSource.connect(windFilter).connect(windGain).connect(a), windSource.start(0); const i = audioCtx.createBuffer(2, e, audioCtx.sampleRate); for (let a = 0; a < 2; a++) { const l = i.getChannelData(a); for (let t = 0; t < e; t++) { let o = t / audioCtx.sampleRate, r = .1 * Math.sin(110 * o * Math.PI) + .08 * Math.sin(165 * o * Math.PI) + .06 * Math.sin(220 * o * Math.PI); l[t] = .3 * r + .02 * (2 * Math.random() - 1) } } ambientSource = audioCtx.createBufferSource(), ambientSource.buffer = i, ambientSource.loop = !0, ambientFilter = audioCtx.createBiquadFilter(), ambientFilter.type = "lowpass", ambientFilter.frequency.value = 2e3, ambientGain = audioCtx.createGain(), ambientGain.gain.value = 0, ambientSource.connect(ambientFilter).connect(ambientGain).connect(a), ambientSource.start(0); const c = audioCtx.createBuffer(1, e, audioCtx.sampleRate), s = c.getChannelData(0); let u = 0; for (let a = 0; a < e; a++) { let l = a / audioCtx.sampleRate, t = .5 * Math.sin(.3 * l) + .5; t *= .5 * Math.sin(.17 * l) + .5; let o = 2 * Math.random() - 1, r = (u + .01 * o) / 1.01; u = r; let n = .8 * r * t * .4 + .8 * r * .2; n += .02 * Math.sin(5 * l * Math.PI) * t, s[a] = .6 * n } nightSource = audioCtx.createBufferSource(), nightSource.buffer = c, nightSource.loop = !0, nightFilter = audioCtx.createBiquadFilter(), nightFilter.type = "lowpass", nightFilter.frequency.value = 400, nightFilter.Q.value = .5, nightGain = audioCtx.createGain(), nightGain.gain.value = 0, nightSource.connect(nightFilter).connect(nightGain).connect(a), nightSource.start(0), droneOsc = audioCtx.createOscillator(), droneOsc.type = "sine", droneOsc.frequency.value = 40; const d = audioCtx.createOscillator(); d.type = "sine", d.frequency.value = 60; const f = audioCtx.createOscillator(); f.type = "triangle", f.frequency.value = 80, droneGain = audioCtx.createGain(), droneGain.gain.value = 0; const g = audioCtx.createBiquadFilter(); g.type = "lowpass", g.frequency.value = 100, droneOsc.connect(droneGain), d.connect(droneGain), f.connect(droneGain), droneGain.connect(g).connect(a), droneOsc.start(0), d.start(0), f.start(0); let p = audioCtx.currentTime; waterGain.gain.setValueAtTime(0, p), waterGain.gain.linearRampToValueAtTime(.15, p + 2), windGain.gain.setValueAtTime(0, p), windGain.gain.linearRampToValueAtTime(.06, p + 2.5), ambientGain.gain.setValueAtTime(0, p), ambientGain.gain.linearRampToValueAtTime(.04, p + 3), droneGain.gain.setValueAtTime(0, p), droneGain.gain.linearRampToValueAtTime(.03, p + 3) }
 
-        let isPaused = false;
-        let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+        document.addEventListener('touchstart', unlockAudio, { once: !0 }), window.addEventListener('touchstart', e => { if (!e.target.tagName.match(/INPUT|BUTTON/) && !e.target.closest('.panel-box') && !e.target.classList.contains('btn-init')) { e.cancelable && e.preventDefault(); isTouching = !0; lastTouchTime = Date.now(); mX = 1.5 * (e.touches[0].clientX / window.innerWidth * 2 - 1); mY = .7 * (1 - e.touches[0].clientY / window.innerHeight * 2) } }, { passive: !1 }), window.addEventListener('touchmove', e => { if (!e.target.tagName.match(/INPUT|BUTTON/) && !e.target.closest('.panel-box') && !e.target.classList.contains('btn-init')) { e.cancelable && e.preventDefault(); isTouching = !0; lastTouchTime = Date.now(); mX = 1.5 * (e.touches[0].clientX / window.innerWidth * 2 - 1); mY = .7 * (1 - e.touches[0].clientY / window.innerHeight * 2) } }, { passive: !1 }), window.addEventListener('touchend', () => isTouching = !1), window.addEventListener('touchcancel', () => isTouching = !1), window.onmousemove = e => { if (!isMobile) { mX = 1.5 * (e.clientX / window.innerWidth * 2 - 1); mY = .7 * (1 - e.clientY / window.innerHeight * 2); const t = document.getElementById('cursor'); t && (t.style.left = e.clientX + 'px', t.style.top = e.clientY + 'px') } }, document.addEventListener("visibilitychange", () => isPaused = document.hidden); let resizeTimer; window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(resizeCanvas, 200) }); function resizeCanvas() { if (gl) { canvas.width = window.innerWidth * currentDPR; canvas.height = window.innerHeight * currentDPR; gl.viewport(0, 0, canvas.width, canvas.height) } } const compile = (e, t) => { const s = gl.createShader(e); if (gl.shaderSource(s, t), gl.compileShader(s), !gl.getShaderParameter(s, gl.COMPILE_STATUS)) return null; return s };
 
-        let baseDPR = isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2.0);
-        let currentDPR = baseDPR, globalQuality = 1.0, totalFrames = 0;
-
-        const configKeys = ['energy', 'height', 'stars', 'r', 'g', 'b'];
-        const textKeys = ['mainTitle', 'btnText', 'cineTitle', 'cineSub1', 'cineSub2', 'targetUrl'];
-
-        const defaultConfig = {
-            energy: 2.2, height: 0.05, stars: 600.0, r: 0.01, g: 0.04, b: 0.08,
-            mainTitle: "RAHATIL", btnText: "Initialize", cineTitle: "Welcome, Rahatil",
-            cineSub1: "Calibrating Tidal Engine...", cineSub2: "Redirecting to Terminal",
-            targetUrl: "https://www.linkedin.com/in/rahatreza100/"
-        };
-
-        let uLocs = {};
-        let engineConfig = { ...defaultConfig };
-
-        try {
-            const savedData = localStorage.getItem('rahatil_engine_config');
-            if (savedData) engineConfig = { ...defaultConfig, ...JSON.parse(savedData) };
-        } catch (e) { }
-
-        function applyTextConfig() {
-            document.getElementById('ui-mainTitle').innerText = engineConfig.mainTitle;
-            document.getElementById('ui-btnText').innerText = engineConfig.btnText;
-            document.getElementById('ui-cineTitle').innerText = engineConfig.cineTitle;
-            document.getElementById('ui-cineSub1').innerText = engineConfig.cineSub1;
-            document.getElementById('ui-cineSub2').innerText = engineConfig.cineSub2;
-            TARGET = engineConfig.targetUrl;
-        }
-
-        function syncUIWithConfig() {
-            configKeys.forEach(k => {
-                document.getElementById(`inp-${k}`).value = engineConfig[k];
-                document.getElementById(`val-${k}`).innerText = parseFloat(engineConfig[k]).toFixed(k === 'stars' ? 0 : 2);
-            });
-            textKeys.forEach(k => {
-                document.getElementById(`inp-${k}`).value = engineConfig[k] || '';
-            });
-            applyTextConfig();
-        }
-        syncUIWithConfig();
-
-        let audioCtx;
-        let waterSource, waterFilter, waterGain;
-        let windSource, windFilter, windGain;
-        let ambientSource, ambientFilter, ambientGain;
-        let nightSource, nightFilter, nightGain;
-        let droneSource, droneOsc, droneGain;
-        let masterPanner;
-        let audioInit = false;
-        let gyroActive = false;
-        let lastTouchTime = 0;
-        let targetMX = 0, targetMY = 0.2;
-
-        let currentDayFactor = 0.5, currentNightFactor = 0.5, lastBeta = null, lastGamma = null;
-        function enterExperience() {
-            const intro = document.getElementById('intro-layer'), uiL = document.getElementById('ui-layer');
-            if (intro) {
-                intro.style.opacity = '0';
-                intro.style.pointerEvents = 'none';
-                intro.style.backdropFilter = 'blur(0px)';
-                setTimeout(() => { intro.style.display = 'none'; }, 1500);
-            }
-            if (uiL) uiL.style.opacity = '1';
-            unlockAudio();
-            if (initGL()) requestAnimationFrame(render);
-        }
-
-        if (isMobile) {
-            document.getElementById('cursor').style.display = 'none';
-            const iL = document.getElementById('intro-layer'), uL = document.getElementById('ui-layer');
-            if (iL) iL.style.display = 'none';
-            if (uL) uL.style.display = 'flex';
-        }
-
-        function handleOrientation(event) {
-            if (event.beta === null || event.gamma === null) return;
-            gyroActive = true;
-
-            let angle = (screen.orientation ? screen.orientation.angle : window.orientation) || 0;
-            let b = event.beta;
-            let g = event.gamma;
-
-            if (lastBeta !== null && Math.abs(b - lastBeta) > 60) b = lastBeta;
-            if (lastGamma !== null && Math.abs(g - lastGamma) > 60) g = lastGamma;
-
-            lastBeta = b;
-            lastGamma = g;
-
-            b = Math.max(-85, Math.min(85, b));
-            g = Math.max(-85, Math.min(85, g));
-
-            let finalX = 0, finalY = 0;
-            const TILT_DIVISOR = 60.0;
-
-            if (angle === 90) {
-                finalX = b / TILT_DIVISOR;
-                finalY = (g + 45.0) / TILT_DIVISOR;
-            } else if (angle === -90 || angle === 270) {
-                finalX = -b / TILT_DIVISOR;
-                finalY = -(g - 45.0) / TILT_DIVISOR;
-            } else {
-                finalX = g / TILT_DIVISOR;
-                finalY = (b - 45.0) / TILT_DIVISOR;
-            }
-
-            targetMX = Math.max(-1.5, Math.min(1.5, finalX));
-            targetMY = Math.max(-0.9, Math.min(0.9, finalY));
-        }
-
-        function unlockAudio() {
-            if (audioInit) return;
-            audioInit = true;
-            if (isMobile && typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission().then(state => {
-                    if (state === 'granted') window.addEventListener('deviceorientation', handleOrientation);
-                });
-            }
-
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioCtx = new AudioContext();
-            const unlock = audioCtx.createBufferSource();
-            unlock.buffer = audioCtx.createBuffer(1, 1, 22050);
-            unlock.connect(audioCtx.destination);
-            if (unlock.start) unlock.start(0);
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            setTimeout(() => { buildAudioGraph(); }, 20);
-        }
-
-        function buildAudioGraph() {
-            const bufferSize = audioCtx.sampleRate * 2;
-
-            // 3D VR SPATIAL PANNER
-            if (audioCtx.createStereoPanner) {
-                try {
-                    masterPanner = audioCtx.createStereoPanner();
-                    masterPanner.pan.value = 0;
-                    masterPanner.connect(audioCtx.destination);
-                } catch (e) { }
-            }
-            let audioDest = masterPanner ? masterPanner : audioCtx.destination;
-
-            const waterBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const waterOut = waterBuffer.getChannelData(0);
-            let lastOut = 0;
-            for (let i = 0; i < bufferSize; i++) {
-                let white = Math.random() * 2 - 1;
-                waterOut[i] = (lastOut + (0.02 * white)) / 1.02;
-                lastOut = waterOut[i];
-                waterOut[i] *= 3.5;
-            }
-            waterSource = audioCtx.createBufferSource();
-            waterSource.buffer = waterBuffer;
-            waterSource.loop = true;
-            waterFilter = audioCtx.createBiquadFilter();
-            waterFilter.type = 'lowpass';
-            waterFilter.frequency.value = 400;
-            waterFilter.Q.value = 0.5;
-            waterGain = audioCtx.createGain();
-            waterGain.gain.value = 0.0;
-            waterSource.connect(waterFilter).connect(waterGain).connect(audioDest);
-            waterSource.start(0);
-
-            // WIND LAYER
-            const windBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const windOut = windBuffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) { windOut[i] = (Math.random() * 2 - 1) * 0.5; }
-            windSource = audioCtx.createBufferSource();
-            windSource.buffer = windBuffer;
-            windSource.loop = true;
-            windFilter = audioCtx.createBiquadFilter();
-            windFilter.type = 'bandpass';
-            windFilter.frequency.value = 800;
-            windFilter.Q.value = 0.3;
-            windGain = audioCtx.createGain();
-            windGain.gain.value = 0.0;
-            windSource.connect(windFilter).connect(windGain).connect(audioDest);
-            windSource.start(0);
-
-            // AMBIENT PAD LAYER
-            const ambientBuffer = audioCtx.createBuffer(2, bufferSize, audioCtx.sampleRate);
-            for (let c = 0; c < 2; c++) {
-                const ambOut = ambientBuffer.getChannelData(c);
-                for (let i = 0; i < bufferSize; i++) {
-                    let t = i / audioCtx.sampleRate;
-                    let pad = Math.sin(t * 55 * Math.PI * 2) * 0.1 + Math.sin(t * 82.5 * Math.PI * 2) * 0.08 + Math.sin(t * 110 * Math.PI * 2) * 0.06;
-                    ambOut[i] = (pad * 0.3) + (Math.random() * 2 - 1) * 0.02;
-                }
-            }
-            ambientSource = audioCtx.createBufferSource();
-            ambientSource.buffer = ambientBuffer;
-            ambientSource.loop = true;
-            ambientFilter = audioCtx.createBiquadFilter();
-            ambientFilter.type = 'lowpass';
-            ambientFilter.frequency.value = 2000;
-            ambientGain = audioCtx.createGain();
-            ambientGain.gain.value = 0.0;
-            ambientSource.connect(ambientFilter).connect(ambientGain).connect(audioDest);
-            ambientSource.start(0);
-
-            const nightBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const nightOut = nightBuffer.getChannelData(0);
-            let lastNight = 0;
-            for (let i = 0; i < bufferSize; i++) {
-                let t = i / audioCtx.sampleRate;
-                let swell = Math.sin(t * 0.3) * 0.5 + 0.5;
-                swell *= Math.sin(t * 0.17) * 0.5 + 0.5;
-                let n = Math.random() * 2 - 1;
-                let filtered = (lastNight + (0.01 * n)) / 1.01;
-                lastNight = filtered;
-                let nightSound = (filtered * 0.8) * swell * 0.4 + (filtered * 0.8) * 0.2;
-                nightSound += Math.sin(t * 2.5 * Math.PI * 2) * 0.02 * swell;
-                nightOut[i] = nightSound * 0.6;
-            }
-            nightSource = audioCtx.createBufferSource();
-            nightSource.buffer = nightBuffer;
-            nightSource.loop = true;
-            nightFilter = audioCtx.createBiquadFilter();
-            nightFilter.type = 'lowpass';
-            nightFilter.frequency.value = 400;
-            nightFilter.Q.value = 0.5;
-            nightGain = audioCtx.createGain();
-            nightGain.gain.value = 0.0;
-            nightSource.connect(nightFilter).connect(nightGain).connect(audioDest);
-            nightSource.start(0);
-
-            droneOsc = audioCtx.createOscillator();
-            droneOsc.type = 'sine';
-            droneOsc.frequency.value = 40;
-            const droneOsc2 = audioCtx.createOscillator();
-            droneOsc2.type = 'sine';
-            droneOsc2.frequency.value = 60;
-            const droneOsc3 = audioCtx.createOscillator();
-            droneOsc3.type = 'triangle';
-            droneOsc3.frequency.value = 80;
-            droneGain = audioCtx.createGain();
-            droneGain.gain.value = 0.0;
-            const droneFilter = audioCtx.createBiquadFilter();
-            droneFilter.type = 'lowpass';
-            droneFilter.frequency.value = 100;
-            droneOsc.connect(droneGain);
-            droneOsc2.connect(droneGain);
-            droneOsc3.connect(droneGain);
-            droneGain.connect(droneFilter).connect(audioDest);
-            droneOsc.start(0);
-            droneOsc2.start(0);
-            droneOsc3.start(0);
-
-            let ct = audioCtx.currentTime;
-            waterGain.gain.setValueAtTime(0.0, ct);
-            waterGain.gain.linearRampToValueAtTime(0.15, ct + 2.0);
-            windGain.gain.setValueAtTime(0.0, ct);
-            windGain.gain.linearRampToValueAtTime(0.06, ct + 2.5);
-            ambientGain.gain.setValueAtTime(0.0, ct);
-            ambientGain.gain.linearRampToValueAtTime(0.04, ct + 3.0);
-            droneGain.gain.setValueAtTime(0.0, ct);
-            droneGain.gain.linearRampToValueAtTime(0.03, ct + 3.0);
-        }
-
-        // Attach safely to the window for mobile unlocks
-        document.addEventListener('touchstart', unlockAudio, { once: true });
-
-        window.addEventListener('touchstart', (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
-            if (e.cancelable) e.preventDefault();
-
-            isTouching = true;
-            lastTouchTime = Date.now();
-            mX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 1.5;
-            mY = ((1 - e.touches[0].clientY / window.innerHeight) * 2 - 1) * 0.7;
-        }, { passive: false });
-
-        window.addEventListener('touchmove', (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
-            if (e.cancelable) e.preventDefault();
-            isTouching = true;
-            lastTouchTime = Date.now();
-            mX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 1.5;
-            mY = ((1 - e.touches[0].clientY / window.innerHeight) * 2 - 1) * 0.7;
-        }, { passive: false });
-
-        window.addEventListener('touchend', () => { isTouching = false; });
-        window.addEventListener('touchcancel', () => { isTouching = false; });
-
-        window.onmousemove = (e) => {
-            if (isMobile) return;
-            mX = ((e.clientX / window.innerWidth) * 2 - 1) * 1.5;
-            mY = ((1 - e.clientY / window.innerHeight) * 2 - 1) * 0.7;
-            const cur = document.getElementById('cursor');
-            if (cur) {
-                cur.style.left = e.clientX + 'px';
-                cur.style.top = e.clientY + 'px';
-            }
-        };
-
-        const targetFPS = 60;
-        const frameInterval = 1000 / targetFPS;
-        let lastTime = 0;
-        let framesAnalyzed = 0;
-        let droppedFrames = 0;
-
-        document.addEventListener("visibilitychange", () => { isPaused = document.hidden; });
-
-        let resizeTimer;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(resizeCanvas, 200);
-        });
-
-        function resizeCanvas() {
-            if (!gl) return;
-            canvas.width = window.innerWidth * currentDPR;
-            canvas.height = window.innerHeight * currentDPR;
-            gl.viewport(0, 0, canvas.width, canvas.height);
-        }
-
-        const compile = (t, s) => {
-            const sh = gl.createShader(t); gl.shaderSource(sh, s); gl.compileShader(sh);
-            if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) return null;
-            return sh;
-        };
-
-        function initGL() {
-            gl = canvas.getContext('webgl2', { antialias: false, powerPreference: "high-performance" });
-            if (!gl) {
-                document.getElementById('ui-layer').innerHTML = "<div class='brand-text'><h1>ENGINE HALTED</h1><div style='color:#fff; letter-spacing:8px; margin-top:20px; font-size:0.8rem;'>WEBGL2 NOT SUPPORTED</div></div>";
-                if (!isMobile) document.getElementById('cursor').style.display = 'none';
-                return false;
-            }
-
-            prg = gl.createProgram();
-            const vs = compile(gl.VERTEX_SHADER, '#version 300 es\nin vec4 p;void main(){gl_Position=p;}');
-            const fs = compile(gl.FRAGMENT_SHADER, document.getElementById('fs').text);
-            if (!vs || !fs) return false;
-
-            gl.attachShader(prg, vs);
-            gl.attachShader(prg, fs);
-            gl.linkProgram(prg);
-
-            const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-            const a = gl.getAttribLocation(prg, 'p'); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
-
-            uLocs.res = gl.getUniformLocation(prg, 'u_res');
-            uLocs.time = gl.getUniformLocation(prg, 'u_time');
-            uLocs.mouse = gl.getUniformLocation(prg, 'u_mouse');
-            uLocs.warp = gl.getUniformLocation(prg, 'u_warp');
-            uLocs.wTime = gl.getUniformLocation(prg, 'u_waveTime');
-
-            // CORRECTLY RE-BOUND UNIFORMS
-            uLocs.wColor = gl.getUniformLocation(prg, 'u_waterColor');
-            uLocs.wEnergy = gl.getUniformLocation(prg, 'u_waveEnergy');
-            uLocs.wHeight = gl.getUniformLocation(prg, 'u_waveHeight');
-            uLocs.sDensity = gl.getUniformLocation(prg, 'u_starDensity');
-            uLocs.quality = gl.getUniformLocation(prg, 'u_quality');
-
-            resizeCanvas();
-            return true;
-        }
+        function initGL() { if (gl = canvas.getContext('webgl2', { antialias: !1, powerPreference: "high-performance" }), !gl) return document.getElementById('ui-layer').innerHTML = "<div class='brand-text'><h1>ENGINE HALTED</h1><div style='color:#fff; letter-spacing:8px; margin-top:20px; font-size:0.8rem;'>WEBGL2 NOT SUPPORTED</div></div>", isMobile || (document.getElementById('cursor').style.display = 'none'), !1; prg = gl.createProgram(); let e = compile(gl.VERTEX_SHADER, '#version 300 es\nin vec4 p;void main(){gl_Position=p;}'), t = compile(gl.FRAGMENT_SHADER, document.getElementById('fs').text); return !!e && !!t && (gl.attachShader(prg, e), gl.attachShader(prg, t), gl.linkProgram(prg), gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()), gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW), t = gl.getAttribLocation(prg, 'p'), gl.enableVertexAttribArray(t), gl.vertexAttribPointer(t, 2, gl.FLOAT, !1, 0, 0), uLocs.res = gl.getUniformLocation(prg, 'u_res'), uLocs.time = gl.getUniformLocation(prg, 'u_time'), uLocs.mouse = gl.getUniformLocation(prg, 'u_mouse'), uLocs.warp = gl.getUniformLocation(prg, 'u_warp'), uLocs.wTime = gl.getUniformLocation(prg, 'u_waveTime'), uLocs.wColor = gl.getUniformLocation(prg, 'u_waterColor'), uLocs.wEnergy = gl.getUniformLocation(prg, 'u_waveEnergy'), uLocs.wHeight = gl.getUniformLocation(prg, 'u_waveHeight'), uLocs.sDensity = gl.getUniformLocation(prg, 'u_starDensity'), uLocs.quality = gl.getUniformLocation(prg, 'u_quality'), resizeCanvas(), !0) }
 
         canvas.addEventListener("webglcontextlost", (e) => { e.preventDefault(); isPaused = true; }, false);
         canvas.addEventListener("webglcontextrestored", () => { initGL(); isPaused = false; }, false);
@@ -1530,307 +1159,11 @@ void main() {
             }
         }
 
-        let firstF = true;
-        function render(now) {
-            requestAnimationFrame(render);
-            if (isPaused || !gl) return;
-            if (firstF) {
-                firstF = false;
-                canvas.style.opacity = '1';
-            }
-
-            let elapsed = now - lastTime;
-            if (elapsed < frameInterval) return;
-            lastTime = now - (elapsed % frameInterval);
-
-            let dtJS = Math.min(now - (lastTimeJS || now), 50);
-            lastTimeJS = now;
-            waveTime += (dtJS * 0.001) * engineConfig.energy;
-
-            let dtFactor = Math.min(elapsed, 50) / 16.666;
-
-            // FIX 2: SAFE MOBILE DRS LOGIC (Never goes blurry)
-            totalFrames++;
-            if (totalFrames > 120) {
-                if (framesAnalyzed >= 60) {
-                    let frameHealth = (60 - droppedFrames) / 60;
-
-                    if (frameHealth < 0.7 && currentDPR > 1.0) {
-                        currentDPR = Math.max(1.0, currentDPR - 0.25);
-                        resizeCanvas();
-                    } else if (frameHealth > 0.9 && currentDPR < baseDPR && isMobile) {
-                        currentDPR = Math.min(baseDPR, currentDPR + 0.1);
-                        resizeCanvas();
-                    }
-
-                    let avgFrameTime = elapsed;
-                    globalQuality = avgFrameTime < 16 ? 1.0 : Math.max(0.5, 1.0 - (avgFrameTime - 16) * 0.05);
-
-                    framesAnalyzed = 0;
-                    droppedFrames = 0;
-                }
-                if (elapsed > 20) droppedFrames++;
-                framesAnalyzed++;
-            }
-
-            let timeSinceTouch = Date.now() - lastTouchTime;
-            if (gyroActive) {
-                if (isTouching || timeSinceTouch < 150) {
-                    offsetMX = mX - targetMX;
-                    offsetMY = mY - targetMY;
-                    if (isTouching) lastTouchTime = Date.now();
-                } else {
-                    if (timeSinceTouch > 2000) {
-                        let decay = Math.pow(0.95, dtFactor);
-                        offsetMX *= decay;
-                        offsetMY *= decay;
-                    }
-                    let destX = targetMX + offsetMX;
-                    let destY = targetMY + offsetMY;
-
-                    let lerpAmt = 1.0 - Math.pow(0.93, dtFactor);
-                    mX += (destX - mX) * lerpAmt;
-                    mY += (destY - mY) * lerpAmt;
-                }
-            }
-
-            let solarEase = warp * warp * (3.0 - 2.0 * warp);
-            let currentSunY = 0.15 + mY * 1.0;
-            let sunY = currentSunY * (1 - solarEase) + (-1.5) * solarEase;
-
-            let dayFactor = Math.max(0, Math.min(1, (sunY + 0.02) / 0.17));
-            let nightFactor = 1.0 - dayFactor;
-
-            currentDayFactor = currentDayFactor + (dayFactor - currentDayFactor) * 0.05;
-            currentNightFactor = currentNightFactor + (nightFactor - currentNightFactor) * 0.05;
-
-            let isSunset = (sunY > -0.1 && sunY < 0.15) ? 1.0 : 0.0;
-            let sunsetFactor = isSunset * (1.0 - Math.abs(sunY - 0.02) / 0.15);
-
-            if (isW) {
-                warp = Math.min(1.0, warp + (0.008 * dtFactor));
-                if (warp >= 1.0 && !redirected) {
-                    redirected = true;
-                    window.location.href = TARGET;
-                }
-            } else if (audioInit && audioCtx.state === 'running') {
-                let waveCycle = Math.sin(waveTime * 0.3);
-                if (masterPanner && masterPanner.pan) {
-                    let panTarget = Math.max(-1.0, Math.min(1.0, mX * 0.8));
-                    masterPanner.pan.setTargetAtTime(panTarget, audioCtx.currentTime, 0.2);
-                }
-
-                if (waterFilter && waterSource && waterGain) {
-                    let targetWaterFreq = 250 + (waveCycle * 100) + (engineConfig.height * 600) - (mY * 150);
-                    waterFilter.frequency.setTargetAtTime(Math.max(150, targetWaterFreq), audioCtx.currentTime, 0.1);
-
-                    let targetRate = 0.4 + (engineConfig.energy * 0.02) + (waveCycle * 0.03);
-                    waterSource.playbackRate.setTargetAtTime(Math.max(0.1, targetRate), audioCtx.currentTime, 0.1);
-
-                    let waterVol = 0.12 + currentDayFactor * 0.08;
-                    waterGain.gain.setTargetAtTime(waterVol, audioCtx.currentTime, 0.3);
-                }
-
-                if (windFilter && windGain) {
-                    let windFreq = 600 + currentDayFactor * 600 + sunsetFactor * 400;
-                    windFilter.frequency.setTargetAtTime(windFreq, audioCtx.currentTime, 0.3);
-
-                    let windVol = 0.03 + currentDayFactor * 0.05 + sunsetFactor * 0.04;
-                    windGain.gain.setTargetAtTime(windVol, audioCtx.currentTime, 0.3);
-                }
-
-                if (ambientFilter && ambientGain) {
-                    let ambientFreq = 1500 + currentDayFactor * 1000 - currentNightFactor * 500;
-                    ambientFilter.frequency.setTargetAtTime(ambientFreq, audioCtx.currentTime, 0.5);
-
-                    let ambientVol = 0.03 + currentDayFactor * 0.03 + sunsetFactor * 0.04;
-                    ambientGain.gain.setTargetAtTime(ambientVol, audioCtx.currentTime, 0.3);
-                }
-
-                if (nightFilter && nightGain) {
-                    let nightVol = currentNightFactor * 0.12;
-                    nightGain.gain.setTargetAtTime(nightVol, audioCtx.currentTime, 0.5);
-
-                    let nightFreq = 300 + Math.abs(mY) * 150;
-                    nightFilter.frequency.setTargetAtTime(nightFreq, audioCtx.currentTime, 0.3);
-                }
-
-                if (droneGain) {
-                    let droneVol = 0.02 + currentNightFactor * 0.04 + sunsetFactor * 0.02;
-                    droneGain.gain.setTargetAtTime(droneVol, audioCtx.currentTime, 0.5);
-                }
-            }
-
-            gl.useProgram(prg);
-
-            gl.uniform2f(uLocs.res, canvas.width, canvas.height);
-            gl.uniform1f(uLocs.time, now * 0.001);
-            gl.uniform2f(uLocs.mouse, mX, mY);
-            gl.uniform1f(uLocs.warp, warp);
-            gl.uniform1f(uLocs.wTime, waveTime);
-
-            gl.uniform3f(uLocs.wColor, engineConfig.r, engineConfig.g, engineConfig.b);
-            gl.uniform1f(uLocs.wEnergy, engineConfig.energy);
-            gl.uniform1f(uLocs.wHeight, engineConfig.height);
-            gl.uniform1f(uLocs.sDensity, engineConfig.stars);
-            gl.uniform1f(uLocs.quality, globalQuality);
-
-            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        }
+        const fI = 16.666; let lT = 0, fA = 0, dF = 0, firstF = !0; function render(e) { if (requestAnimationFrame(render), !isPaused && gl) { firstF && (firstF = !1, canvas.style.opacity = '1'); let t = e - lT; if (!(t < fI)) { lT = e - (t % fI); let s = Math.min(e - (lastTimeJS || e), 50); lastTimeJS = e, waveTime += .001 * s * engineConfig.energy; let n = Math.min(t, 50) / 16.666; if (totalFrames++, totalFrames > 120) { if (fA >= 60) { let pS = (60 - dF) / 60; pS < .7 && currentDPR > 1 ? (currentDPR = Math.max(1, currentDPR - .25), resizeCanvas()) : pS > .9 && currentDPR < baseDPR && isMobile && (currentDPR = Math.min(baseDPR, currentDPR + .1), resizeCanvas()); let dS = s; globalQuality = dS < 16 ? 1 : Math.max(.5, 1 - .05 * (dS - 16)), fA = 0, dF = 0 } t > 20 && dF++, fA++ } let r = Date.now() - lastTouchTime; if (gyroActive) if (isTouching || r < 150) offsetMX = mX - targetMX, offsetMY = mY - targetMY, isTouching && (lastTouchTime = Date.now()); else { r > 2e3 && (offsetMX *= Math.pow(.95, n), offsetMY *= Math.pow(.95, n)); let eX = targetMX + offsetMX, tY = targetMY + offsetMY, sF = 1 - Math.pow(.93, n); mX += (eX - mX) * sF, mY += (tY - mY) * sF } let a = warp * warp * (3 - 2 * warp), i = .15 + 1 * mY, u = i * (1 - a) - 1.5 * a, c = Math.max(0, Math.min(1, (u + .02) / .17)), o = 1 - c; currentDayFactor += .05 * (c - currentDayFactor), currentNightFactor += .05 * (o - currentNightFactor); let l = u > -0.1 && u < .15 ? 1 : 0, M = l * (1 - Math.abs(u - .02) / .15); if (isW) warp = Math.min(1, warp + .008 * n), warp >= 1 && !redirected && (redirected = !0, window.location.href = TARGET); else if (audioInit && "running" === audioCtx.state) { let aS = Math.sin(.3 * waveTime); masterPanner && masterPanner.pan && masterPanner.pan.setTargetAtTime(Math.max(-1, Math.min(1, .8 * mX)), audioCtx.currentTime, .2); if (waterFilter && waterSource && waterGain) { waterFilter.frequency.setTargetAtTime(Math.max(150, 250 + 100 * aS + 600 * engineConfig.height - 150 * mY), audioCtx.currentTime, .1), waterSource.playbackRate.setTargetAtTime(Math.max(.1, .4 + .02 * engineConfig.energy + .03 * aS), audioCtx.currentTime, .1); let tG = .12 + .08 * currentDayFactor; waterGain.gain.setTargetAtTime(tG, audioCtx.currentTime, .3) } windFilter && windGain && (windFilter.frequency.setTargetAtTime(600 + 600 * currentDayFactor + 400 * M, audioCtx.currentTime, .3), windGain.gain.setTargetAtTime(.03 + .05 * currentDayFactor + .04 * M, audioCtx.currentTime, .3)), ambientFilter && ambientGain && (ambientFilter.frequency.setTargetAtTime(1500 + 1e3 * currentDayFactor - 500 * currentNightFactor, audioCtx.currentTime, .5), ambientGain.gain.setTargetAtTime(.03 + .03 * currentDayFactor + .04 * M, audioCtx.currentTime, .3)), nightFilter && nightGain && (nightGain.gain.setTargetAtTime(.12 * currentNightFactor, audioCtx.currentTime, .5), nightFilter.frequency.setTargetAtTime(300 + 150 * Math.abs(mY), audioCtx.currentTime, .3)), droneGain && droneGain.gain.setTargetAtTime(.02 + .04 * currentNightFactor + .02 * M, audioCtx.currentTime, .5) } gl.useProgram(prg), gl.uniform2f(uLocs.res, canvas.width, canvas.height), gl.uniform1f(uLocs.time, .001 * e), gl.uniform2f(uLocs.mouse, mX, mY), gl.uniform1f(uLocs.warp, warp), gl.uniform1f(uLocs.wTime, waveTime), gl.uniform3f(uLocs.wColor, engineConfig.r, engineConfig.g, engineConfig.b), gl.uniform1f(uLocs.wEnergy, engineConfig.energy), gl.uniform1f(uLocs.wHeight, engineConfig.height), gl.uniform1f(uLocs.sDensity, engineConfig.stars), gl.uniform1f(uLocs.quality, globalQuality), gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4) } } }
 
 
-        window.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 's') {
-                e.preventDefault();
-                document.getElementById('auth-modal').style.display = 'flex';
-                document.getElementById('auth-input').value = '';
-                document.getElementById('auth-input').focus();
-            }
-        });
-
-        document.getElementById('auth-input').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const val = e.target.value.trim();
-
-                if (val === 'abcab123') {
-                    document.getElementById('auth-modal').style.display = 'none';
-                    document.getElementById('custom-panel').style.display = 'flex';
-                    e.target.value = '';
-                } else {
-                    e.target.style.color = '#ff4444';
-                    setTimeout(() => e.target.style.color = '#fff', 600);
-                }
-            }
-        });
-
-        let syncDebounce;
-        configKeys.forEach(k => {
-            document.getElementById(`inp-${k}`).addEventListener('input', (e) => {
-                lastTouchTime = Date.now();
-                const val = parseFloat(e.target.value);
-                document.getElementById(`val-${k}`).innerText = val.toFixed(k === 'stars' ? 0 : 2);
-                engineConfig[k] = val;
-                try { localStorage.setItem('rahatil_engine_config', JSON.stringify(engineConfig)); } catch (err) { }
-            });
-        });
-
-        textKeys.forEach(k => {
-            document.getElementById(`inp-${k}`).addEventListener('input', (e) => {
-                engineConfig[k] = e.target.value;
-                applyTextConfig();
-                try { localStorage.setItem('rahatil_engine_config', JSON.stringify(engineConfig)); } catch (err) { }
-            });
-        });
-
-        function resetAdminPanel() {
-            localStorage.removeItem('rahatil_engine_config');
-            engineConfig = { ...defaultConfig };
-            syncUIWithConfig();
-        }
-
-        function closeAdminPanel() {
-            document.getElementById('custom-panel').style.display = 'none';
-        }
-
-        function showDeployPanel() {
-            document.getElementById('custom-panel').style.display = 'none';
-            document.getElementById('deploy-panel').style.display = 'flex';
-            loadDeploySettings();
-        }
-
-        function closeDeployPanel() {
-            document.getElementById('deploy-panel').style.display = 'none';
-        }
-
-        document.getElementById('deploy-method').addEventListener('change', function (e) {
-            const method = e.target.value;
-            document.getElementById('deploy-ftp-fields').style.display = method === 'ftp' ? 'block' : 'none';
-        });
-
-        try {
-            const saved = localStorage.getItem('rahatil_ftp_config');
-            if (saved) {
-                const cfg = JSON.parse(saved);
-                document.getElementById('deploy-ftp-host').value = cfg.ftpHost || '';
-                document.getElementById('deploy-ftp-user').value = cfg.ftpUser || '';
-                document.getElementById('deploy-ftp-path').value = cfg.ftpPath || '/public_html/index.html';
-            }
-        } catch (e) { }
-
-        function loadDeploySettings() {
-            try {
-                const saved = localStorage.getItem('rahatil_deploy_config');
-                if (saved) {
-                    const config = JSON.parse(saved);
-                    document.getElementById('deploy-method').value = config.method || 'download';
-                    document.getElementById('deploy-ftp-host').value = config.ftpHost || '';
-                    document.getElementById('deploy-ftp-user').value = config.ftpUser || '';
-                    document.getElementById('deploy-ftp-path').value = config.ftpPath || '/public_html/index.html';
-                }
-            } catch (e) { }
-            document.getElementById('deploy-method').dispatchEvent(new Event('change'));
-        }
-
-        async function deployToCloud() {
-            const method = document.getElementById('deploy-method').value;
-            const status = document.getElementById('deploy-status');
-
-            status.style.display = 'block';
-            status.style.color = '#4ade80';
-            status.innerHTML = '⏳ Preparing your configured file...';
-
-            let htmlContent = document.documentElement.outerHTML;
-
-            try {
-                const ftpConfig = {
-                    ftpHost: document.getElementById('deploy-ftp-host').value,
-                    ftpUser: document.getElementById('deploy-ftp-user').value,
-                    ftpPath: document.getElementById('deploy-ftp-path').value
-                };
-                localStorage.setItem('rahatil_ftp_config', JSON.stringify(ftpConfig));
-
-                if (method === 'download') {
-                    const blob = new Blob([htmlContent], { type: 'text/html' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'index.html';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-
-                    status.innerHTML = '✅ <strong>Download Ready!</strong><br><span style="color:#888;font-size:0.65rem;">1. Upload "index.html" to your server<br>2. Your site is live!</span>';
-                    return;
-                }
-
-                if (method === 'ftp') {
-                    const host = document.getElementById('deploy-ftp-host').value;
-                    const user = document.getElementById('deploy-ftp-user').value;
-                    const pass = document.getElementById('deploy-ftp-pass').value;
-                    const path = document.getElementById('deploy-ftp-path').value || '/index.html';
-
-                    if (!host || !user || !pass) {
-                        status.innerHTML = '⚠️ Please enter FTP Host, Username & Password';
-                        status.style.color = '#f87171';
-                        return;
-                    }
-
-                    status.innerHTML = `✅ <strong>Ready to Upload!</strong><br>
-                        <span style="color:#888;font-size:0.6rem;">
-                        FTP Details saved for next time.<br><br>
-                        <strong>Quick Upload:</strong><br>
-                        1. Click <a href="#" onclick="document.getElementById('deploy-method').value='download'; deployToCloud(); return false;" style="color:#4ade80;">Direct Download</a><br>
-                        2. Upload index.html to: <strong>${host}${path}</strong><br>
-                        </span>`;
-                }
-
-            } catch (e) {
-                status.innerHTML = '⚠️ Error: ' + e.message;
-                status.style.color = '#f87171';
-            }
-        }
+        window.addEventListener('keydown', e => { e.ctrlKey && e.shiftKey && 's' === e.key.toLowerCase() && (e.preventDefault(), document.getElementById('auth-modal').style.display = 'flex', document.getElementById('auth-input').value = '', document.getElementById('auth-input').focus()) }); document.getElementById('auth-input').addEventListener('keydown', e => { "Enter" === e.key && ('abcab123' === e.target.value.trim() ? (document.getElementById('auth-modal').style.display = 'none', document.getElementById('custom-panel').style.display = 'flex', e.target.value = '') : (e.target.style.color = '#ff4444', setTimeout(() => e.target.style.color = '#fff', 600))) }); configKeys.forEach(e => { document.getElementById(`inp-${e}`).addEventListener('input', t => { lastTouchTime = Date.now(); const n = parseFloat(t.target.value); document.getElementById(`val-${e}`).innerText = n.toFixed('stars' === e ? 0 : 2), engineConfig[e] = n; try { localStorage.setItem('rahatil_engine_config', JSON.stringify(engineConfig)) } catch (e) { } }) }); textKeys.forEach(e => { document.getElementById(`inp-${e}`).addEventListener('input', t => { engineConfig[e] = t.target.value, applyTextConfig(); try { localStorage.setItem('rahatil_engine_config', JSON.stringify(engineConfig)) } catch (e) { } }) }); document.getElementById('deploy-method').addEventListener('change', e => { document.getElementById('deploy-ftp-fields').style.display = 'ftp' === e.target.value ? 'block' : 'none' }); try { const e = localStorage.getItem('rahatil_ftp_config'); if (e) { const t = JSON.parse(e); document.getElementById('deploy-ftp-host').value = t.ftpHost || '', document.getElementById('deploy-ftp-user').value = t.ftpUser || '', document.getElementById('deploy-ftp-path').value = t.ftpPath || '/public_html/index.html' } } catch (e) { } async function deployToCloud() { const method = document.getElementById('deploy-method').value, status = document.getElementById('deploy-status'); status.style.display = 'block'; status.style.color = '#4ade80'; status.innerHTML = '⏳ Preparing...'; try { const ftpConfig = { ftpHost: document.getElementById('deploy-ftp-host').value, ftpUser: document.getElementById('deploy-ftp-user').value, ftpPath: document.getElementById('deploy-ftp-path').value }; localStorage.setItem('rahatil_ftp_config', JSON.stringify(ftpConfig)); if (method === 'download') { const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' }), url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = 'index.html'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); status.innerHTML = '✅ Download Ready!'; return; } if (method === 'ftp') { const host = document.getElementById('deploy-ftp-host').value; status.innerHTML = '✅ FTP Config Saved. Download and upload to: ' + host; } } catch (e) { status.innerHTML = '⚠️ Error: ' + e.message; status.style.color = '#f87171'; } } function resetAdminPanel() { localStorage.removeItem('rahatil_engine_config'); engineConfig = { ...defaultConfig }; syncUIWithConfig(); } function closeAdminPanel() { document.getElementById('custom-panel').style.display = 'none'; } function showDeployPanel() { document.getElementById('custom-panel').style.display = 'none'; document.getElementById('deploy-panel').style.display = 'flex'; loadDeploySettings(); } function closeDeployPanel() { document.getElementById('deploy-panel').style.display = 'none'; } function loadDeploySettings() { try { const saved = localStorage.getItem('rahatil_deploy_config'); if (saved) { const config = JSON.parse(saved); document.getElementById('deploy-method').value = config.method || 'download'; document.getElementById('deploy-ftp-host').value = config.ftpHost || ''; document.getElementById('deploy-ftp-user').value = config.ftpUser || ''; document.getElementById('deploy-ftp-path').value = config.ftpPath || '/public_html/index.html'; } } catch (e) { } document.getElementById('deploy-method').dispatchEvent(new Event('change')); }
     </script>
-</body>
+    </body>
 
 </html>
