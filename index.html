@@ -977,9 +977,9 @@ void main() {
             droneGain.gain.linearRampToValueAtTime(0.03, ct + 3.0);
         }
 
-        // PILLAR 2: PASSIVE LISTENERS
-        // Main thread is fully unblocked. Scroll handling is done by CSS touch-action: none.
+        // PILLAR 2: PASSIVE LISTENERS - Safe touch handling
         window.addEventListener('touchstart', (e) => {
+            if (!e.touches || !e.touches[0]) return;
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
             isTouching = true;
             lastTouchTime = Date.now();
@@ -988,6 +988,7 @@ void main() {
         }, { passive: true });
 
         window.addEventListener('touchmove', (e) => {
+            if (!e.touches || !e.touches[0]) return;
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
             isTouching = true;
             lastTouchTime = Date.now();
@@ -1078,7 +1079,10 @@ void main() {
         canvas.addEventListener("webglcontextrestored", () => { initGL(); isPaused = false; }, false);
 
         function engage() {
-            if (isW || !gl || document.getElementById('custom-panel').style.display === 'flex') return;
+            if (isW || document.getElementById('custom-panel').style.display === 'flex') return;
+            
+            // Mobile: Ensure WebGL is ready
+            if (!gl && !initGL()) return;
 
             if (!audioInit) unlockAudio();
             if (audioCtx && audioCtx.state === 'suspended') {
