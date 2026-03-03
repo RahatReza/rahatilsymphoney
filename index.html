@@ -1,13 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="RAHATIL | TIDAL CONVERGENCE - A Cinematic Audio-Visual Experience. Explore the convergence of light, sound, and water in a deep volumetric simulation.">
     <title>RAHATIL | TIDAL CONVERGENCE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;400&display=swap" rel="stylesheet" media="print"
+        onload="this.media='all'"><noscript>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;400&display=swap" rel="stylesheet">
+    </noscript>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;400&display=swap');
-
         body,
         html {
             margin: 0;
@@ -32,11 +38,11 @@
         /* IMMERSION GATEWAY (DESKTOP ONLY) */
         #intro-layer {
             position: absolute;
-            top: 0; 
-            left: 0; 
-            width: 100vw; 
+            top: 0;
+            left: 0;
+            width: 100vw;
             height: 100vh;
-            z-index: 50; 
+            z-index: 50;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -50,7 +56,7 @@
         .intro-visual {
             width: 80px;
             height: 80px;
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 50%;
             position: relative;
             animation: visual-pulse 2s ease-in-out infinite;
@@ -65,7 +71,7 @@
             transform: translate(-50%, -50%);
             width: 20px;
             height: 20px;
-            background: rgba(255,255,255,0.8);
+            background: rgba(255, 255, 255, 0.8);
             border-radius: 50%;
             animation: sound-wave 1.5s ease-out infinite;
         }
@@ -78,25 +84,48 @@
             transform: translate(-50%, -50%);
             width: 40px;
             height: 40px;
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             animation: sound-wave-outer 1.5s ease-out infinite;
             animation-delay: 0.3s;
         }
 
         @keyframes visual-pulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
-            50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(255,255,255,0.1); }
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
         }
 
         @keyframes sound-wave {
-            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(2);
+                opacity: 0;
+            }
         }
 
         @keyframes sound-wave-outer {
-            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.8; }
-            100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(2.5);
+                opacity: 0;
+            }
         }
 
         .intro-text {
@@ -105,13 +134,13 @@
             letter-spacing: 15px;
             text-transform: uppercase;
             animation: pulse-breath 2.5s infinite alternate ease-in-out;
-            text-shadow: 0 2px 20px rgba(0,0,0,0.8);
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.8);
             pointer-events: none;
             margin-bottom: 15px;
         }
 
         .intro-hint {
-            color: rgba(255,255,255,0.4);
+            color: rgba(255, 255, 255, 0.4);
             font-size: 0.55rem;
             letter-spacing: 4px;
             text-transform: uppercase;
@@ -119,13 +148,27 @@
         }
 
         @keyframes pulse-breath {
-            0% { opacity: 0.3; letter-spacing: 15px; }
-            100% { opacity: 1; letter-spacing: 20px; }
+            0% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1.02);
+            }
         }
 
         @keyframes hint-fade {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.8; }
+
+            0%,
+            100% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
         }
 
         /* STANDARD UI */
@@ -329,13 +372,16 @@
         .panel-box::-webkit-scrollbar {
             width: 6px;
         }
+
         .panel-box::-webkit-scrollbar-track {
             background: transparent;
         }
+
         .panel-box::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.2);
             border-radius: 4px;
         }
+
         .panel-box::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.4);
         }
@@ -448,18 +494,18 @@
             background: rgba(255, 100, 100, 0.15);
             border-color: rgba(255, 100, 100, 0.6);
         }
-        
+
         .btn-deploy {
             background: rgba(74, 222, 128, 0.15);
             border-color: rgba(74, 222, 128, 0.4);
             color: #4ade80;
         }
-        
+
         .btn-deploy:hover {
             background: rgba(74, 222, 128, 0.25);
             border-color: rgba(74, 222, 128, 0.7);
         }
-        
+
         select.text-input {
             cursor: pointer;
         }
@@ -608,14 +654,16 @@
     <div id="deploy-panel" class="overlay-layer">
         <div class="panel-box">
             <h3>Cloud Deployment</h3>
-            
+
             <div class="slider-group">
                 <label>Deploy to Your Server</label>
-                <div style="text-align: center; padding: 15px; background: rgba(74, 222, 128, 0.1); border-radius: 8px; border: 1px solid rgba(74, 222, 128, 0.3);">
-                    <p style="margin: 0; color: #4ade80; font-size: 0.75rem;">Get your configured file and upload it to your hosting.</p>
+                <div
+                    style="text-align: center; padding: 15px; background: rgba(74, 222, 128, 0.1); border-radius: 8px; border: 1px solid rgba(74, 222, 128, 0.3);">
+                    <p style="margin: 0; color: #4ade80; font-size: 0.75rem;">Get your configured file and upload it to
+                        your hosting.</p>
                 </div>
             </div>
-            
+
             <div class="slider-group" style="margin-top: 15px;">
                 <label>Server Connection</label>
                 <select id="deploy-method" class="text-input" style="padding: 10px;">
@@ -623,7 +671,7 @@
                     <option value="download">💾 Direct Download</option>
                 </select>
             </div>
-            
+
             <div id="deploy-ftp-fields">
                 <div class="slider-group">
                     <label>Server Host</label>
@@ -642,13 +690,14 @@
                     <input type="text" id="deploy-ftp-path" class="text-input" placeholder="/public_html/index.html">
                 </div>
             </div>
-            
+
             <div class="panel-buttons">
                 <button class="btn-panel btn-deploy" onclick="deployToCloud()">🚀 Deploy to My Server</button>
                 <button class="btn-panel" onclick="closeDeployPanel()">Cancel</button>
             </div>
-            
-            <div id="deploy-status" style="display: none; text-align: center; padding: 10px; font-size: 0.7rem; color: #4ade80;"></div>
+
+            <div id="deploy-status"
+                style="display: none; text-align: center; padding: 10px; font-size: 0.7rem; color: #4ade80;"></div>
         </div>
     </div>
 
@@ -1022,15 +1071,15 @@ void main() {
         // =================================================================
         // ENGINE CONFIGURATION (BUYER SETTINGS)
         // =================================================================
-        const CLOUD_SAVE_ENDPOINT = "https://your-api-endpoint.com/v1/config"; 
-        const CLOUD_AUTH_BEARER = ""; 
+        const CLOUD_SAVE_ENDPOINT = "https://your-api-endpoint.com/v1/config";
+        const CLOUD_AUTH_BEARER = "";
 
         const canvas = document.getElementById('v');
         let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.2, redirected = false;
 
         let offsetMX = 0, offsetMY = 0;
         let isTouching = false;
-        
+
         let waveTime = 0;
         let lastTimeJS = 0;
 
@@ -1042,21 +1091,21 @@ void main() {
         // FIXED: The DRS floor is strictly locked to 1.0 so mobile never gets blurry.
         let baseDPR = isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2.0);
         let currentDPR = baseDPR;
-        let globalQuality = 1.0; 
-        
+        let globalQuality = 1.0;
+
         // FIXED: ADDED MISSING totalFrames TRACKER TO PREVENT REFERENCE ERROR CRASH
         let totalFrames = 0;
 
-        const configKeys =['energy', 'height', 'stars', 'r', 'g', 'b'];
-        const textKeys =['mainTitle', 'btnText', 'cineTitle', 'cineSub1', 'cineSub2', 'targetUrl'];
-        
-        const defaultConfig = { 
+        const configKeys = ['energy', 'height', 'stars', 'r', 'g', 'b'];
+        const textKeys = ['mainTitle', 'btnText', 'cineTitle', 'cineSub1', 'cineSub2', 'targetUrl'];
+
+        const defaultConfig = {
             energy: 2.2, height: 0.05, stars: 600.0, r: 0.01, g: 0.04, b: 0.08,
             mainTitle: "RAHATIL", btnText: "Initialize", cineTitle: "Welcome, Rahatil",
             cineSub1: "Calibrating Tidal Engine...", cineSub2: "Redirecting to Terminal",
             targetUrl: "https://www.linkedin.com/in/rahatreza100/"
         };
-        
+
         let uLocs = {};
         let engineConfig = { ...defaultConfig };
 
@@ -1097,7 +1146,7 @@ void main() {
         let gyroActive = false;
         let lastTouchTime = 0;
         let targetMX = 0, targetMY = 0.2;
-        
+
         let currentDayFactor = 0.5;
         let currentNightFactor = 0.5;
 
@@ -1108,7 +1157,7 @@ void main() {
         function enterExperience() {
             const intro = document.getElementById('intro-layer');
             const uiL = document.getElementById('ui-layer');
-            
+
             if (intro) {
                 intro.style.opacity = '0';
                 intro.style.pointerEvents = 'none';
@@ -1118,16 +1167,16 @@ void main() {
             if (uiL) {
                 uiL.style.opacity = '1';
             }
-            
+
             unlockAudio();
         }
 
         if (isMobile) {
             document.getElementById('cursor').style.display = 'none';
             var introLayer = document.getElementById('intro-layer');
-            if(introLayer) introLayer.style.display = 'none';
+            if (introLayer) introLayer.style.display = 'none';
             var uiLayer = document.getElementById('ui-layer');
-            if(uiLayer) uiLayer.style.display = 'flex';
+            if (uiLayer) uiLayer.style.display = 'flex';
         }
 
         function handleOrientation(event) {
@@ -1192,14 +1241,14 @@ void main() {
 
         function buildAudioGraph() {
             const bufferSize = audioCtx.sampleRate * 2;
-            
+
             // 3D VR SPATIAL PANNER
             if (audioCtx.createStereoPanner) {
                 try {
                     masterPanner = audioCtx.createStereoPanner();
                     masterPanner.pan.value = 0;
                     masterPanner.connect(audioCtx.destination);
-                } catch(e) {}
+                } catch (e) { }
             }
             let audioDest = masterPanner ? masterPanner : audioCtx.destination;
 
@@ -1411,11 +1460,11 @@ void main() {
             uLocs.time = gl.getUniformLocation(prg, 'u_time');
             uLocs.mouse = gl.getUniformLocation(prg, 'u_mouse');
             uLocs.warp = gl.getUniformLocation(prg, 'u_warp');
-            uLocs.wTime = gl.getUniformLocation(prg, 'u_waveTime'); 
-            
+            uLocs.wTime = gl.getUniformLocation(prg, 'u_waveTime');
+
             // CORRECTLY RE-BOUND UNIFORMS
             uLocs.wColor = gl.getUniformLocation(prg, 'u_waterColor');
-            uLocs.wEnergy = gl.getUniformLocation(prg, 'u_waveEnergy'); 
+            uLocs.wEnergy = gl.getUniformLocation(prg, 'u_waveEnergy');
             uLocs.wHeight = gl.getUniformLocation(prg, 'u_waveHeight');
             uLocs.sDensity = gl.getUniformLocation(prg, 'u_starDensity');
             uLocs.quality = gl.getUniformLocation(prg, 'u_quality');
@@ -1469,7 +1518,7 @@ void main() {
                 waterGain.gain.cancelScheduledValues(ct);
                 waterGain.gain.setValueAtTime(waterGain.gain.value, ct);
                 waterGain.gain.linearRampToValueAtTime(0, ct + 1.5);
-                
+
                 if (windGain) { windGain.gain.linearRampToValueAtTime(0, ct + 1.5); }
                 if (ambientGain) { ambientGain.gain.linearRampToValueAtTime(0, ct + 1.5); }
                 if (nightGain) { nightGain.gain.linearRampToValueAtTime(0, ct + 1.0); }
@@ -1517,18 +1566,18 @@ void main() {
             if (elapsed < frameInterval) return;
             lastTime = now - (elapsed % frameInterval);
 
-            let dtJS = Math.min(now - (lastTimeJS || now), 50); 
+            let dtJS = Math.min(now - (lastTimeJS || now), 50);
             lastTimeJS = now;
             waveTime += (dtJS * 0.001) * engineConfig.energy;
 
             let dtFactor = Math.min(elapsed, 50) / 16.666;
-            
+
             // FIX 2: SAFE MOBILE DRS LOGIC (Never goes blurry)
             totalFrames++;
-            if (totalFrames > 120) { 
+            if (totalFrames > 120) {
                 if (framesAnalyzed >= 60) {
                     let frameHealth = (60 - droppedFrames) / 60;
-                    
+
                     if (frameHealth < 0.7 && currentDPR > 1.0) {
                         currentDPR = Math.max(1.0, currentDPR - 0.25);
                         resizeCanvas();
@@ -1536,10 +1585,10 @@ void main() {
                         currentDPR = Math.min(baseDPR, currentDPR + 0.1);
                         resizeCanvas();
                     }
-                    
+
                     let avgFrameTime = elapsed;
                     globalQuality = avgFrameTime < 16 ? 1.0 : Math.max(0.5, 1.0 - (avgFrameTime - 16) * 0.05);
-                    
+
                     framesAnalyzed = 0;
                     droppedFrames = 0;
                 }
@@ -1571,13 +1620,13 @@ void main() {
             let solarEase = warp * warp * (3.0 - 2.0 * warp);
             let currentSunY = 0.15 + mY * 1.0;
             let sunY = currentSunY * (1 - solarEase) + (-1.5) * solarEase;
-            
+
             let dayFactor = Math.max(0, Math.min(1, (sunY + 0.02) / 0.17));
             let nightFactor = 1.0 - dayFactor;
-            
+
             currentDayFactor = currentDayFactor + (dayFactor - currentDayFactor) * 0.05;
             currentNightFactor = currentNightFactor + (nightFactor - currentNightFactor) * 0.05;
-            
+
             let isSunset = (sunY > -0.1 && sunY < 0.15) ? 1.0 : 0.0;
             let sunsetFactor = isSunset * (1.0 - Math.abs(sunY - 0.02) / 0.15);
 
@@ -1588,8 +1637,8 @@ void main() {
                     window.location.href = TARGET;
                 }
             } else if (audioInit && audioCtx.state === 'running') {
-                let waveCycle = Math.sin(waveTime * 0.3); 
-                
+                let waveCycle = Math.sin(waveTime * 0.3);
+
                 // 3D VR SPATIAL AUDIO
                 if (masterPanner && masterPanner.pan) {
                     let panTarget = Math.max(-1.0, Math.min(1.0, mX * 0.8));
@@ -1599,38 +1648,38 @@ void main() {
                 if (waterFilter && waterSource && waterGain) {
                     let targetWaterFreq = 250 + (waveCycle * 100) + (engineConfig.height * 600) - (mY * 150);
                     waterFilter.frequency.setTargetAtTime(Math.max(150, targetWaterFreq), audioCtx.currentTime, 0.1);
-                    
+
                     let targetRate = 0.4 + (engineConfig.energy * 0.02) + (waveCycle * 0.03);
                     waterSource.playbackRate.setTargetAtTime(Math.max(0.1, targetRate), audioCtx.currentTime, 0.1);
-                    
+
                     let waterVol = 0.12 + currentDayFactor * 0.08;
                     waterGain.gain.setTargetAtTime(waterVol, audioCtx.currentTime, 0.3);
                 }
-                
+
                 if (windFilter && windGain) {
                     let windFreq = 600 + currentDayFactor * 600 + sunsetFactor * 400;
                     windFilter.frequency.setTargetAtTime(windFreq, audioCtx.currentTime, 0.3);
-                    
+
                     let windVol = 0.03 + currentDayFactor * 0.05 + sunsetFactor * 0.04;
                     windGain.gain.setTargetAtTime(windVol, audioCtx.currentTime, 0.3);
                 }
-                
+
                 if (ambientFilter && ambientGain) {
                     let ambientFreq = 1500 + currentDayFactor * 1000 - currentNightFactor * 500;
                     ambientFilter.frequency.setTargetAtTime(ambientFreq, audioCtx.currentTime, 0.5);
-                    
+
                     let ambientVol = 0.03 + currentDayFactor * 0.03 + sunsetFactor * 0.04;
                     ambientGain.gain.setTargetAtTime(ambientVol, audioCtx.currentTime, 0.3);
                 }
-                
+
                 if (nightFilter && nightGain) {
                     let nightVol = currentNightFactor * 0.12;
                     nightGain.gain.setTargetAtTime(nightVol, audioCtx.currentTime, 0.5);
-                    
+
                     let nightFreq = 300 + Math.abs(mY) * 150;
                     nightFilter.frequency.setTargetAtTime(nightFreq, audioCtx.currentTime, 0.3);
                 }
-                
+
                 if (droneGain) {
                     let droneVol = 0.02 + currentNightFactor * 0.04 + sunsetFactor * 0.02;
                     droneGain.gain.setTargetAtTime(droneVol, audioCtx.currentTime, 0.5);
@@ -1643,8 +1692,8 @@ void main() {
             gl.uniform1f(uLocs.time, now * 0.001);
             gl.uniform2f(uLocs.mouse, mX, mY);
             gl.uniform1f(uLocs.warp, warp);
-            gl.uniform1f(uLocs.wTime, waveTime); 
-            
+            gl.uniform1f(uLocs.wTime, waveTime);
+
             gl.uniform3f(uLocs.wColor, engineConfig.r, engineConfig.g, engineConfig.b);
             gl.uniform1f(uLocs.wEnergy, engineConfig.energy);
             gl.uniform1f(uLocs.wHeight, engineConfig.height);
@@ -1668,7 +1717,7 @@ void main() {
         document.getElementById('auth-input').addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 const val = e.target.value.trim();
-                
+
                 if (val === 'abcab123') {
                     document.getElementById('auth-modal').style.display = 'none';
                     document.getElementById('custom-panel').style.display = 'flex';
@@ -1714,16 +1763,16 @@ void main() {
             document.getElementById('deploy-panel').style.display = 'flex';
             loadDeploySettings();
         }
-        
+
         function closeDeployPanel() {
             document.getElementById('deploy-panel').style.display = 'none';
         }
-        
-        document.getElementById('deploy-method').addEventListener('change', function(e) {
+
+        document.getElementById('deploy-method').addEventListener('change', function (e) {
             const method = e.target.value;
             document.getElementById('deploy-ftp-fields').style.display = method === 'ftp' ? 'block' : 'none';
         });
-        
+
         try {
             const saved = localStorage.getItem('rahatil_ftp_config');
             if (saved) {
@@ -1732,8 +1781,8 @@ void main() {
                 document.getElementById('deploy-ftp-user').value = cfg.ftpUser || '';
                 document.getElementById('deploy-ftp-path').value = cfg.ftpPath || '/public_html/index.html';
             }
-        } catch(e) {}
-        
+        } catch (e) { }
+
         function loadDeploySettings() {
             try {
                 const saved = localStorage.getItem('rahatil_deploy_config');
@@ -1744,20 +1793,20 @@ void main() {
                     document.getElementById('deploy-ftp-user').value = config.ftpUser || '';
                     document.getElementById('deploy-ftp-path').value = config.ftpPath || '/public_html/index.html';
                 }
-            } catch(e) {}
+            } catch (e) { }
             document.getElementById('deploy-method').dispatchEvent(new Event('change'));
         }
-        
+
         async function deployToCloud() {
             const method = document.getElementById('deploy-method').value;
             const status = document.getElementById('deploy-status');
-            
+
             status.style.display = 'block';
             status.style.color = '#4ade80';
             status.innerHTML = '⏳ Preparing your configured file...';
-            
+
             let htmlContent = document.documentElement.outerHTML;
-            
+
             try {
                 const ftpConfig = {
                     ftpHost: document.getElementById('deploy-ftp-host').value,
@@ -1765,7 +1814,7 @@ void main() {
                     ftpPath: document.getElementById('deploy-ftp-path').value
                 };
                 localStorage.setItem('rahatil_ftp_config', JSON.stringify(ftpConfig));
-                
+
                 if (method === 'download') {
                     const blob = new Blob([htmlContent], { type: 'text/html' });
                     const url = URL.createObjectURL(blob);
@@ -1776,23 +1825,23 @@ void main() {
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
-                    
+
                     status.innerHTML = '✅ <strong>Download Ready!</strong><br><span style="color:#888;font-size:0.65rem;">1. Upload "index.html" to your server<br>2. Your site is live!</span>';
                     return;
                 }
-                
+
                 if (method === 'ftp') {
                     const host = document.getElementById('deploy-ftp-host').value;
                     const user = document.getElementById('deploy-ftp-user').value;
                     const pass = document.getElementById('deploy-ftp-pass').value;
                     const path = document.getElementById('deploy-ftp-path').value || '/index.html';
-                    
+
                     if (!host || !user || !pass) {
                         status.innerHTML = '⚠️ Please enter FTP Host, Username & Password';
                         status.style.color = '#f87171';
                         return;
                     }
-                    
+
                     status.innerHTML = `✅ <strong>Ready to Upload!</strong><br>
                         <span style="color:#888;font-size:0.6rem;">
                         FTP Details saved for next time.<br><br>
@@ -1801,8 +1850,8 @@ void main() {
                         2. Upload index.html to: <strong>${host}${path}</strong><br>
                         </span>`;
                 }
-                
-            } catch(e) {
+
+            } catch (e) {
                 status.innerHTML = '⚠️ Error: ' + e.message;
                 status.style.color = '#f87171';
             }
