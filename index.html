@@ -19,7 +19,7 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background: #000;
+            background: radial-gradient(circle at 50% 100%, #08121a 0%, #000 80%);
             font-family: 'Inter', sans-serif;
             cursor: none;
             touch-action: none;
@@ -33,6 +33,8 @@
             position: absolute;
             z-index: 1;
             filter: contrast(1.05);
+            opacity: 0;
+            transition: opacity 2s ease;
         }
 
         /* IMMERSION GATEWAY (DESKTOP ONLY) */
@@ -1068,9 +1070,6 @@ void main() {
     fragColor = vec4(pow(col, vec3(1.0/2.2)), 1.0);
 }</script>
     <script>
-        // =================================================================
-        // ENGINE CONFIGURATION (BUYER SETTINGS)
-        // =================================================================
         const CLOUD_SAVE_ENDPOINT = "https://your-api-endpoint.com/v1/config";
         const CLOUD_AUTH_BEARER = "";
 
@@ -1088,13 +1087,8 @@ void main() {
         let isPaused = false;
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
 
-        // FIXED: The DRS floor is strictly locked to 1.0 so mobile never gets blurry.
         let baseDPR = isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2.0);
-        let currentDPR = baseDPR;
-        let globalQuality = 1.0;
-
-        // FIXED: ADDED MISSING totalFrames TRACKER TO PREVENT REFERENCE ERROR CRASH
-        let totalFrames = 0;
+        let currentDPR = baseDPR, globalQuality = 1.0, totalFrames = 0;
 
         const configKeys = ['energy', 'height', 'stars', 'r', 'g', 'b'];
         const textKeys = ['mainTitle', 'btnText', 'cineTitle', 'cineSub1', 'cineSub2', 'targetUrl'];
@@ -1111,8 +1105,8 @@ void main() {
 
         try {
             const savedData = localStorage.getItem('rahatil_engine_config');
-            if (savedData) { engineConfig = { ...defaultConfig, ...JSON.parse(savedData) }; }
-        } catch (e) { console.error(e); }
+            if (savedData) engineConfig = { ...defaultConfig, ...JSON.parse(savedData) };
+        } catch (e) { }
 
         function applyTextConfig() {
             document.getElementById('ui-mainTitle').innerText = engineConfig.mainTitle;
@@ -1147,13 +1141,7 @@ void main() {
         let lastTouchTime = 0;
         let targetMX = 0, targetMY = 0.2;
 
-        let currentDayFactor = 0.5;
-        let currentNightFactor = 0.5;
-
-        let lastBeta = null;
-        let lastGamma = null;
-
-        // FIXED: GLOBALLY DEFINED enterExperience FUNCTION
+        let currentDayFactor = 0.5, currentNightFactor = 0.5, lastBeta = null, lastGamma = null;
         function enterExperience() {
             const intro = document.getElementById('intro-layer');
             const uiL = document.getElementById('ui-layer');
@@ -1173,10 +1161,9 @@ void main() {
 
         if (isMobile) {
             document.getElementById('cursor').style.display = 'none';
-            var introLayer = document.getElementById('intro-layer');
-            if (introLayer) introLayer.style.display = 'none';
-            var uiLayer = document.getElementById('ui-layer');
-            if (uiLayer) uiLayer.style.display = 'flex';
+            const iL = document.getElementById('intro-layer'), uL = document.getElementById('ui-layer');
+            if (iL) iL.style.display = 'none';
+            if (uL) uL.style.display = 'flex';
         }
 
         function handleOrientation(event) {
@@ -1214,15 +1201,13 @@ void main() {
             targetMY = Math.max(-0.9, Math.min(0.9, finalY));
         }
 
-        // --- THE HACK: MOBILE SANDBOX UNLOCKER ---
         function unlockAudio() {
             if (audioInit) return;
             audioInit = true;
-
             if (isMobile && typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission().then(state => {
                     if (state === 'granted') window.addEventListener('deviceorientation', handleOrientation);
-                }).catch(console.error);
+                });
             }
 
             const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -1235,7 +1220,6 @@ void main() {
             if (unlock.start) unlock.start(0);
             if (audioCtx.state === 'suspended') audioCtx.resume();
 
-            // 2. Let the browser breathe, then construct the massive 5-layer synth graph
             setTimeout(() => { buildAudioGraph(); }, 20);
         }
 
@@ -1252,7 +1236,6 @@ void main() {
             }
             let audioDest = masterPanner ? masterPanner : audioCtx.destination;
 
-            // WATER LAYER
             const waterBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const waterOut = waterBuffer.getChannelData(0);
             let lastOut = 0;
@@ -1311,7 +1294,6 @@ void main() {
             ambientSource.connect(ambientFilter).connect(ambientGain).connect(audioDest);
             ambientSource.start(0);
 
-            // NIGHT OCEAN LAYER
             const nightBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const nightOut = nightBuffer.getChannelData(0);
             let lastNight = 0;
@@ -1338,7 +1320,6 @@ void main() {
             nightSource.connect(nightFilter).connect(nightGain).connect(audioDest);
             nightSource.start(0);
 
-            // DEEP DRONE LAYER
             droneOsc = audioCtx.createOscillator();
             droneOsc.type = 'sine';
             droneOsc.frequency.value = 40;
@@ -1431,7 +1412,7 @@ void main() {
 
         const compile = (t, s) => {
             const sh = gl.createShader(t); gl.shaderSource(sh, s); gl.compileShader(sh);
-            if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(sh)); return null; }
+            if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) return null;
             return sh;
         };
 
@@ -1558,9 +1539,14 @@ void main() {
             }
         }
 
+        let firstF = true;
         function render(now) {
             requestAnimationFrame(render);
             if (isPaused || !gl) return;
+            if (firstF) {
+                firstF = false;
+                canvas.style.opacity = '1';
+            }
 
             let elapsed = now - lastTime;
             if (elapsed < frameInterval) return;
@@ -1638,8 +1624,6 @@ void main() {
                 }
             } else if (audioInit && audioCtx.state === 'running') {
                 let waveCycle = Math.sin(waveTime * 0.3);
-
-                // 3D VR SPATIAL AUDIO
                 if (masterPanner && masterPanner.pan) {
                     let panTarget = Math.max(-1.0, Math.min(1.0, mX * 0.8));
                     masterPanner.pan.setTargetAtTime(panTarget, audioCtx.currentTime, 0.2);
@@ -1703,7 +1687,11 @@ void main() {
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         }
 
-        if (initGL()) { requestAnimationFrame(render); }
+        if (window.requestIdleCallback) {
+            requestIdleCallback(() => { setTimeout(() => { if (initGL()) requestAnimationFrame(render); }, 500); });
+        } else {
+            setTimeout(() => { if (initGL()) requestAnimationFrame(render); }, 1000);
+        }
 
         window.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 's') {
