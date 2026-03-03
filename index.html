@@ -37,7 +37,6 @@
             transition: opacity 2s ease;
         }
 
-        /* IMMERSION GATEWAY (DESKTOP ONLY) */
         #intro-layer {
             position: absolute;
             top: 0;
@@ -173,7 +172,6 @@
             }
         }
 
-        /* STANDARD UI */
         #ui-layer {
             position: relative;
             z-index: 10;
@@ -1143,20 +1141,16 @@ void main() {
 
         let currentDayFactor = 0.5, currentNightFactor = 0.5, lastBeta = null, lastGamma = null;
         function enterExperience() {
-            const intro = document.getElementById('intro-layer');
-            const uiL = document.getElementById('ui-layer');
-
+            const intro = document.getElementById('intro-layer'), uiL = document.getElementById('ui-layer');
             if (intro) {
                 intro.style.opacity = '0';
                 intro.style.pointerEvents = 'none';
                 intro.style.backdropFilter = 'blur(0px)';
                 setTimeout(() => { intro.style.display = 'none'; }, 1500);
             }
-            if (uiL) {
-                uiL.style.opacity = '1';
-            }
-
+            if (uiL) uiL.style.opacity = '1';
             unlockAudio();
+            if (initGL()) requestAnimationFrame(render);
         }
 
         if (isMobile) {
@@ -1212,14 +1206,11 @@ void main() {
 
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             audioCtx = new AudioContext();
-
-            // 1. Instantly fire silent buffer to hack iOS Safari sandbox block.
             const unlock = audioCtx.createBufferSource();
             unlock.buffer = audioCtx.createBuffer(1, 1, 22050);
             unlock.connect(audioCtx.destination);
             if (unlock.start) unlock.start(0);
             if (audioCtx.state === 'suspended') audioCtx.resume();
-
             setTimeout(() => { buildAudioGraph(); }, 20);
         }
 
@@ -1687,11 +1678,6 @@ void main() {
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         }
 
-        if (window.requestIdleCallback) {
-            requestIdleCallback(() => { setTimeout(() => { if (initGL()) requestAnimationFrame(render); }, 500); });
-        } else {
-            setTimeout(() => { if (initGL()) requestAnimationFrame(render); }, 1000);
-        }
 
         window.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 's') {
