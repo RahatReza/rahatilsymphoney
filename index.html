@@ -325,10 +325,19 @@
             box-sizing: border-box;
         }
 
-        .panel-box::-webkit-scrollbar { width: 6px; }
-        .panel-box::-webkit-scrollbar-track { background: transparent; }
-        .panel-box::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
-        .panel-box::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+        .panel-box::-webkit-scrollbar {
+            width: 6px;
+        }
+        .panel-box::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .panel-box::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        .panel-box::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
 
         .panel-box h3 {
             margin: 0 0 5px 0;
@@ -355,7 +364,9 @@
             justify-content: space-between;
         }
 
-        .slider-group span { color: #fff; }
+        .slider-group span {
+            color: #fff;
+        }
 
         input[type=range] {
             -webkit-appearance: none;
@@ -423,7 +434,9 @@
             transition: 0.3s;
         }
 
-        .btn-panel:hover { background: rgba(255, 255, 255, 0.2); }
+        .btn-panel:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
 
         .btn-reset {
             color: #ffa0a0;
@@ -446,17 +459,51 @@
             border-color: rgba(74, 222, 128, 0.7);
         }
         
-        select.text-input { cursor: pointer; }
+        select.text-input {
+            cursor: pointer;
+        }
 
+        /* MOBILE RESPONSIVE SCALING */
         @media (max-width: 768px) {
-            h1 { font-size: 2.2rem; letter-spacing: 18px; margin-left: 18px; }
-            .btn-init { font-size: 0.6rem; letter-spacing: 10px; margin-top: 50px; }
-            .btn-init:hover { letter-spacing: 12px; }
-            .cine-title { font-size: 1.5rem; letter-spacing: 8px; }
-            .cine-sub { font-size: 0.5rem; letter-spacing: 6px; }
-            #cinematic-layer.active .cine-title { letter-spacing: 15px; }
-            .panel-box { padding: 20px; gap: 12px; }
-            .panel-box h3 { font-size: 1rem; letter-spacing: 5px; }
+            h1 {
+                font-size: 2.2rem;
+                letter-spacing: 18px;
+                margin-left: 18px;
+            }
+
+            .btn-init {
+                font-size: 0.6rem;
+                letter-spacing: 10px;
+                margin-top: 50px;
+            }
+
+            .btn-init:hover {
+                letter-spacing: 12px;
+            }
+
+            .cine-title {
+                font-size: 1.5rem;
+                letter-spacing: 8px;
+            }
+
+            .cine-sub {
+                font-size: 0.5rem;
+                letter-spacing: 6px;
+            }
+
+            #cinematic-layer.active .cine-title {
+                letter-spacing: 15px;
+            }
+
+            .panel-box {
+                padding: 20px;
+                gap: 12px;
+            }
+
+            .panel-box h3 {
+                font-size: 1rem;
+                letter-spacing: 5px;
+            }
         }
     </style>
 </head>
@@ -484,10 +531,12 @@
         <div class="cine-sub" id="ui-cineSub2">Redirecting to Terminal</div>
     </div>
 
+    <!-- ADMIN AUTHORIZATION MODAL -->
     <div id="auth-modal" class="overlay-layer">
         <input type="password" id="auth-input" placeholder="OVERRIDE CODE" autocomplete="off" />
     </div>
 
+    <!-- ENGINEERING PANEL -->
     <div id="custom-panel" class="overlay-layer">
         <div class="panel-box">
             <h3>Engine Override</h3>
@@ -554,6 +603,7 @@
         </div>
     </div>
 
+    <!-- CLOUD DEPLOYMENT PANEL -->
     <div id="deploy-panel" class="overlay-layer">
         <div class="panel-box">
             <h3>Cloud Deployment</h3>
@@ -617,6 +667,7 @@ uniform vec2 u_mouse;
 uniform float u_warp;
 uniform float u_waveTime;
 
+// CUSTOMIZATION UNIFORMS
 uniform vec3 u_waterColor;
 uniform float u_waveEnergy;
 uniform float u_waveHeight;
@@ -632,6 +683,7 @@ float noise(vec2 p) {
     return mix(mix(hash(i), hash(i+vec2(1,0)), u.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), u.x), u.y);
 }
 
+// TRUE GERSTNER WAVES WITH HORIZONTAL DISPLACEMENT
 vec3 GetGerstnerWave(vec2 pos, float steepness, float wavelength, vec2 direction, float time, out float height) {
     float k = 2.0 * PI / wavelength;
     float c = sqrt(9.8 / k);
@@ -695,6 +747,7 @@ float GetWaterHeight(vec3 p, bool micro) {
     h += (u_waveHeight * 0.15) * pow(wave5, 2.5);
 
     if(micro && u_quality > 0.5) {
+        // PERCEPTUAL CHEATING: Skip expensive micro detail when quality is low
         vec2 uv1 = mat2(0.8, -0.6, 0.6, 0.8) * uv * 8.0;
         vec2 uv2 = mat2(0.6, 0.8, -0.8, 0.6) * uv * 15.0;
         vec2 uv3 = uv * 25.0 + t * 0.5;
@@ -708,7 +761,9 @@ float GetWaterHeight(vec3 p, bool micro) {
 vec3 GetNormal(vec3 p, bool micro) {
     vec2 e = vec2(0.02, 0.0);
     float h = GetWaterHeight(p, micro);
+    
     float naturalY = 0.04 + (u_waveHeight * 0.4); 
+    
     return normalize(vec3(
         h - GetWaterHeight(p - e.xyy, micro), 
         naturalY, 
@@ -721,6 +776,7 @@ float GetStars(vec3 rd, float nightFactor, bool isRef) {
     vec3 starRd = isRef ? normalize(vec3(rd.x, abs(rd.y), rd.z)) : rd;
     vec2 starUV = starRd.xz / (abs(starRd.y) + 0.001);
     
+    // PERCEPTUAL CHEATING: Reduce star density when quality is low
     float effectiveStarDensity = u_starDensity * (0.5 + 0.5 * u_quality);
     float baseHash = hash(starUV);
     float stars = pow(baseHash, isRef ? effectiveStarDensity * 1.33 : effectiveStarDensity);
@@ -818,6 +874,7 @@ void main() {
         col = mix(col, getCloudColor(rd, sunDir), cloudAlpha * 0.65);
     }
 
+    // --- CINEMATIC VOLUMETRIC SUN SYSTEM ---
     float sunDot = max(0.0, dot(rd, sunDir));
     float sunAltD = max(0.0, sunDir.y);
     
@@ -835,7 +892,9 @@ void main() {
     cinematicSun += mix(vec3(1.0, 0.1, 0.0), glowColor, 0.5) * sunAtmosphere;
     col += cinematicSun * sunMask;
     
+    // --- REALISTIC PROCEDURAL MOON SYSTEM ---
     float moonDot = max(0.0, dot(rd, moonDir));
+    
     vec3 moonRight = normalize(cross(vec3(0.0, 1.0, 0.0), moonDir));
     vec3 moonUp = cross(moonDir, moonRight);
     vec2 moonUV = vec2(dot(rd, moonRight), dot(rd, moonUp)) * 45.0;
@@ -963,6 +1022,8 @@ void main() {
         let framesAnalyzed = 0;
         let droppedFrames = 0;
         let lastTime = 0;
+        const targetFPS = 60;
+        const frameInterval = 1000 / targetFPS;
 
         const canvas = document.getElementById('v');
         let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.2, redirected = false;
@@ -979,7 +1040,7 @@ void main() {
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
 
         // HIGH QUALITY MOBILE FLOOR (Never goes blurry)
-        let baseDPR = isMobile ? Math.min(window.devicePixelRatio, 2.0) : Math.min(window.devicePixelRatio, 2.0);
+        let baseDPR = isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2.0);
         let currentDPR = baseDPR;
         let globalQuality = 1.0; 
         
@@ -1401,6 +1462,7 @@ void main() {
                 }
             }
 
+            // Cross-fade everything out for the cinematic exit
             if (waterGain && audioCtx) {
                 let ct = audioCtx.currentTime;
                 waterGain.gain.cancelScheduledValues(ct);
