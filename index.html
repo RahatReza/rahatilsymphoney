@@ -8,15 +8,16 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;400&display=swap');
 
-        /* DOM/CANVAS SPLIT: CPU handles layout, CSS handles passive touch blocking */
-        body, html {
+        /* DOM/CANVAS SPLIT */
+        body,
+        html {
             margin: 0;
             padding: 0;
             overflow: hidden;
             background: #000;
             font-family: 'Inter', sans-serif;
             cursor: none;
-            touch-action: none; /* Replaces e.preventDefault() for passive listeners */
+            touch-action: none;
             -webkit-touch-callout: none;
         }
 
@@ -25,15 +26,18 @@
             width: 100vw;
             height: 100vh;
             position: absolute;
-            z-index: 1; /* Hardware accelerated layer */
+            z-index: 1;
             filter: contrast(1.05);
         }
 
-        /* IMMERSION GATEWAY (DESKTOP ONLY) */
+        /* IMMERSION GATEWAY */
         #intro-layer {
             position: absolute;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: 50; 
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 50;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -45,8 +49,9 @@
         }
 
         .intro-visual {
-            width: 80px; height: 80px;
-            border: 1px solid rgba(255,255,255,0.2);
+            width: 80px;
+            height: 80px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 50%;
             position: relative;
             animation: visual-pulse 2s ease-in-out infinite;
@@ -54,23 +59,35 @@
         }
 
         .intro-visual::before {
-            content: ''; position: absolute;
-            top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 20px; height: 20px; background: rgba(255,255,255,0.8);
-            border-radius: 50%; animation: sound-wave 1.5s ease-out infinite;
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: sound-wave 1.5s ease-out infinite;
         }
 
         .intro-visual::after {
-            content: ''; position: absolute;
-            top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 50%; animation: sound-wave-outer 1.5s ease-out infinite;
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: sound-wave-outer 1.5s ease-out infinite;
             animation-delay: 0.3s;
         }
 
         @keyframes visual-pulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
-            50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(255,255,255,0.1); }
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+            50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(255, 255, 255, 0.1); }
         }
 
         @keyframes sound-wave {
@@ -84,14 +101,22 @@
         }
 
         .intro-text {
-            color: #fff; font-size: 0.7rem; letter-spacing: 15px; text-transform: uppercase;
+            color: #fff;
+            font-size: 0.7rem;
+            letter-spacing: 15px;
+            text-transform: uppercase;
             animation: pulse-breath 2.5s infinite alternate ease-in-out;
-            text-shadow: 0 2px 20px rgba(0,0,0,0.8); pointer-events: none; margin-bottom: 15px;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+            margin-bottom: 15px;
         }
 
         .intro-hint {
-            color: rgba(255,255,255,0.4); font-size: 0.55rem; letter-spacing: 4px;
-            text-transform: uppercase; animation: hint-fade 3s ease-in-out infinite;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.55rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            animation: hint-fade 3s ease-in-out infinite;
         }
 
         @keyframes pulse-breath {
@@ -106,48 +131,98 @@
 
         /* STANDARD UI */
         #ui-layer {
-            position: relative; z-index: 10; height: 100vh; width: 100vw;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            pointer-events: none; transition: opacity 1.2s ease;
+            position: relative;
+            z-index: 10;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            transition: opacity 1.2s ease;
         }
 
         .brand-text { text-align: center; }
 
         h1 {
-            font-weight: 100; letter-spacing: 35px; color: #fff; margin: 0; font-size: 3.2rem;
-            text-transform: uppercase; text-shadow: 0 4px 30px rgba(0, 0, 0, 0.35), 0 0 15px rgba(255, 255, 255, 0.2);
+            font-weight: 100;
+            letter-spacing: 35px;
+            color: #fff;
+            margin: 0;
+            font-size: 3.2rem;
+            text-transform: uppercase;
+            text-shadow: 0 4px 30px rgba(0, 0, 0, 0.35), 0 0 15px rgba(255, 255, 255, 0.2);
         }
 
         .btn-init {
-            margin-top: 80px; pointer-events: auto; cursor: pointer; color: #fff; font-size: 0.7rem;
-            letter-spacing: 15px; text-transform: uppercase; opacity: 0.5; transition: 0.4s;
-            position: relative; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+            margin-top: 80px;
+            pointer-events: auto;
+            cursor: pointer;
+            color: #fff;
+            font-size: 0.7rem;
+            letter-spacing: 15px;
+            text-transform: uppercase;
+            opacity: 0.5;
+            transition: 0.4s;
+            position: relative;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
         }
 
         .btn-init::after {
-            content: ''; position: absolute; bottom: -10px; left: 25%; width: 50%; height: 1px;
-            background: #fff; opacity: 0.2; transition: 0.4s;
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 25%;
+            width: 50%;
+            height: 1px;
+            background: #fff;
+            opacity: 0.2;
+            transition: 0.4s;
         }
 
         .btn-init:hover { opacity: 1; letter-spacing: 20px; }
         .btn-init:hover::after { width: 100%; left: 0; opacity: 1; }
 
         #cinematic-layer {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 20; display: flex; flex-direction: column; align-items: center;
-            justify-content: center; pointer-events: none; gap: 20px; opacity: 0;
-            transition: opacity 0.6s ease; width: 100%;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            gap: 20px;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            width: 100%;
         }
 
         .cine-title {
-            font-weight: 100; font-size: 2.2rem; color: #fff; letter-spacing: 15px;
-            text-transform: uppercase; text-shadow: 0 4px 25px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 255, 255, 0.2);
-            opacity: 0; transform: translateY(20px); transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); text-align: center;
+            font-weight: 100;
+            font-size: 2.2rem;
+            color: #fff;
+            letter-spacing: 15px;
+            text-transform: uppercase;
+            text-shadow: 0 4px 25px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 255, 255, 0.2);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            text-align: center;
         }
 
         .cine-sub {
-            font-size: 0.65rem; color: #ddd; letter-spacing: 12px; text-transform: uppercase;
-            opacity: 0; transform: translateY(15px); transition: all 0.6s ease; text-align: center; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            font-size: 0.65rem;
+            color: #ddd;
+            letter-spacing: 12px;
+            text-transform: uppercase;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.6s ease;
+            text-align: center;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
         }
 
         #cinematic-layer.active { opacity: 1; }
@@ -226,7 +301,6 @@
         
         select.text-input { cursor: pointer; }
 
-        /* MOBILE RESPONSIVE SCALING */
         @media (max-width: 768px) {
             h1 { font-size: 2.2rem; letter-spacing: 18px; margin-left: 18px; }
             .btn-init { font-size: 0.6rem; letter-spacing: 10px; margin-top: 50px; }
@@ -263,12 +337,10 @@
         <div class="cine-sub" id="ui-cineSub2">Redirecting to Terminal</div>
     </div>
 
-    <!-- ADMIN AUTHORIZATION MODAL -->
     <div id="auth-modal" class="overlay-layer">
         <input type="password" id="auth-input" placeholder="OVERRIDE CODE" autocomplete="off" />
     </div>
 
-    <!-- ENGINEERING PANEL -->
     <div id="custom-panel" class="overlay-layer">
         <div class="panel-box">
             <h3>Engine Override</h3>
@@ -335,55 +407,7 @@
         </div>
     </div>
 
-    <!-- CLOUD DEPLOYMENT PANEL -->
-    <div id="deploy-panel" class="overlay-layer">
-        <div class="panel-box">
-            <h3>Cloud Deployment</h3>
-            
-            <div class="slider-group">
-                <label>Deploy to Your Server</label>
-                <div style="text-align: center; padding: 15px; background: rgba(74, 222, 128, 0.1); border-radius: 8px; border: 1px solid rgba(74, 222, 128, 0.3);">
-                    <p style="margin: 0; color: #4ade80; font-size: 0.75rem;">Get your configured file and upload it to your hosting.</p>
-                </div>
-            </div>
-            
-            <div class="slider-group" style="margin-top: 15px;">
-                <label>Server Connection</label>
-                <select id="deploy-method" class="text-input" style="padding: 10px;">
-                    <option value="ftp">🌐 FTP / SFTP (Recommended)</option>
-                    <option value="download">💾 Direct Download</option>
-                </select>
-            </div>
-            
-            <div id="deploy-ftp-fields">
-                <div class="slider-group">
-                    <label>Server Host</label>
-                    <input type="text" id="deploy-ftp-host" class="text-input" placeholder="ftp.yourdomain.com">
-                </div>
-                <div class="slider-group">
-                    <label>Username</label>
-                    <input type="text" id="deploy-ftp-user" class="text-input" placeholder="username">
-                </div>
-                <div class="slider-group">
-                    <label>Password</label>
-                    <input type="password" id="deploy-ftp-pass" class="text-input" placeholder="••••••••">
-                </div>
-                <div class="slider-group">
-                    <label>Upload Path</label>
-                    <input type="text" id="deploy-ftp-path" class="text-input" placeholder="/public_html/index.html">
-                </div>
-            </div>
-            
-            <div class="panel-buttons">
-                <button class="btn-panel btn-deploy" onclick="deployToCloud()">🚀 Deploy to My Server</button>
-                <button class="btn-panel" onclick="closeDeployPanel()">Cancel</button>
-            </div>
-            
-            <div id="deploy-status" style="display: none; text-align: center; padding: 10px; font-size: 0.7rem; color: #4ade80;"></div>
-        </div>
-    </div>
-
-    <!-- GLSL SHADER (GPU CORE) -->
+    <!-- GLSL SHADER (EXTREME PERFORMANCE EDITION) -->
     <script id="fs" type="x-shader/x-fragment">#version 300 es
 #ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
@@ -402,6 +426,8 @@ uniform vec3 u_waterColor;
 uniform float u_waveEnergy;
 uniform float u_waveHeight;
 uniform float u_starDensity;
+
+// DYNAMIC PERFORMANCE GOVERNOR (Tells the shader to kill heavy math)
 uniform float u_quality;
 
 #define PI 3.14159265359
@@ -413,80 +439,55 @@ float noise(vec2 p) {
     return mix(mix(hash(i), hash(i+vec2(1,0)), u.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), u.x), u.y);
 }
 
-vec3 GetGerstnerWave(vec2 pos, float steepness, float wavelength, vec2 direction, float time, out float height) {
-    float k = 2.0 * PI / wavelength;
-    float c = sqrt(9.8 / k);
-    vec2 d = normalize(direction);
-    float f = k * (dot(d, pos) - c * time);
-    float a = steepness / k;
-    height = a * sin(f);
-    return vec3(d.x * a * cos(f), height, d.y * a * cos(f));
-}
-
-vec2 GetWaterDisplacement(vec2 pos, float time) {
-    vec2 disp = vec2(0.0);
-    float h = 0.0;
-    float noiseVal = noise(pos * 0.3 + time * 0.1);
-    
-    vec3 w1 = GetGerstnerWave(pos, 0.25 * u_waveHeight, 4.0, vec2(1.0, 1.2), time * 0.8, h);
-    disp += w1.xz * (0.85 + 0.3 * noiseVal);
-    vec3 w2 = GetGerstnerWave(pos, 0.2 * u_waveHeight, 2.5, vec2(-1.0, 0.8), time * 1.2, h);
-    disp += w2.xz * (0.9 + 0.2 * noise(pos * 2.0 - time * 0.15));
-    vec3 w3 = GetGerstnerWave(pos, 0.15 * u_waveHeight, 1.5, vec2(0.3, -1.5), time * 1.5, h);
-    disp += w3.xz;
-    vec3 w4 = GetGerstnerWave(pos, 0.1 * u_waveHeight, 3.0, vec2(-0.7, -0.5), time * 0.6, h);
-    disp += w4.xz * (0.8 + 0.4 * noiseVal);
-    vec3 w5 = GetGerstnerWave(pos, 0.08 * u_waveHeight, 0.8, vec2(0.9, -0.3), time * 2.0, h);
-    disp += w5.xz;
-    return disp;
-}
-
+// CULLED GERSTNER WAVES (Optimized for Mobile GPU)
 float GetWaterHeight(vec3 p, bool micro) {
     float t = u_waveTime;
     float h = 0.0;
     vec2 uv = p.xz * 0.75;
-    float noiseVal = noise(uv * 0.3 + t * 0.1);
+    
+    // Only calculate noise if we strictly need micro detail (Saves 30% GPU)
+    float nVal = (micro && u_quality > 0.6) ? noise(uv * 0.3 + t * 0.1) : 0.5;
     
     vec2 d1 = normalize(vec2(1.0, 1.2));
-    float wave1 = sin(dot(uv, d1) * 1.5 + t * 0.8) * 0.5 + 0.5;
-    h += u_waveHeight * 1.5 * pow(wave1, 1.6) * (0.85 + 0.3 * noiseVal);
+    float w1 = sin(dot(uv, d1) * 1.5 + t * 0.8) * 0.5 + 0.5;
+    h += u_waveHeight * 1.5 * (w1 * w1) * (0.85 + 0.3 * nVal); // Removed slow pow() function
     
     vec2 d2 = normalize(vec2(-1.0, 0.8));
-    float wave2 = sin(dot(uv, d2) * 2.8 - t * 1.2) * 0.5 + 0.5;
-    h += (u_waveHeight * 0.8) * pow(wave2, 1.8) * (0.9 + 0.2 * noise(uv * 2.0 - t * 0.15));
+    float w2 = sin(dot(uv, d2) * 2.8 - t * 1.2) * 0.5 + 0.5;
+    h += (u_waveHeight * 0.8) * (w2 * w2);
     
     vec2 d3 = normalize(vec2(0.3, -1.5));
-    float wave3 = sin(dot(uv, d3) * 5.0 + t * 1.5) * 0.5 + 0.5;
-    h += (u_waveHeight * 0.4) * pow(wave3, 2.0);
+    float w3 = sin(dot(uv, d3) * 5.0 + t * 1.5) * 0.5 + 0.5;
+    h += (u_waveHeight * 0.4) * (w3 * w3);
     
-    vec2 d4 = normalize(vec2(-0.7, -0.5));
-    float wave4 = sin(dot(uv, d4) * 3.5 + t * 0.6) * 0.5 + 0.5;
-    h += (u_waveHeight * 0.25) * pow(wave4, 2.2) * (0.8 + 0.4 * noiseVal);
-    
-    vec2 d5 = normalize(vec2(0.9, -0.3));
-    float wave5 = sin(dot(uv, d5) * 8.0 - t * 2.0) * 0.5 + 0.5;
-    h += (u_waveHeight * 0.15) * pow(wave5, 2.5);
+    // PERFORMANCE CULLING: Drop 2 massive wave layers if phone lags
+    if (u_quality > 0.8) {
+        vec2 d4 = normalize(vec2(-0.7, -0.5));
+        float w4 = sin(dot(uv, d4) * 3.5 + t * 0.6) * 0.5 + 0.5;
+        h += (u_waveHeight * 0.25) * (w4 * w4) * (0.8 + 0.4 * nVal);
+        
+        vec2 d5 = normalize(vec2(0.9, -0.3));
+        float w5 = sin(dot(uv, d5) * 8.0 - t * 2.0) * 0.5 + 0.5;
+        h += (u_waveHeight * 0.15) * (w5 * w5);
+    }
 
-    // PILLAR 4: LOD (Level of Detail) Cheating
-    // Skips expensive micro-ripples if rendering far reflections or if DRS quality dropped
     if(micro && u_quality > 0.6) {
         vec2 uv1 = mat2(0.8, -0.6, 0.6, 0.8) * uv * 8.0;
-        vec2 uv2 = mat2(0.6, 0.8, -0.8, 0.6) * uv * 15.0;
-        vec2 uv3 = uv * 25.0 + t * 0.5;
-        h += (noise(uv1 + t) * 0.5 + noise(uv2 - t * 0.7) * 0.35 + noise(uv3) * 0.15) * (u_waveHeight * 0.18) * u_quality;
+        h += (noise(uv1 + t) * 0.5) * (u_waveHeight * 0.18) * u_quality;
     }
     
     return h - (u_waveHeight * 0.5);
 }
 
+// OPTIMIZED NORMALS: Skip micro-noise when calculating offsets to prevent 3x math multiplier
 vec3 GetNormal(vec3 p, bool micro) {
     vec2 e = vec2(0.02, 0.0);
     float h = GetWaterHeight(p, micro);
     float naturalY = 0.04 + (u_waveHeight * 0.4); 
     return normalize(vec3(
-        h - GetWaterHeight(p - e.xyy, micro), 
+        h - GetWaterHeight(p - e.xyy, false), 
         naturalY, 
-        h - GetWaterHeight(p - e.yxy, micro)
+        h - GetWaterHeight(p - e.yxy, false)
     ));
 }
 
@@ -494,9 +495,8 @@ float GetStars(vec3 rd, float nightFactor, bool isRef) {
     vec3 starRd = isRef ? normalize(vec3(rd.x, abs(rd.y), rd.z)) : rd;
     vec2 starUV = starRd.xz / (abs(starRd.y) + 0.001);
     
-    float effectiveStarDensity = u_starDensity * (0.5 + 0.5 * u_quality);
     float baseHash = hash(starUV);
-    float stars = pow(baseHash, isRef ? effectiveStarDensity * 1.33 : effectiveStarDensity);
+    float stars = pow(baseHash, isRef ? u_starDensity * 1.33 : u_starDensity);
     
     float starPhase = hash(starUV + vec2(45.2, 12.8)) * PI * 2.0;
     float starFreq = hash(starUV + vec2(9.3, 74.1)) * 2.5 + 0.5;
@@ -506,17 +506,20 @@ float GetStars(vec3 rd, float nightFactor, bool isRef) {
     return stars * twinkle * nightFactor * (isRef ? 0.3 : 1.2) * warpFade;
 }
 
-// PILLAR 4: LOD Cheating
+// CULLED CLOUD ENGINE
 float getClouds(vec3 rd, float t, bool isRef) {
     vec2 uv = rd.xz / (rd.y + 0.001) * 0.4;
     uv.x -= t * 0.05;      
     
     float f = noise(uv);
-    uv = mat2(1.6, 1.2, -1.2, 1.6) * uv;
-    f += 0.5 * noise(uv + t * 0.03);
     
-    // Skip 3rd octave math for water reflections!
-    if(!isRef) {
+    // Save cycles on reflections or low-end phones
+    if (u_quality > 0.6) {
+        uv = mat2(1.6, 1.2, -1.2, 1.6) * uv;
+        f += 0.5 * noise(uv + t * 0.03);
+    }
+    
+    if(!isRef && u_quality > 0.9) {
         uv = mat2(1.6, 1.2, -1.2, 1.6) * uv;
         f += 0.25 * noise(uv - t * 0.02);
     }
@@ -574,7 +577,7 @@ void main() {
     float sunMask = smoothstep(-0.05, 0.02, sunDir.y);
     float moonMask = smoothstep(-0.05, 0.02, moonDir.y);
 
-    // PILLAR 3: CULLING (Only calculate sky items if looking UP)
+    // PILLAR 3: VERTICAL CULLING (Only do sky math if looking up)
     if (rd.y >= 0.0) {
         if(nightFactor > 0.01) {
             vec2 nebUV = rd.xz / (abs(rd.y) + 0.001);
@@ -592,7 +595,6 @@ void main() {
         vec3 glowColor = mix(vec3(1.0, 0.25, 0.05), vec3(1.0, 0.8, 0.5), smoothstep(0.0, 0.4, sunAltD));
         vec3 cinematicSun = coreColor * (smoothstep(0.9985, 0.9998, sunDot) * 2.5);
         cinematicSun += glowColor * (pow(sunDot, 180.0) * 1.5);            
-        cinematicSun += glowColor * (pow(sunDot, 50.0) * 0.8);             
         cinematicSun += mix(vec3(1.0, 0.1, 0.0), glowColor, 0.5) * (pow(sunDot, 12.0) * 0.4);
         col += cinematicSun * sunMask;
         
@@ -601,17 +603,20 @@ void main() {
         vec3 moonUp = cross(moonDir, moonRight);
         vec2 moonUV = vec2(dot(rd, moonRight), dot(rd, moonUp)) * 45.0;
         
-        float craters = noise(moonUV * 8.0) * 0.6 + noise(moonUV * 20.0) * 0.4;
+        // Turn off moon craters on low end phones
+        float craters = 0.5;
+        if (u_quality > 0.7) craters = noise(moonUV * 8.0) * 0.6 + noise(moonUV * 20.0) * 0.4;
+        
         vec3 moonSurface = mix(vec3(0.5, 0.55, 0.6), vec3(1.0, 0.98, 0.95), craters);
         float moonDist = clamp((1.0 - moonDot) / (1.0 - 0.9993), 0.0, 1.0);
         
         vec3 cinematicMoon = moonSurface * sqrt(1.0 - moonDist * moonDist) * smoothstep(0.9993, 0.99945, moonDot) * 2.2; 
-        cinematicMoon += vec3(0.7, 0.85, 1.0) * (pow(moonDot, 250.0) * 1.2 + pow(moonDot, 70.0) * 0.5 + pow(moonDot, 15.0) * 0.2);
+        cinematicMoon += vec3(0.7, 0.85, 1.0) * (pow(moonDot, 250.0) * 1.2 + pow(moonDot, 70.0) * 0.5);
         col += cinematicMoon * trueNight * moonMask;
         col += vec3(0.04, 0.05, 0.1) * (pow(moonDot, 8.0) * 0.15 + pow(moonDot, 25.0) * 0.08) * trueNight;
     }
 
-    // PILLAR 3: CULLING (Only calculate water items if looking DOWN)
+    // PILLAR 3: VERTICAL CULLING (Only calculate water if looking down)
     if(rd.y < 0.0) {
         float d = -(ro.y) / min(rd.y, -0.002); 
         vec3 p = ro + rd * d;
@@ -626,8 +631,9 @@ void main() {
         vec3 refR_Planar = reflect(rd, vec3(0, 1, 0)); 
         vec3 reflectedSky = mix(horizon, zenith, smoothstep(-0.2, 0.6, reflect(rd, N_smooth).y));
         
-        if(nightFactor > 0.01) {
-            reflectedSky += vec3(0.04, 0.015, 0.06) * noise(refR_Planar.xz * 2.0) * noise(refR_Planar.xz * 4.0) * nightFactor * smoothstep(0.0, 0.3, refR_Planar.y);
+        // Turn off reflection stars to save performance
+        if(nightFactor > 0.01 && u_quality > 0.8) {
+            reflectedSky += vec3(0.04, 0.015, 0.06) * noise(refR_Planar.xz * 2.0) * nightFactor * smoothstep(0.0, 0.3, refR_Planar.y);
             reflectedSky += GetStars(refR_Planar, nightFactor, true);
         }
 
@@ -636,15 +642,10 @@ void main() {
 
         float fresnel = pow(1.0 - max(0.0, dot(-rd, N_sharp)), 5.0);
         float waveLocalH = GetWaterHeight(p, false);
-        float waveSlope = abs(GetWaterHeight(p + vec3(0.1, 0.0, 0.0), false) - waveLocalH) * 8.0;
-        
-        float foamNoise = noise(p.xz * 3.0 + u_time * 0.3) * 0.5 + 0.5;
-        foamNoise *= noise(p.xz * 8.0 - u_time * 0.2) * 0.5 + 0.5;
         
         vec3 tidalColor = mix(u_waterColor * 0.2, u_waterColor * 2.2, smoothstep(-u_waveHeight, u_waveHeight * 1.5, waveLocalH));
         vec3 waterBase = mix(mix(vec3(0.000, 0.001, 0.003), vec3(0.01, 0.03, 0.08), max(0.0, moonDir.y)), tidalColor, dayFactor);
         
-        waterBase += mix(vec3(0.9, 0.92, 0.95), vec3(0.7, 0.75, 0.85), 1.0 - dayFactor) * smoothstep(0.15, 0.45, waveSlope + foamNoise * 0.3) * 0.3 * smoothstep(0.0, 0.15, rd.y);
         vec3 waterCol = mix(waterBase, reflectedSky * 0.85, 0.15 + 0.85 * fresnel);
         
         vec3 waterSunDir = normalize(vec3(sunDir.x, max(sunDir.y, 0.001), sunDir.z));
@@ -654,11 +655,10 @@ void main() {
         waterCol += mix(vec3(1.0, 0.3, 0.05), vec3(1.0, 0.9, 0.7), smoothstep(0.0, 0.3, waterSunDir.y)) * (pow(max(0.0, dot(N_spec, normalize(-rd + waterSunDir))), 400.0) * 4.5 + pow(smoothSpecDot, 80.0) * 0.8) * sunMask;
         
         float smoothMoonSpecDot = max(0.0, dot(N_smooth, normalize(-rd + waterMoonDir)));
-        float moonSpecIntensity = (pow(max(0.0, dot(N_spec, normalize(-rd + waterMoonDir))), 500.0) * 2.5 + pow(smoothMoonSpecDot, 80.0) * 0.8 + pow(smoothMoonSpecDot, 20.0) * 0.15) * (0.5 + smoothstep(0.3, 0.8, waveSlope) * smoothstep(0.0, 0.5, dot(rd, moonDir)) * 2.0);
+        float moonSpecIntensity = pow(max(0.0, dot(N_spec, normalize(-rd + waterMoonDir))), 500.0) * 2.5 + pow(smoothMoonSpecDot, 80.0) * 0.8;
         
         waterCol += vec3(0.5, 0.65, 0.85) * moonSpecIntensity * trueNight * moonMask;
         waterCol += vec3(0.02, 0.028, 0.05) * (max(0.0, dot(N_smooth, waterMoonDir)) * 0.08) * trueNight;
-        waterCol += vec3(0.005, 0.008, 0.018) * trueNight * moonMask;
         
         col = mix(mix(horizon, waterCol, smoothstep(180.0, 5.0, d)), horizon * 0.5, smoothstep(30.0, 150.0, d) * trueNight * 0.6);
     }
@@ -671,12 +671,10 @@ void main() {
     fragColor = vec4(pow(col, vec3(1.0/2.2)), 1.0);
 }</script>
     <script>
-        // =================================================================
-        // ENGINE CONFIGURATION
-        // =================================================================
-        const CLOUD_SAVE_ENDPOINT = "https://your-api-endpoint.com/v1/config"; 
-        const CLOUD_AUTH_BEARER = ""; 
+        const CLOUD_SAVE_ENDPOINT = "https://your-api-endpoint.com/v1/config";
+        const CLOUD_AUTH_BEARER = "";
 
+        // GLOBAL FRAME AND FPS TIMING RESTORED
         let totalFrames = 0;
         let framesAnalyzed = 0;
         let droppedFrames = 0;
@@ -686,40 +684,37 @@ void main() {
 
         const canvas = document.getElementById('v');
         let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.2, redirected = false;
-
-        let offsetMX = 0, offsetMY = 0;
-        let isTouching = false;
-        
-        let waveTime = 0;
-        let lastTimeJS = 0;
-
+        let offsetMX = 0, offsetMY = 0, isTouching = false;
+        let waveTime = 0, lastTimeJS = 0;
         let TARGET = "https://www.linkedin.com/in/rahatreza100/";
 
         let isPaused = false;
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
 
-        // PILLAR 5: DYNAMIC RESOLUTION SCALING (Floor 1.0 to prevent mobile blurring)
+        // PILLAR 5: DYNAMIC RESOLUTION (Hard floor 1.0 to prevent mobile blurring)
         let baseDPR = isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2.0);
         let currentDPR = baseDPR;
-        let globalQuality = 1.0; 
         
+        // PILLAR 4: SHADER LOD GOVERNOR (Tells shader to drop math if lagging)
+        let globalQuality = 1.0;
+
         const configKeys =['energy', 'height', 'stars', 'r', 'g', 'b'];
         const textKeys =['mainTitle', 'btnText', 'cineTitle', 'cineSub1', 'cineSub2', 'targetUrl'];
-        
-        const defaultConfig = { 
+
+        const defaultConfig = {
             energy: 2.2, height: 0.05, stars: 600.0, r: 0.01, g: 0.04, b: 0.08,
             mainTitle: "RAHATIL", btnText: "Initialize", cineTitle: "Welcome, Rahatil",
             cineSub1: "Calibrating Tidal Engine...", cineSub2: "Redirecting to Terminal",
             targetUrl: "https://www.linkedin.com/in/rahatreza100/"
         };
-        
+
         let uLocs = {};
         let engineConfig = { ...defaultConfig };
 
         try {
             const savedData = localStorage.getItem('rahatil_engine_config');
             if (savedData) { engineConfig = { ...defaultConfig, ...JSON.parse(savedData) }; }
-        } catch (e) { console.error(e); }
+        } catch (e) {}
 
         function applyTextConfig() {
             document.getElementById('ui-mainTitle').innerText = engineConfig.mainTitle;
@@ -742,28 +737,17 @@ void main() {
         }
         syncUIWithConfig();
 
-        let audioCtx;
-        let waterSource, waterFilter, waterGain;
+        let audioCtx, waterSource, waterFilter, waterGain;
         let windSource, windFilter, windGain;
         let ambientSource, ambientFilter, ambientGain;
         let nightSource, nightFilter, nightGain;
-        let droneSource, droneOsc, droneGain;
-        let masterPanner;
-        let audioInit = false;
-        let gyroActive = false;
-        let lastTouchTime = 0;
-        let targetMX = 0, targetMY = 0.2;
-        
-        let currentDayFactor = 0.5;
-        let currentNightFactor = 0.5;
+        let droneSource, droneOsc, droneGain, masterPanner;
+        let audioInit = false, gyroActive = false, lastTouchTime = 0, targetMX = 0, targetMY = 0.2;
+        let currentDayFactor = 0.5, currentNightFactor = 0.5, lastBeta = null, lastGamma = null;
 
-        let lastBeta = null;
-        let lastGamma = null;
-
-        window.enterExperience = function() {
+        window.enterExperience = function () {
             const intro = document.getElementById('intro-layer');
             const uiL = document.getElementById('ui-layer');
-            
             if (intro) {
                 intro.style.opacity = '0';
                 intro.style.pointerEvents = 'none';
@@ -771,32 +755,27 @@ void main() {
                 setTimeout(() => { intro.style.display = 'none'; }, 1500);
             }
             if (uiL) uiL.style.opacity = '1';
-            
             unlockAudio();
         };
 
         if (isMobile) {
             document.getElementById('cursor').style.display = 'none';
             const introLayer = document.getElementById('intro-layer');
-            if(introLayer) introLayer.style.display = 'none';
+            if (introLayer) introLayer.style.display = 'none';
             const uiLayer = document.getElementById('ui-layer');
-            if(uiLayer) uiLayer.style.display = 'flex';
+            if (uiLayer) uiLayer.style.display = 'flex';
         }
 
         function handleOrientation(event) {
             if (event.beta === null || event.gamma === null) return;
             gyroActive = true;
-
             let angle = (screen.orientation ? screen.orientation.angle : window.orientation) || 0;
-            let b = event.beta;
-            let g = event.gamma;
+            let b = event.beta; let g = event.gamma;
 
             if (lastBeta !== null && Math.abs(b - lastBeta) > 60) b = lastBeta;
             if (lastGamma !== null && Math.abs(g - lastGamma) > 60) g = lastGamma;
 
-            lastBeta = b;
-            lastGamma = g;
-
+            lastBeta = b; lastGamma = g;
             b = Math.max(-85, Math.min(85, b));
             g = Math.max(-85, Math.min(85, g));
 
@@ -804,14 +783,11 @@ void main() {
             const TILT_DIVISOR = 60.0;
 
             if (angle === 90) {
-                finalX = b / TILT_DIVISOR;
-                finalY = (g + 45.0) / TILT_DIVISOR;
+                finalX = b / TILT_DIVISOR; finalY = (g + 45.0) / TILT_DIVISOR;
             } else if (angle === -90 || angle === 270) {
-                finalX = -b / TILT_DIVISOR;
-                finalY = -(g - 45.0) / TILT_DIVISOR;
+                finalX = -b / TILT_DIVISOR; finalY = -(g - 45.0) / TILT_DIVISOR;
             } else {
-                finalX = g / TILT_DIVISOR;
-                finalY = (b - 45.0) / TILT_DIVISOR;
+                finalX = g / TILT_DIVISOR; finalY = (b - 45.0) / TILT_DIVISOR;
             }
 
             targetMX = Math.max(-1.5, Math.min(1.5, finalX));
@@ -837,12 +813,9 @@ void main() {
                 source.buffer = buffer;
                 source.connect(audioCtx.destination);
                 if (source.start) source.start(0); else source.noteOn(0);
-            } catch(e) {}
+            } catch (e) { }
 
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-
+            if (audioCtx.state === 'suspended') audioCtx.resume();
             setTimeout(() => { buildAudioGraph(); }, 50);
         }
 
@@ -852,13 +825,12 @@ void main() {
 
         function buildAudioGraph() {
             const bufferSize = audioCtx.sampleRate * 2;
-            
             if (audioCtx.createStereoPanner) {
                 try {
                     masterPanner = audioCtx.createStereoPanner();
                     masterPanner.pan.value = 0;
                     masterPanner.connect(audioCtx.destination);
-                } catch(e) {}
+                } catch (e) { }
             }
             let audioDest = masterPanner ? masterPanner : audioCtx.destination;
 
@@ -868,18 +840,13 @@ void main() {
             for (let i = 0; i < bufferSize; i++) {
                 let white = Math.random() * 2 - 1;
                 waterOut[i] = (lastOut + (0.02 * white)) / 1.02;
-                lastOut = waterOut[i];
-                waterOut[i] *= 3.5;
+                lastOut = waterOut[i]; waterOut[i] *= 3.5;
             }
             waterSource = audioCtx.createBufferSource();
-            waterSource.buffer = waterBuffer;
-            waterSource.loop = true;
+            waterSource.buffer = waterBuffer; waterSource.loop = true;
             waterFilter = audioCtx.createBiquadFilter();
-            waterFilter.type = 'lowpass';
-            waterFilter.frequency.value = 400;
-            waterFilter.Q.value = 0.5;
-            waterGain = audioCtx.createGain();
-            waterGain.gain.value = 0.0;
+            waterFilter.type = 'lowpass'; waterFilter.frequency.value = 400; waterFilter.Q.value = 0.5;
+            waterGain = audioCtx.createGain(); waterGain.gain.value = 0.0;
             waterSource.connect(waterFilter).connect(waterGain).connect(audioDest);
             waterSource.start(0);
 
@@ -887,14 +854,10 @@ void main() {
             const windOut = windBuffer.getChannelData(0);
             for (let i = 0; i < bufferSize; i++) { windOut[i] = (Math.random() * 2 - 1) * 0.5; }
             windSource = audioCtx.createBufferSource();
-            windSource.buffer = windBuffer;
-            windSource.loop = true;
+            windSource.buffer = windBuffer; windSource.loop = true;
             windFilter = audioCtx.createBiquadFilter();
-            windFilter.type = 'bandpass';
-            windFilter.frequency.value = 800;
-            windFilter.Q.value = 0.3;
-            windGain = audioCtx.createGain();
-            windGain.gain.value = 0.0;
+            windFilter.type = 'bandpass'; windFilter.frequency.value = 800; windFilter.Q.value = 0.3;
+            windGain = audioCtx.createGain(); windGain.gain.value = 0.0;
             windSource.connect(windFilter).connect(windGain).connect(audioDest);
             windSource.start(0);
 
@@ -908,13 +871,10 @@ void main() {
                 }
             }
             ambientSource = audioCtx.createBufferSource();
-            ambientSource.buffer = ambientBuffer;
-            ambientSource.loop = true;
+            ambientSource.buffer = ambientBuffer; ambientSource.loop = true;
             ambientFilter = audioCtx.createBiquadFilter();
-            ambientFilter.type = 'lowpass';
-            ambientFilter.frequency.value = 2000;
-            ambientGain = audioCtx.createGain();
-            ambientGain.gain.value = 0.0;
+            ambientFilter.type = 'lowpass'; ambientFilter.frequency.value = 2000;
+            ambientGain = audioCtx.createGain(); ambientGain.gain.value = 0.0;
             ambientSource.connect(ambientFilter).connect(ambientGain).connect(audioDest);
             ambientSource.start(0);
 
@@ -923,75 +883,48 @@ void main() {
             let lastNight = 0;
             for (let i = 0; i < bufferSize; i++) {
                 let t = i / audioCtx.sampleRate;
-                let swell = Math.sin(t * 0.3) * 0.5 + 0.5;
-                swell *= Math.sin(t * 0.17) * 0.5 + 0.5;
+                let swell = Math.sin(t * 0.3) * 0.5 + 0.5; swell *= Math.sin(t * 0.17) * 0.5 + 0.5;
                 let n = Math.random() * 2 - 1;
-                let filtered = (lastNight + (0.01 * n)) / 1.01;
-                lastNight = filtered;
+                let filtered = (lastNight + (0.01 * n)) / 1.01; lastNight = filtered;
                 let nightSound = (filtered * 0.8) * swell * 0.4 + (filtered * 0.8) * 0.2;
                 nightSound += Math.sin(t * 2.5 * Math.PI * 2) * 0.02 * swell;
                 nightOut[i] = nightSound * 0.6;
             }
             nightSource = audioCtx.createBufferSource();
-            nightSource.buffer = nightBuffer;
-            nightSource.loop = true;
+            nightSource.buffer = nightBuffer; nightSource.loop = true;
             nightFilter = audioCtx.createBiquadFilter();
-            nightFilter.type = 'lowpass';
-            nightFilter.frequency.value = 400;
-            nightFilter.Q.value = 0.5;
-            nightGain = audioCtx.createGain();
-            nightGain.gain.value = 0.0;
+            nightFilter.type = 'lowpass'; nightFilter.frequency.value = 400; nightFilter.Q.value = 0.5;
+            nightGain = audioCtx.createGain(); nightGain.gain.value = 0.0;
             nightSource.connect(nightFilter).connect(nightGain).connect(audioDest);
             nightSource.start(0);
 
-            droneOsc = audioCtx.createOscillator();
-            droneOsc.type = 'sine';
-            droneOsc.frequency.value = 40;
-            const droneOsc2 = audioCtx.createOscillator();
-            droneOsc2.type = 'sine';
-            droneOsc2.frequency.value = 60;
-            const droneOsc3 = audioCtx.createOscillator();
-            droneOsc3.type = 'triangle';
-            droneOsc3.frequency.value = 80;
-            droneGain = audioCtx.createGain();
-            droneGain.gain.value = 0.0;
-            const droneFilter = audioCtx.createBiquadFilter();
-            droneFilter.type = 'lowpass';
-            droneFilter.frequency.value = 100;
-            droneOsc.connect(droneGain);
-            droneOsc2.connect(droneGain);
-            droneOsc3.connect(droneGain);
+            droneOsc = audioCtx.createOscillator(); droneOsc.type = 'sine'; droneOsc.frequency.value = 40;
+            const droneOsc2 = audioCtx.createOscillator(); droneOsc2.type = 'sine'; droneOsc2.frequency.value = 60;
+            const droneOsc3 = audioCtx.createOscillator(); droneOsc3.type = 'triangle'; droneOsc3.frequency.value = 80;
+            droneGain = audioCtx.createGain(); droneGain.gain.value = 0.0;
+            const droneFilter = audioCtx.createBiquadFilter(); droneFilter.type = 'lowpass'; droneFilter.frequency.value = 100;
+            droneOsc.connect(droneGain); droneOsc2.connect(droneGain); droneOsc3.connect(droneGain);
             droneGain.connect(droneFilter).connect(audioDest);
-            droneOsc.start(0);
-            droneOsc2.start(0);
-            droneOsc3.start(0);
+            droneOsc.start(0); droneOsc2.start(0); droneOsc3.start(0);
 
             let ct = audioCtx.currentTime;
-            waterGain.gain.setValueAtTime(0.0, ct);
-            waterGain.gain.linearRampToValueAtTime(0.15, ct + 2.0);
-            windGain.gain.setValueAtTime(0.0, ct);
-            windGain.gain.linearRampToValueAtTime(0.06, ct + 2.5);
-            ambientGain.gain.setValueAtTime(0.0, ct);
-            ambientGain.gain.linearRampToValueAtTime(0.04, ct + 3.0);
-            droneGain.gain.setValueAtTime(0.0, ct);
-            droneGain.gain.linearRampToValueAtTime(0.03, ct + 3.0);
+            waterGain.gain.setValueAtTime(0.0, ct); waterGain.gain.linearRampToValueAtTime(0.15, ct + 2.0);
+            windGain.gain.setValueAtTime(0.0, ct); windGain.gain.linearRampToValueAtTime(0.06, ct + 2.5);
+            ambientGain.gain.setValueAtTime(0.0, ct); ambientGain.gain.linearRampToValueAtTime(0.04, ct + 3.0);
+            droneGain.gain.setValueAtTime(0.0, ct); droneGain.gain.linearRampToValueAtTime(0.03, ct + 3.0);
         }
 
-        // PILLAR 2: PASSIVE LISTENERS - Safe touch handling
+        // PILLAR 2: PASSIVE LISTENERS
         window.addEventListener('touchstart', (e) => {
-            if (!e.touches || !e.touches[0]) return;
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
-            isTouching = true;
-            lastTouchTime = Date.now();
+            isTouching = true; lastTouchTime = Date.now();
             mX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 1.5;
             mY = ((1 - e.touches[0].clientY / window.innerHeight) * 2 - 1) * 0.7;
         }, { passive: true });
 
         window.addEventListener('touchmove', (e) => {
-            if (!e.touches || !e.touches[0]) return;
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
-            isTouching = true;
-            lastTouchTime = Date.now();
+            isTouching = true; lastTouchTime = Date.now();
             mX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 1.5;
             mY = ((1 - e.touches[0].clientY / window.innerHeight) * 2 - 1) * 0.7;
         }, { passive: true });
@@ -1004,18 +937,14 @@ void main() {
             mX = ((e.clientX / window.innerWidth) * 2 - 1) * 1.5;
             mY = ((1 - e.clientY / window.innerHeight) * 2 - 1) * 0.7;
             const cur = document.getElementById('cursor');
-            if (cur) {
-                cur.style.left = e.clientX + 'px';
-                cur.style.top = e.clientY + 'px';
-            }
+            if (cur) { cur.style.left = e.clientX + 'px'; cur.style.top = e.clientY + 'px'; }
         };
 
         document.addEventListener("visibilitychange", () => { isPaused = document.hidden; });
 
         let resizeTimer;
         window.addEventListener('resize', () => {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(resizeCanvas, 200);
+            clearTimeout(resizeTimer); resizeTimer = setTimeout(resizeCanvas, 200);
         });
 
         function resizeCanvas() {
@@ -1044,9 +973,7 @@ void main() {
             const fs = compile(gl.FRAGMENT_SHADER, document.getElementById('fs').text);
             if (!vs || !fs) return false;
 
-            gl.attachShader(prg, vs);
-            gl.attachShader(prg, fs);
-            gl.linkProgram(prg);
+            gl.attachShader(prg, vs); gl.attachShader(prg, fs); gl.linkProgram(prg);
 
             const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
@@ -1056,9 +983,10 @@ void main() {
             uLocs.time = gl.getUniformLocation(prg, 'u_time');
             uLocs.mouse = gl.getUniformLocation(prg, 'u_mouse');
             uLocs.warp = gl.getUniformLocation(prg, 'u_warp');
-            uLocs.wTime = gl.getUniformLocation(prg, 'u_waveTime'); 
+            uLocs.wTime = gl.getUniformLocation(prg, 'u_waveTime');
+            
             uLocs.wColor = gl.getUniformLocation(prg, 'u_waterColor');
-            uLocs.wEnergy = gl.getUniformLocation(prg, 'u_waveEnergy'); 
+            uLocs.wEnergy = gl.getUniformLocation(prg, 'u_waveEnergy');
             uLocs.wHeight = gl.getUniformLocation(prg, 'u_waveHeight');
             uLocs.sDensity = gl.getUniformLocation(prg, 'u_starDensity');
             uLocs.quality = gl.getUniformLocation(prg, 'u_quality');
@@ -1067,27 +995,16 @@ void main() {
             return true;
         }
 
-        // FORCE GRAPHICS CARD BOOT ON PAGE LOAD
-        setTimeout(() => {
-            if (initGL()) { 
-                canvas.style.opacity = '1';
-                requestAnimationFrame(render); 
-            }
-        }, 50);
+        setTimeout(() => { if (initGL()) { canvas.style.opacity = '1'; requestAnimationFrame(render); } }, 50);
 
         canvas.addEventListener("webglcontextlost", (e) => { e.preventDefault(); isPaused = true; }, false);
         canvas.addEventListener("webglcontextrestored", () => { initGL(); isPaused = false; }, false);
 
         function engage() {
-            if (isW || document.getElementById('custom-panel').style.display === 'flex') return;
-            
-            // Mobile: Ensure WebGL is ready
-            if (!gl && !initGL()) return;
+            if (isW || !gl || document.getElementById('custom-panel').style.display === 'flex') return;
 
             if (!audioInit) unlockAudio();
-            if (audioCtx && audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
 
             isW = true;
             document.getElementById('ui-layer').style.opacity = '0';
@@ -1103,26 +1020,15 @@ void main() {
                 } else if (audioCtx && audioCtx.state === 'running') {
                     let rumble = audioCtx.createOscillator();
                     let rumbleGain = audioCtx.createGain();
-
-                    rumble.type = 'sine';
-                    rumble.frequency.setValueAtTime(45, audioCtx.currentTime);
-                    rumble.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 1.2);
-
-                    rumbleGain.gain.setValueAtTime(1.5, audioCtx.currentTime);
-                    rumbleGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
-
-                    rumble.connect(rumbleGain).connect(audioCtx.destination);
-                    rumble.start();
-                    rumble.stop(audioCtx.currentTime + 1.2);
+                    rumble.type = 'sine'; rumble.frequency.setValueAtTime(45, audioCtx.currentTime); rumble.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 1.2);
+                    rumbleGain.gain.setValueAtTime(1.5, audioCtx.currentTime); rumbleGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+                    rumble.connect(rumbleGain).connect(audioCtx.destination); rumble.start(); rumble.stop(audioCtx.currentTime + 1.2);
                 }
             }
 
             if (waterGain && audioCtx) {
                 let ct = audioCtx.currentTime;
-                waterGain.gain.cancelScheduledValues(ct);
-                waterGain.gain.setValueAtTime(waterGain.gain.value, ct);
-                waterGain.gain.linearRampToValueAtTime(0, ct + 1.5);
-                
+                waterGain.gain.cancelScheduledValues(ct); waterGain.gain.setValueAtTime(waterGain.gain.value, ct); waterGain.gain.linearRampToValueAtTime(0, ct + 1.5);
                 if (windGain) { windGain.gain.linearRampToValueAtTime(0, ct + 1.5); }
                 if (ambientGain) { ambientGain.gain.linearRampToValueAtTime(0, ct + 1.5); }
                 if (nightGain) { nightGain.gain.linearRampToValueAtTime(0, ct + 1.0); }
@@ -1131,34 +1037,14 @@ void main() {
 
             if (audioCtx) {
                 const playBell = (freq, delay) => {
-                    let osc1 = audioCtx.createOscillator();
-                    let osc2 = audioCtx.createOscillator();
-                    let noteGain = audioCtx.createGain();
-
-                    osc1.type = 'sine';
-                    osc2.type = 'triangle';
-                    osc1.frequency.value = freq;
-                    osc2.frequency.value = freq * 1.005;
-
+                    let osc1 = audioCtx.createOscillator(); let osc2 = audioCtx.createOscillator(); let noteGain = audioCtx.createGain();
+                    osc1.type = 'sine'; osc2.type = 'triangle'; osc1.frequency.value = freq; osc2.frequency.value = freq * 1.005;
                     let t = audioCtx.currentTime + delay;
-
-                    noteGain.gain.setValueAtTime(0, t);
-                    noteGain.gain.linearRampToValueAtTime(0.15, t + 0.05);
-                    noteGain.gain.exponentialRampToValueAtTime(0.001, t + 2.5);
-
-                    osc1.connect(noteGain).connect(audioCtx.destination);
-                    osc2.connect(noteGain).connect(audioCtx.destination);
-
-                    osc1.start(t); osc1.stop(t + 2.5);
-                    osc2.start(t); osc2.stop(t + 2.5);
+                    noteGain.gain.setValueAtTime(0, t); noteGain.gain.linearRampToValueAtTime(0.15, t + 0.05); noteGain.gain.exponentialRampToValueAtTime(0.001, t + 2.5);
+                    osc1.connect(noteGain).connect(audioCtx.destination); osc2.connect(noteGain).connect(audioCtx.destination);
+                    osc1.start(t); osc1.stop(t + 2.5); osc2.start(t); osc2.stop(t + 2.5);
                 };
-
-                playBell(261.63, 0.0);
-                playBell(392.00, 0.2);
-                playBell(493.88, 0.4);
-                playBell(587.33, 0.6);
-                playBell(659.25, 0.8);
-                playBell(1046.50, 1.2);
+                playBell(261.63, 0.0); playBell(392.00, 0.2); playBell(493.88, 0.4); playBell(587.33, 0.6); playBell(659.25, 0.8); playBell(1046.50, 1.2);
             }
         }
 
@@ -1170,15 +1056,14 @@ void main() {
             if (elapsed < frameInterval) return;
             lastTime = now - (elapsed % frameInterval);
 
-            let dtJS = Math.min(now - (lastTimeJS || now), 50); 
-            lastTimeJS = now;
-            waveTime += (dtJS * 0.001) * engineConfig.energy;
+            let dtJS = Math.min(now - (lastTimeJS || now), 50);
+            lastTimeJS = now; waveTime += (dtJS * 0.001) * engineConfig.energy;
 
             let dtFactor = Math.min(elapsed, 50) / 16.666;
-            
-            // PILLAR 5: DYNAMIC RESOLUTION SCALING (Hard floor at 1.0 to prevent blur)
+
+            // PILLAR 5: DYNAMIC SHADER GOVERNOR
             totalFrames++;
-            if (totalFrames > 120) { 
+            if (totalFrames > 60) {
                 if (framesAnalyzed >= 60) {
                     let frameHealth = (60 - droppedFrames) / 60;
                     
@@ -1189,60 +1074,49 @@ void main() {
                         currentDPR = Math.min(baseDPR, currentDPR + 0.1);
                         resizeCanvas();
                     }
-                    
-                    let avgFrameTime = elapsed;
-                    globalQuality = avgFrameTime < 16 ? 1.0 : Math.max(0.5, 1.0 - (avgFrameTime - 16) * 0.05);
-                    
-                    framesAnalyzed = 0;
-                    droppedFrames = 0;
+
+                    // Force the Shader to drop heavy math if frame times are bad
+                    if (droppedFrames > 12) {
+                        globalQuality = Math.max(0.5, globalQuality - 0.1);
+                    } else if (droppedFrames < 2) {
+                        globalQuality = Math.min(1.0, globalQuality + 0.05);
+                    }
+
+                    framesAnalyzed = 0; droppedFrames = 0;
                 }
-                if (elapsed > 20) droppedFrames++;
+                if (elapsed > 25) droppedFrames++; 
                 framesAnalyzed++;
             }
 
             let timeSinceTouch = Date.now() - lastTouchTime;
             if (gyroActive) {
                 if (isTouching || timeSinceTouch < 150) {
-                    offsetMX = mX - targetMX;
-                    offsetMY = mY - targetMY;
+                    offsetMX = mX - targetMX; offsetMY = mY - targetMY;
                     if (isTouching) lastTouchTime = Date.now();
                 } else {
-                    if (timeSinceTouch > 2000) {
-                        let decay = Math.pow(0.95, dtFactor);
-                        offsetMX *= decay;
-                        offsetMY *= decay;
-                    }
-                    let destX = targetMX + offsetMX;
-                    let destY = targetMY + offsetMY;
-
-                    let lerpAmt = 1.0 - Math.pow(0.93, dtFactor);
-                    mX += (destX - mX) * lerpAmt;
-                    mY += (destY - mY) * lerpAmt;
+                    if (timeSinceTouch > 2000) { let decay = Math.pow(0.95, dtFactor); offsetMX *= decay; offsetMY *= decay; }
+                    let destX = targetMX + offsetMX; let destY = targetMY + offsetMY;
+                    let lerpAmt = 1.0 - Math.pow(0.93, dtFactor); mX += (destX - mX) * lerpAmt; mY += (destY - mY) * lerpAmt;
                 }
             }
 
             let solarEase = warp * warp * (3.0 - 2.0 * warp);
             let currentSunY = 0.15 + mY * 1.0;
             let sunY = currentSunY * (1 - solarEase) + (-1.5) * solarEase;
-            
             let dayFactor = Math.max(0, Math.min(1, (sunY + 0.02) / 0.17));
             let nightFactor = 1.0 - dayFactor;
             
             currentDayFactor = currentDayFactor + (dayFactor - currentDayFactor) * 0.05;
             currentNightFactor = currentNightFactor + (nightFactor - currentNightFactor) * 0.05;
-            
             let isSunset = (sunY > -0.1 && sunY < 0.15) ? 1.0 : 0.0;
             let sunsetFactor = isSunset * (1.0 - Math.abs(sunY - 0.02) / 0.15);
 
             if (isW) {
                 warp = Math.min(1.0, warp + (0.008 * dtFactor));
-                if (warp >= 1.0 && !redirected) {
-                    redirected = true;
-                    window.location.href = TARGET;
-                }
+                if (warp >= 1.0 && !redirected) { redirected = true; window.location.href = TARGET; }
             } else if (audioInit && audioCtx && audioCtx.state === 'running') {
-                let waveCycle = Math.sin(waveTime * 0.3); 
-                
+                let waveCycle = Math.sin(waveTime * 0.3);
+
                 if (masterPanner && masterPanner.pan) {
                     let panTarget = Math.max(-1.0, Math.min(1.0, mX * 0.8));
                     masterPanner.pan.setTargetAtTime(panTarget, audioCtx.currentTime, 0.2);
@@ -1251,38 +1125,29 @@ void main() {
                 if (waterFilter && waterSource && waterGain) {
                     let targetWaterFreq = 250 + (waveCycle * 100) + (engineConfig.height * 600) - (mY * 150);
                     waterFilter.frequency.setTargetAtTime(Math.max(150, targetWaterFreq), audioCtx.currentTime, 0.1);
-                    
                     let targetRate = 0.4 + (engineConfig.energy * 0.02) + (waveCycle * 0.03);
                     waterSource.playbackRate.setTargetAtTime(Math.max(0.1, targetRate), audioCtx.currentTime, 0.1);
-                    
                     let waterVol = 0.12 + currentDayFactor * 0.08;
                     waterGain.gain.setTargetAtTime(waterVol, audioCtx.currentTime, 0.3);
                 }
-                
                 if (windFilter && windGain) {
                     let windFreq = 600 + currentDayFactor * 600 + sunsetFactor * 400;
                     windFilter.frequency.setTargetAtTime(windFreq, audioCtx.currentTime, 0.3);
-                    
                     let windVol = 0.03 + currentDayFactor * 0.05 + sunsetFactor * 0.04;
                     windGain.gain.setTargetAtTime(windVol, audioCtx.currentTime, 0.3);
                 }
-                
                 if (ambientFilter && ambientGain) {
                     let ambientFreq = 1500 + currentDayFactor * 1000 - currentNightFactor * 500;
                     ambientFilter.frequency.setTargetAtTime(ambientFreq, audioCtx.currentTime, 0.5);
-                    
                     let ambientVol = 0.03 + currentDayFactor * 0.03 + sunsetFactor * 0.04;
                     ambientGain.gain.setTargetAtTime(ambientVol, audioCtx.currentTime, 0.3);
                 }
-                
                 if (nightFilter && nightGain) {
                     let nightVol = currentNightFactor * 0.12;
                     nightGain.gain.setTargetAtTime(nightVol, audioCtx.currentTime, 0.5);
-                    
                     let nightFreq = 300 + Math.abs(mY) * 150;
                     nightFilter.frequency.setTargetAtTime(nightFreq, audioCtx.currentTime, 0.3);
                 }
-                
                 if (droneGain) {
                     let droneVol = 0.02 + currentNightFactor * 0.04 + sunsetFactor * 0.02;
                     droneGain.gain.setTargetAtTime(droneVol, audioCtx.currentTime, 0.5);
@@ -1290,13 +1155,11 @@ void main() {
             }
 
             gl.useProgram(prg);
-
             gl.uniform2f(uLocs.res, canvas.width, canvas.height);
             gl.uniform1f(uLocs.time, now * 0.001);
             gl.uniform2f(uLocs.mouse, mX, mY);
             gl.uniform1f(uLocs.warp, warp);
-            gl.uniform1f(uLocs.wTime, waveTime); 
-            
+            gl.uniform1f(uLocs.wTime, waveTime);
             gl.uniform3f(uLocs.wColor, engineConfig.r, engineConfig.g, engineConfig.b);
             gl.uniform1f(uLocs.wEnergy, engineConfig.energy);
             gl.uniform1f(uLocs.wHeight, engineConfig.height);
@@ -1318,7 +1181,6 @@ void main() {
         document.getElementById('auth-input').addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 const val = e.target.value.trim();
-                
                 if (val === 'abcab123') {
                     document.getElementById('auth-modal').style.display = 'none';
                     document.getElementById('custom-panel').style.display = 'flex';
@@ -1343,8 +1205,7 @@ void main() {
 
         textKeys.forEach(k => {
             document.getElementById(`inp-${k}`).addEventListener('input', (e) => {
-                engineConfig[k] = e.target.value;
-                applyTextConfig();
+                engineConfig[k] = e.target.value; applyTextConfig();
                 try { localStorage.setItem('rahatil_engine_config', JSON.stringify(engineConfig)); } catch (err) { }
             });
         });
@@ -1355,25 +1216,14 @@ void main() {
             syncUIWithConfig();
         }
 
-        function closeAdminPanel() {
-            document.getElementById('custom-panel').style.display = 'none';
-        }
+        function closeAdminPanel() { document.getElementById('custom-panel').style.display = 'none'; }
+        function showDeployPanel() { document.getElementById('custom-panel').style.display = 'none'; document.getElementById('deploy-panel').style.display = 'flex'; loadDeploySettings(); }
+        function closeDeployPanel() { document.getElementById('deploy-panel').style.display = 'none'; }
 
-        function showDeployPanel() {
-            document.getElementById('custom-panel').style.display = 'none';
-            document.getElementById('deploy-panel').style.display = 'flex';
-            loadDeploySettings();
-        }
-        
-        function closeDeployPanel() {
-            document.getElementById('deploy-panel').style.display = 'none';
-        }
-        
-        document.getElementById('deploy-method').addEventListener('change', function(e) {
-            const method = e.target.value;
-            document.getElementById('deploy-ftp-fields').style.display = method === 'ftp' ? 'block' : 'none';
+        document.getElementById('deploy-method').addEventListener('change', function (e) {
+            document.getElementById('deploy-ftp-fields').style.display = e.target.value === 'ftp' ? 'block' : 'none';
         });
-        
+
         try {
             const saved = localStorage.getItem('rahatil_ftp_config');
             if (saved) {
@@ -1382,8 +1232,8 @@ void main() {
                 document.getElementById('deploy-ftp-user').value = cfg.ftpUser || '';
                 document.getElementById('deploy-ftp-path').value = cfg.ftpPath || '/public_html/index.html';
             }
-        } catch(e) {}
-        
+        } catch (e) { }
+
         function loadDeploySettings() {
             try {
                 const saved = localStorage.getItem('rahatil_deploy_config');
@@ -1394,20 +1244,16 @@ void main() {
                     document.getElementById('deploy-ftp-user').value = config.ftpUser || '';
                     document.getElementById('deploy-ftp-path').value = config.ftpPath || '/public_html/index.html';
                 }
-            } catch(e) {}
+            } catch (e) { }
             document.getElementById('deploy-method').dispatchEvent(new Event('change'));
         }
-        
+
         async function deployToCloud() {
             const method = document.getElementById('deploy-method').value;
             const status = document.getElementById('deploy-status');
-            
-            status.style.display = 'block';
-            status.style.color = '#4ade80';
-            status.innerHTML = '⏳ Preparing your configured file...';
-            
+            status.style.display = 'block'; status.style.color = '#4ade80'; status.innerHTML = '⏳ Preparing your configured file...';
             let htmlContent = document.documentElement.outerHTML;
-            
+
             try {
                 const ftpConfig = {
                     ftpHost: document.getElementById('deploy-ftp-host').value,
@@ -1415,34 +1261,25 @@ void main() {
                     ftpPath: document.getElementById('deploy-ftp-path').value
                 };
                 localStorage.setItem('rahatil_ftp_config', JSON.stringify(ftpConfig));
-                
+
                 if (method === 'download') {
                     const blob = new Blob([htmlContent], { type: 'text/html' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'index.html';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
+                    a.href = url; a.download = 'index.html';
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
                     URL.revokeObjectURL(url);
-                    
                     status.innerHTML = '✅ <strong>Download Ready!</strong><br><span style="color:#888;font-size:0.65rem;">1. Upload "index.html" to your server<br>2. Your site is live!</span>';
                     return;
                 }
-                
+
                 if (method === 'ftp') {
                     const host = document.getElementById('deploy-ftp-host').value;
                     const user = document.getElementById('deploy-ftp-user').value;
                     const pass = document.getElementById('deploy-ftp-pass').value;
                     const path = document.getElementById('deploy-ftp-path').value || '/index.html';
-                    
-                    if (!host || !user || !pass) {
-                        status.innerHTML = '⚠️ Please enter FTP Host, Username & Password';
-                        status.style.color = '#f87171';
-                        return;
-                    }
-                    
+
+                    if (!host || !user || !pass) { status.innerHTML = '⚠️ Please enter FTP Host, Username & Password'; status.style.color = '#f87171'; return; }
                     status.innerHTML = `✅ <strong>Ready to Upload!</strong><br>
                         <span style="color:#888;font-size:0.6rem;">
                         FTP Details saved for next time.<br><br>
@@ -1451,10 +1288,7 @@ void main() {
                         2. Upload index.html to: <strong>${host}${path}</strong><br>
                         </span>`;
                 }
-            } catch(e) {
-                status.innerHTML = '⚠️ Error: ' + e.message;
-                status.style.color = '#f87171';
-            }
+            } catch (e) { status.innerHTML = '⚠️ Error: ' + e.message; status.style.color = '#f87171'; }
         }
     </script>
 </body>
