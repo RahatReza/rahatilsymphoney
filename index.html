@@ -515,7 +515,7 @@ float GetStars(vec3 rd, float nightFactor, bool isRef) {
     return stars * twinkle * nightFactor * (isRef ? 0.3 : 1.2) * warpFade;
 }
 
-// --- OPTIMIZED CLOUD ENGINE (Dynamic LOD for Reflections) ---
+// --- OPTIMIZED CLOUD ENGINE ---
 float getClouds(vec3 rd, float t, bool isRef) {
     if(rd.y < 0.0) return 0.0;
     vec2 uv = rd.xz / (rd.y + 0.001) * 0.4;
@@ -525,7 +525,6 @@ float getClouds(vec3 rd, float t, bool isRef) {
     uv = mat2(1.6, 1.2, -1.2, 1.6) * uv;
     f += 0.5 * noise(uv + t * 0.03);
     
-    // Performance saver: Skip 3rd octave math for water reflections
     if(!isRef) {
         uv = mat2(1.6, 1.2, -1.2, 1.6) * uv;
         f += 0.25 * noise(uv - t * 0.02);
@@ -588,7 +587,6 @@ void main() {
     float sunMask = smoothstep(-0.05, 0.02, sunDir.y);
     float moonMask = smoothstep(-0.05, 0.02, moonDir.y);
 
-    // PERFORMANCE OPTIMIZATION: Only calculate galaxy/stars if it is actually night!
     if(nightFactor > 0.01) {
         vec2 nebUV = rd.xz / (abs(rd.y) + 0.001);
         float neb = noise(nebUV * 2.0 + u_time * 0.01) * noise(nebUV * 4.0 - u_time * 0.01);
@@ -684,14 +682,13 @@ void main() {
 }</script>
     <script>
         const canvas = document.getElementById('v');
-        let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.0, redirected = false; // Initial mY fixed to 0.0 for perfectly centered sun
+        let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.0, redirected = false; 
         let isTouching = false; 
         const TARGET = "https://www.linkedin.com/in/rahatreza100/";
 
         let isPaused = false;
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
 
-        // SMART DYNAMIC RESOLUTION SCALING
         let baseDPR = isMobile ? Math.min(window.devicePixelRatio, 1.0) : Math.min(window.devicePixelRatio, 2.0);
         let currentDPR = baseDPR;
 
@@ -723,9 +720,9 @@ void main() {
         let targetMX = 0, targetMY = 0.0; 
         let manualPanX = 0, manualPanY = 0; 
         
-        // --- HARDCORE VR DIAGNOSIS FIX: DELTA TRACKER & JUMP REJECTION ---
+        // --- HARDCORE VR FIX: DELTA TRACKER WITH LINEAR TILT BLENDING ---
         let lastA = null, lastB = null, lastG = null;
-        let smoothDa = 0, smoothDb = 0, smoothDg = 0;
+        let smoothDx = 0, smoothDy = 0;
         let accumX = 0, accumY = 0;
 
         function handleOrientation(event) {
@@ -741,55 +738,58 @@ void main() {
                 return;
             }
 
-            // Find shortest path angular deltas (prevents 360 to 0 degree spinning jump)
+            // Shortest path deltas (prevents jumping when wrapping 360 to 0)
             let da = a - lastA; if(da > 180) da -= 360; else if(da < -180) da += 360;
             let db = b - lastB; if(db > 180) db -= 360; else if(db < -180) db += 360;
             let dg = g - lastG; if(dg > 180) dg -= 360; else if(dg < -180) dg += 360;
 
             lastA = a; lastB = b; lastG = g;
 
-            // GIMBAL LOCK & SENSOR JUMP REJECTION: 
-            // If the sensor flips >100 degrees instantly (impossible physically), drop the frame. Cures vertical jitter.
-            if (Math.abs(da) > 100 || Math.abs(db) > 100 || Math.abs(dg) > 100) return;
+            // GIMBAL LOCK REJECTOR: Drop frame if physically impossible jump (>60 deg in 1 frame)
+            if (Math.abs(da) > 60 || Math.abs(db) > 60 || Math.abs(dg) > 60) return;
 
-            // DEADZONE NOISE GATE: Eliminates compass micro-jitter when holding still
-            if (Math.abs(da) < 0.08) da = 0;
-            if (Math.abs(db) < 0.08) db = 0;
-            if (Math.abs(dg) < 0.08) dg = 0;
+            // NOISE GATE: Filters out micro-jitters from mobile compass drift
+            if (Math.abs(da) < 0.05) da = 0;
+            if (Math.abs(db) < 0.05) db = 0;
+            if (Math.abs(dg) < 0.05) dg = 0;
 
-            // LOW-PASS DELTA SMOOTHING: Buttery smooth motion without lag
-            smoothDa += (da - smoothDa) * 0.25;
-            smoothDb += (db - smoothDb) * 0.25;
-            smoothDg += (dg - smoothDg) * 0.25;
+            // DYNAMIC TILT BLEND: Solves axis swapping between flat vs upright holding
+            let tilt = Math.abs(b);
+            if (tilt > 90) tilt = 180 - tilt; // Handle Android 180deg flip logic safely
+            let tiltFactor = Math.max(0.0, Math.min(1.0, tilt / 90.0));
 
             let angle = (screen.orientation ? screen.orientation.angle : window.orientation) || 0;
-            let finalDx = 0, finalDy = 0;
+            let dx = 0, dy = 0;
 
-            let radB = b * (Math.PI / 180);
-            let radG = g * (Math.PI / 180);
-
-            // Correct mathematical mapping for Portrait vs Landscape
+            // Route physical axes to screen coordinates based on device rotation
             if (angle === 90) { 
-                finalDx = smoothDa * Math.sin(Math.abs(radG)) + smoothDb * Math.cos(radG);
-                finalDy = -smoothDg;
+                dx = db * (1.0 - tiltFactor) - da * tiltFactor;
+                dy = -dg;
             } else if (angle === -90 || angle === 270) { 
-                finalDx = smoothDa * Math.sin(Math.abs(radG)) - smoothDb * Math.cos(radG);
-                finalDy = smoothDg;
-            } else { // Portrait 
-                finalDx = smoothDg * Math.cos(radB) + smoothDa * Math.sin(radB);
-                finalDy = smoothDb;
+                dx = -db * (1.0 - tiltFactor) - da * tiltFactor;
+                dy = dg;
+            } else { // Portrait
+                dx = dg * (1.0 - tiltFactor) - da * tiltFactor;
+                dy = db;
             }
 
+            // LOW-PASS FILTER: Cinematic, heavy-camera feeling
+            smoothDx += (dx - smoothDx) * 0.15;
+            smoothDy += (dy - smoothDy) * 0.15;
+
             if (!isTouching) {
-                accumX += finalDx / 30.0; // Adjusted for perfect heavy sensitivity
-                accumY += finalDy / 30.0;
+                accumX += smoothDx / 25.0; // Panning sensitivity
+                accumY += smoothDy / 25.0;
                 
-                // Gravity Center Return (slowly pulls back to the middle if left alone)
+                // GRAVITY CENTERING: slowly drifts sun back to the center of screen if you stop moving
                 accumX *= 0.985;
                 accumY *= 0.985;
             } else {
+                // If touching, instantly lock the gyro coordinates to finger position
                 accumX = manualPanX;
                 accumY = manualPanY;
+                smoothDx = 0; // Kill momentum
+                smoothDy = 0;
             }
 
             targetMX = Math.max(-1.5, Math.min(1.5, accumX));
