@@ -727,61 +727,69 @@ void main() {
         let targetMX = 0, targetMY = 0.0; 
         let manualPanX = 0, manualPanY = 0; // Stores offset injected by manual touch scrolling
         
-        // ADAPTIVE VR GYROSCOPE VARIABLES (Solves the "Bed/90-degree" problem)
-        let lastBeta = null;
-        let lastGamma = null;
-        let referencePitch = null;
-        let referenceRoll = null;
+        // HARDCORE VR DIAGNOSIS: Delta Tracker Variables to prevent Gimbal Lock
+        let lastA = null, lastB = null, lastG = null;
+        let accumX = 0, accumY = 0;
 
         function handleOrientation(event) {
-            if (event.beta === null || event.gamma === null) return;
+            if (event.alpha === null || event.beta === null || event.gamma === null) return;
             gyroActive = true;
 
-            let angle = (screen.orientation ? screen.orientation.angle : window.orientation) || 0;
+            let a = event.alpha;
             let b = event.beta;
             let g = event.gamma;
 
-            // Prevent sudden camera jumps if device crosses 90/-90 boundaries
-            if (lastBeta !== null && Math.abs(b - lastBeta) > 60) referencePitch += (b - lastBeta);
-            if (lastGamma !== null && Math.abs(g - lastGamma) > 60) referenceRoll += (g - lastGamma);
-
-            lastBeta = b;
-            lastGamma = g;
-
-            // Establish the starting "Center" posture dynamically based on how the user holds the phone initially
-            if (referencePitch === null) {
-                referencePitch = b;
-                referenceRoll = g;
+            if (lastA === null) {
+                lastA = a; lastB = b; lastG = g;
+                return;
             }
 
-            // Slowly adapt to user posture shifting over time (sitting up -> lying down)
-            referencePitch += (b - referencePitch) * 0.005;
-            referenceRoll += (g - referenceRoll) * 0.005;
+            // Find shortest path angular deltas (prevents 360 to 0 degree spinning jump)
+            let da = a - lastA; if(da > 180) da -= 360; else if(da < -180) da += 360;
+            let db = b - lastB; if(db > 180) db -= 360; else if(db < -180) db += 360;
+            let dg = g - lastG; if(dg > 180) dg -= 360; else if(dg < -180) dg += 360;
 
-            // When touching to pan, instantly lock the gyro baseline so it seamlessly adds the manual swipe
-            if (isTouching) {
-                referencePitch = b;
-                referenceRoll = g;
-            }
+            lastA = a; lastB = b; lastG = g;
 
-            let finalX = 0, finalY = 0;
-            const TILT_DIVISOR = 50.0; // Responsive multiplier
+            // THE GIMBAL LOCK FIX:
+            // When pitch (beta) approaches 90deg (lying in bed), roll (gamma) snaps to 180/-180 and yaw (alpha) takes over entirely.
+            // By applying trigonometric blending based on Beta, the X-axis control smoothly transitions from Gamma (Roll) to Alpha (Yaw) automatically!
+            let radB = b * (Math.PI / 180);
+            
+            let screenDx = (dg * Math.cos(radB)) + (da * Math.sin(radB));
+            let screenDy = db; // Pitch (up/down) is fundamentally tied to beta
 
-            // Calculate VR offset from the dynamic baseline
+            let angle = (screen.orientation ? screen.orientation.angle : window.orientation) || 0;
+            let finalDx = 0, finalDy = 0;
+
+            // Handle portrait vs landscape device holding
             if (angle === 90) {
-                finalX = (b - referencePitch) / TILT_DIVISOR;
-                finalY = (g - referenceRoll) / TILT_DIVISOR;
+                finalDx = screenDy;
+                finalDy = -screenDx;
             } else if (angle === -90 || angle === 270) {
-                finalX = -(b - referencePitch) / TILT_DIVISOR;
-                finalY = -(g - referenceRoll) / TILT_DIVISOR;
+                finalDx = -screenDy;
+                finalDy = screenDx;
             } else {
-                finalX = (g - referenceRoll) / TILT_DIVISOR;
-                finalY = (b - referencePitch) / TILT_DIVISOR; 
+                finalDx = screenDx;
+                finalDy = screenDy;
             }
 
-            // Add manual swipe offsets seamlessly to the gyro calculation
-            targetMX = Math.max(-2.0, Math.min(2.0, finalX + manualPanX));
-            targetMY = Math.max(-0.9, Math.min(0.9, finalY + manualPanY));
+            if (!isTouching) {
+                // Apply the seamless delta
+                accumX += finalDx / 40.0;
+                accumY += finalDy / 40.0;
+                
+                // Slow Auto-Centering (If you hold still, sun slowly drifts back to center)
+                accumX *= 0.985;
+                accumY *= 0.985;
+            } else {
+                // If touching, lock accumulator directly to the touch panning coords
+                accumX = manualPanX;
+                accumY = manualPanY;
+            }
+
+            targetMX = Math.max(-1.5, Math.min(1.5, accumX));
+            targetMY = Math.max(-0.9, Math.min(0.9, accumY));
         }
 
         if (window.DeviceOrientationEvent) {
@@ -862,8 +870,6 @@ void main() {
             mY = manualPanY;
             targetMX = manualPanX;
             targetMY = manualPanY;
-            if (lastBeta !== null) referencePitch = lastBeta;
-            if (lastGamma !== null) referenceRoll = lastGamma;
         }, { passive: false });
 
         window.addEventListener('touchmove', (e) => {
@@ -876,8 +882,6 @@ void main() {
             mY = manualPanY;
             targetMX = manualPanX;
             targetMY = manualPanY;
-            if (lastBeta !== null) referencePitch = lastBeta;
-            if (lastGamma !== null) referenceRoll = lastGamma;
         }, { passive: false });
 
         window.addEventListener('touchend', () => { isTouching = false; });
@@ -1140,6 +1144,7 @@ void main() {
 
         configKeys.forEach(k => {
             document.getElementById(`inp-${k}`).addEventListener('input', (e) => {
+                lastTouchTime = Date.now(); 
                 const val = parseFloat(e.target.value);
                 document.getElementById(`val-${k}`).innerText = val.toFixed(k === 'stars' ? 0 : 2);
                 engineConfig[k] = val;
