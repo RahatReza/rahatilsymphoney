@@ -435,10 +435,9 @@ uniform float u_warp;
 
 // CUSTOMIZATION UNIFORMS
 uniform vec3 u_waterColor;
-uniform float u_waveTime;
+uniform float u_waveEnergy;
 uniform float u_waveHeight;
 uniform float u_starDensity;
-uniform float u_touchActive; // 1.0 = Mobile Touch Active, 0.0 = PC or Not Touching
 
 #define PI 3.14159265359
 
@@ -449,48 +448,34 @@ float noise(vec2 p) {
     return mix(mix(hash(i), hash(i+vec2(1,0)), u.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), u.x), u.y);
 }
 
-// MULTI-OCTAVE GERSTNER WAVE FORMULA (UPGRADED TO 4 OCTAVES FOR REALISM)
+// MULTI-OCTAVE GERSTNER WAVE FORMULA WITH DISPLACEMENT
 float GetWaterHeight(vec3 p, bool micro) {
-    float t = u_waveTime; // Smooth scaling without time-jumps
+    float t = u_time * u_waveEnergy; 
     float h = 0.0;
     vec2 uv = p.xz;
     
-    // Octave 1: Main swell
     vec2 d1 = normalize(vec2(1.0, 1.2));
     h += u_waveHeight * pow(sin(dot(uv, d1) * 2.0 + t) * 0.5 + 0.5, 2.0);
     
-    // Octave 2: Crossing swell
     vec2 d2 = normalize(vec2(-1.0, 0.8));
     h += (u_waveHeight * 0.6) * pow(sin(dot(uv, d2) * 3.5 - t * 1.3) * 0.5 + 0.5, 2.5);
     
-    // Octave 3: High frequency breakup
     vec2 d3 = normalize(vec2(0.3, -1.5));
     h += (u_waveHeight * 0.3) * pow(sin(dot(uv, d3) * 6.0 + t * 1.8) * 0.5 + 0.5, 3.0);
 
-    // Octave 4: Surface chop (Greatly enhances specular realism)
-    vec2 d4 = normalize(vec2(-0.5, -0.9));
-    h += (u_waveHeight * 0.15) * pow(sin(dot(uv, d4) * 10.0 - t * 2.2) * 0.5 + 0.5, 2.0);
-
-    // Micro detail (PC only typically, saves mobile GPU)
     if(micro) h += noise(uv * 12.0 + t) * (u_waveHeight * 0.2);
     
-    // --- MOBILE EXCLUSIVE WAKE / LIQUID RIPPLES ---
-    // Only fires if u_touchActive > 0.5 AND pointing at the sea.
+    // 3D MOUSE WAKE / LIQUID RIPPLES
     vec2 m_uv = u_mouse * vec2(u_res.x / u_res.y, 1.0) * 0.5;
     vec3 m_rd = normalize(vec3(m_uv.x, m_uv.y - 0.1, 1.1 + u_warp * 0.6));
     
-    if(u_touchActive > 0.5 && m_rd.y < -0.05) {
+    if(m_rd.y < -0.05) {
         vec3 ro_m = vec3(0.0, 1.5, u_time * 0.3 * (2.0 + u_warp * 35.0));
         float safeY = clamp(m_rd.y, -0.85, -0.15); 
         vec3 m_p = ro_m - m_rd * (1.5 / safeY); 
         
         float dist = length(p.xz - m_p.xz);
-        
-        // Realistic ripple expanding outwards based on distance
-        float wake = smoothstep(4.0, 0.0, dist) * sin(dist * 10.0 - u_time * 8.0) * 0.08;
-        // Central depression to mimic fingertip pressure
-        wake -= smoothstep(1.5, 0.0, dist) * 0.05;
-        
+        float wake = smoothstep(3.5, 0.0, dist) * cos(dist * 7.0 - u_time * 12.0) * 0.06;
         h += wake * (1.0 - smoothstep(0.0, 0.5, u_warp)); 
     }
 
@@ -694,15 +679,14 @@ void main() {
         let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.2, redirected = false; 
         let offsetMX = 0, offsetMY = 0; 
         let isTouching = false; 
-        let waveTime = 0, lastTimeJS = 0;
         const TARGET = "https://www.linkedin.com/in/rahatreza100/";
 
         let isPaused = false;
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
 
-        // FIXED LAG SPIKES: Lock mobile DPR to 1.0 natively and disable DOM-resizing DRS entirely.
-        // The mobile pixel ratio of 1.0 is extremely safe, perfectly sharp, and guarantees 60fps locked.
-        let currentDPR = isMobile ? 1.0 : Math.min(window.devicePixelRatio, 2.0);
+        // SMART DYNAMIC RESOLUTION SCALING
+        let baseDPR = isMobile ? Math.min(window.devicePixelRatio, 1.0) : Math.min(window.devicePixelRatio, 2.0);
+        let currentDPR = baseDPR;
 
         if (isMobile) document.getElementById('cursor').style.display = 'none';
 
@@ -870,7 +854,10 @@ void main() {
         };
 
         const targetFPS = 60;
+        const frameInterval = 1000 / targetFPS;
         let lastTime = 0;
+        let framesAnalyzed = 0;
+        let droppedFrames = 0;
 
         document.addEventListener("visibilitychange", () => { isPaused = document.hidden; });
 
@@ -918,13 +905,11 @@ void main() {
             uLocs.time = gl.getUniformLocation(prg, 'u_time');
             uLocs.mouse = gl.getUniformLocation(prg, 'u_mouse');
             uLocs.warp = gl.getUniformLocation(prg, 'u_warp');
-            
-            uLocs.wTime = gl.getUniformLocation(prg, 'u_waveTime');
+
             uLocs.wColor = gl.getUniformLocation(prg, 'u_waterColor');
             uLocs.wEnergy = gl.getUniformLocation(prg, 'u_waveEnergy');
             uLocs.wHeight = gl.getUniformLocation(prg, 'u_waveHeight');
             uLocs.sDensity = gl.getUniformLocation(prg, 'u_starDensity');
-            uLocs.touchActive = gl.getUniformLocation(prg, 'u_touchActive');
 
             resizeCanvas();
             return true;
@@ -1013,15 +998,22 @@ void main() {
             if (isPaused || !gl) return;
 
             let elapsed = now - lastTime;
-            
-            // STRICT MOBILE 60FPS CAP (approx 16.66ms headroom check)
-            if (elapsed < 15.5) return; 
-            
-            lastTime = now - (elapsed % 16.666);
-            let dtJS = Math.min(elapsed, 50);
-            waveTime += (dtJS * 0.001) * engineConfig.energy;
+            if (elapsed < frameInterval) return;
+            lastTime = now - (elapsed % frameInterval);
 
             let dtFactor = Math.min(elapsed, 50) / 16.666;
+
+            // SMART AGGRESSIVE MOBILE DRS CHECK
+            if (framesAnalyzed >= 60) {
+                if (droppedFrames > 8 && currentDPR > 0.5) {
+                    currentDPR = Math.max(0.5, currentDPR - 0.25);
+                    resizeCanvas();
+                }
+                framesAnalyzed = 0;
+                droppedFrames = 0;
+            }
+            if (elapsed > 33) droppedFrames++;
+            framesAnalyzed++;
 
             let timeSinceTouch = Date.now() - lastTouchTime;
             if (gyroActive) {
@@ -1070,14 +1062,10 @@ void main() {
             gl.uniform2f(uLocs.mouse, mX, mY);
             gl.uniform1f(uLocs.warp, warp);
 
-            gl.uniform1f(uLocs.wTime, waveTime);
             gl.uniform3f(uLocs.wColor, engineConfig.r, engineConfig.g, engineConfig.b);
             gl.uniform1f(uLocs.wEnergy, engineConfig.energy);
             gl.uniform1f(uLocs.wHeight, engineConfig.height);
             gl.uniform1f(uLocs.sDensity, engineConfig.stars);
-            
-            // STRICT WAKE LOGIC: Only pass 1.0 if mobile AND touching
-            gl.uniform1f(uLocs.touchActive, (isMobile && isTouching) ? 1.0 : 0.0);
 
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         }
