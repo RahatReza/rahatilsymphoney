@@ -47,6 +47,7 @@
             text-align: center;
         }
 
+        /* Adjusted shadow for perfect daylight readability */
         h1 {
             font-weight: 100;
             letter-spacing: 35px;
@@ -431,7 +432,10 @@ uniform vec2 u_res;
 uniform float u_time;
 uniform vec2 u_mouse;
 uniform float u_warp; 
-uniform float u_isMobile; // NEW: Toggle ripple logic
+
+// NEW MOBILE/TOUCH UNIFORMS
+uniform float u_isMobile;
+uniform float u_touching;
 
 // CUSTOMIZATION UNIFORMS
 uniform vec3 u_waterColor;
@@ -448,13 +452,12 @@ float noise(vec2 p) {
     return mix(mix(hash(i), hash(i+vec2(1,0)), u.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), u.x), u.y);
 }
 
-// REFINED GERSTNER WAVE FORMULA - Removed "Boxy" artifacting
+// MULTI-OCTAVE GERSTNER WAVE FORMULA (Boxy fix: Removed Pow, added smooth sin interpolation)
 float GetWaterHeight(vec3 p, bool micro) {
     float t = u_time * u_waveEnergy; 
     float h = 0.0;
     vec2 uv = p.xz;
     
-    // Smooth Sine convergence instead of high-power sharp peaks
     vec2 d1 = normalize(vec2(1.0, 1.2));
     h += u_waveHeight * (sin(dot(uv, d1) * 2.0 + t) * 0.5 + 0.5);
     
@@ -466,11 +469,11 @@ float GetWaterHeight(vec3 p, bool micro) {
 
     if(micro) h += noise(uv * 12.0 + t) * (u_waveHeight * 0.15);
     
-    // MOBILE-ONLY TOUCH RIPPLE
-    if(u_isMobile > 0.5) {
+    // 3D MOUSE WAKE / LIQUID RIPPLES (Strictly Mobile Touch Only)
+    if(u_isMobile > 0.5 && u_touching > 0.5) {
         vec2 m_uv = u_mouse * vec2(u_res.x / u_res.y, 1.0) * 0.5;
-        // Projecting mouse/touch to plane
         vec3 m_rd = normalize(vec3(m_uv.x, m_uv.y - 0.1, 1.1 + u_warp * 0.6));
+        
         if(m_rd.y < -0.05) {
             vec3 ro_m = vec3(0.0, 1.5, u_time * 0.3 * (2.0 + u_warp * 35.0));
             float safeY = clamp(m_rd.y, -0.85, -0.15); 
@@ -485,12 +488,13 @@ float GetWaterHeight(vec3 p, bool micro) {
     return h - (u_waveHeight * 0.5); 
 }
 
+// NORMAL CALCULATION (Pixelation Fix: Increased Epsilon for softer blending)
 vec3 GetNormal(vec3 p, bool micro) {
-    vec2 e = vec2(0.02, 0.0); 
+    vec2 e = vec2(0.04, 0.0); 
     float h = GetWaterHeight(p, micro);
     return normalize(vec3(
         h - GetWaterHeight(p - e.xyy, micro), 
-        0.05, 
+        0.08, 
         h - GetWaterHeight(p - e.yxy, micro)
     ));
 }
@@ -521,6 +525,7 @@ float getClouds(vec3 rd, float t, bool isRef) {
     uv = mat2(1.6, 1.2, -1.2, 1.6) * uv;
     f += 0.5 * noise(uv + t * 0.03);
     
+    // Performance saver: Skip 3rd octave math for water reflections!
     if(!isRef) {
         uv = mat2(1.6, 1.2, -1.2, 1.6) * uv;
         f += 0.25 * noise(uv - t * 0.02);
@@ -582,31 +587,47 @@ void main() {
     float sunMask = smoothstep(-0.05, 0.02, sunDir.y);
     float moonMask = smoothstep(-0.05, 0.02, moonDir.y);
 
+    // PERFORMANCE OPTIMIZATION: Only calculate galaxy/stars if it is actually night!
     if(nightFactor > 0.01) {
         vec2 nebUV = rd.xz / (abs(rd.y) + 0.001);
         float neb = noise(nebUV * 2.0 + u_time * 0.01) * noise(nebUV * 4.0 - u_time * 0.01);
         vec3 milkyWay = vec3(0.08, 0.03, 0.12) * neb * nightFactor * smoothstep(0.0, 0.3, rd.y) * 0.6;
         col += milkyWay * (1.0 - smoothstep(0.2, 0.8, u_warp));
+        
         col += GetStars(rd, nightFactor, false) * smoothstep(-0.1, 0.2, rd.y);
     }
 
     float cloudAlpha = getClouds(rd, u_time, false);
-    if(cloudAlpha > 0.0) col = mix(col, getCloudColor(rd, sunDir), cloudAlpha * 0.65);
+    if(cloudAlpha > 0.0) {
+        col = mix(col, getCloudColor(rd, sunDir), cloudAlpha * 0.65);
+    }
 
     float sunDot = max(0.0, dot(rd, sunDir));
     float sunAlt = max(0.0, sunDir.y);
+    
     vec3 coreColor = mix(vec3(1.0, 0.7, 0.4), vec3(1.0, 0.98, 0.95), smoothstep(0.0, 0.3, sunAlt));
     vec3 glowColor = mix(vec3(1.0, 0.25, 0.05), vec3(1.0, 0.8, 0.5), smoothstep(0.0, 0.4, sunAlt));
     
     float sunCore = smoothstep(0.9985, 0.9998, sunDot) * 2.5; 
     float sunInnerGlow = pow(sunDot, 180.0) * 1.5;            
     float sunOuterGlow = pow(sunDot, 50.0) * 0.8;             
+    float sunAtmosphere = pow(sunDot, 12.0) * 0.4;            
     
-    col += (coreColor * sunCore + glowColor * sunInnerGlow + glowColor * sunOuterGlow) * sunMask;
+    vec3 cinematicSun = coreColor * sunCore;
+    cinematicSun += glowColor * sunInnerGlow;
+    cinematicSun += glowColor * sunOuterGlow;
+    cinematicSun += mix(vec3(1.0, 0.1, 0.0), glowColor, 0.5) * sunAtmosphere;
+    col += cinematicSun * sunMask;
+    
+    float moonDot = max(0.0, dot(rd, moonDir));
+    float moonCore = smoothstep(0.999, 0.9998, moonDot) * 2.5; 
+    float moonGlow = pow(moonDot, 120.0) * 0.8 + pow(moonDot, 30.0) * 0.3;
+    col += vec3(0.8, 0.9, 1.0) * (moonCore + moonGlow) * nightFactor * moonMask;
 
     if(rd.y < 0.0) {
         float d = -(ro.y) / min(rd.y, -0.002); 
         vec3 p = ro + rd * d;
+        
         vec3 N_sharp = GetNormal(p, true);  
         vec3 N_smooth = GetNormal(p, false); 
         
@@ -614,20 +635,53 @@ void main() {
         float refSkyGrad = smoothstep(-0.2, 0.6, reflect(rd, N_smooth).y);
         vec3 reflectedSky = mix(horizon, zenith, refSkyGrad);
         
-        if(nightFactor > 0.01) reflectedSky += GetStars(refR_Planar, nightFactor, true);
+        // PERFORMANCE OPTIMIZATION: Only calculate galaxy/stars for reflections if night!
+        if(nightFactor > 0.01) {
+            reflectedSky += vec3(0.04, 0.015, 0.06) * noise(refR_Planar.xz * 2.0) * noise(refR_Planar.xz * 4.0) * nightFactor * smoothstep(0.0, 0.3, refR_Planar.y);
+            reflectedSky += GetStars(refR_Planar, nightFactor, true);
+        }
 
-        float fresnel = pow(1.0 - max(0.0, dot(-rd, N_sharp)), 5.0);
+        // Generate water reflection clouds (Uses faster LOD setting)
+        float refCloudAlpha = getClouds(refR_Planar, u_time, true);
+        if(refCloudAlpha > 0.0) {
+            reflectedSky = mix(reflectedSky, getCloudColor(refR_Planar, sunDir), refCloudAlpha * 0.55);
+        }
+
+        float fresnel = pow(1.0 - max(0.0, dot(-rd, N_smooth)), 5.0); // Switched to N_smooth
+        
         vec3 waterBase = mix(vec3(0.000, 0.001, 0.003), u_waterColor, dayFactor);
         vec3 waterCol = mix(waterBase, reflectedSky * 0.85, 0.15 + 0.85 * fresnel);
+
+        // REALISM SSS (Sub-surface Scattering)
+        float sss = pow(max(0.0, dot(sunDir, -rd)), 6.0) * max(0.0, GetWaterHeight(p, false)) * 8.0;
+        waterCol += vec3(0.0, 0.6, 0.5) * sss * dayFactor * sunMask;
         
-        float specDot = max(0.0, dot(N_sharp, normalize(-rd + sunDir)));
-        float sunTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), sunDir.xz)), 35.0);
-        waterCol += mix(vec3(1.0, 0.3, 0.05), vec3(1.0, 0.9, 0.7), smoothstep(0.0, 0.3, sunDir.y)) * pow(specDot, 180.0) * 5.0 * sunTrail * sunMask; 
+        // ANTI-PIXELATION FIX: Replaced high pow sharp normal with smoother variables
+        float smoothSpecDot = max(0.0, dot(N_smooth, normalize(-rd + sunDir)));
+        
+        float sunSpecCore = pow(smoothSpecDot, 100.0) * 3.0; // Reduced from 180 to 100
+        float sunSpecGlow = pow(smoothSpecDot, 30.0) * 1.5; 
+        float sunTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), sunDir.xz)), 15.0); // Smoothed from 35 to 15
+        
+        vec3 waterSpecColor = mix(vec3(1.0, 0.3, 0.05), vec3(1.0, 0.9, 0.7), smoothstep(0.0, 0.3, sunDir.y));
+        waterCol += waterSpecColor * (sunSpecCore + sunSpecGlow) * sunTrail * sunMask; 
+        
+        float moonSpecDot = max(0.0, dot(N_sharp, normalize(-rd + moonDir)));
+        float moonSpec = pow(moonSpecDot, 150.0) * 3.0 + pow(moonSpecDot, 30.0) * 1.0;
+        float moonTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), moonDir.xz)), 30.0);
+        waterCol += vec3(0.6, 0.8, 1.0) * moonSpec * moonTrail * nightFactor * moonMask;
         
         col = mix(horizon, waterCol, smoothstep(250.0, 5.0, d));
     }
 
-    col += pow(u_warp, 3.5) * 2.5 * vec3(0.85, 0.95, 1.0);
+    float hyperGlow = pow(u_warp, 3.5) * 2.5;
+    vec3 warpBase = vec3(0.85, 0.95, 1.0) * hyperGlow;
+    
+    float caSplit = u_warp * length(uv) * 1.5;
+    warpBase += vec3(caSplit, 0.0, -caSplit) * u_warp * 1.5;
+    
+    col += warpBase;
+
     col = (col*(2.51*col+0.03))/(col*(2.43*col+0.59)+0.14);
     fragColor = vec4(pow(col, vec3(1.0/2.2)), 1.0);
 }</script>
@@ -641,6 +695,7 @@ void main() {
         let isPaused = false;
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
 
+        // SMART DYNAMIC RESOLUTION SCALING
         let baseDPR = isMobile ? Math.min(window.devicePixelRatio, 1.0) : Math.min(window.devicePixelRatio, 2.0);
         let currentDPR = baseDPR;
 
@@ -668,20 +723,43 @@ void main() {
         let waterSource, waterFilter, waterGain;
         let audioInit = false;
         let gyroActive = false;
+        let lastTouchTime = 0;
         let targetMX = 0, targetMY = 0.2; 
         
+        let lastBeta = null;
+        let lastGamma = null;
+
         function handleOrientation(event) {
             if (event.beta === null || event.gamma === null) return;
             gyroActive = true;
+
             let angle = (screen.orientation ? screen.orientation.angle : window.orientation) || 0;
-            let b = event.beta, g = event.gamma;
+            let b = event.beta;
+            let g = event.gamma;
+
+            if (lastBeta !== null && Math.abs(b - lastBeta) > 60) b = lastBeta;
+            if (lastGamma !== null && Math.abs(g - lastGamma) > 60) g = lastGamma;
+
+            lastBeta = b;
+            lastGamma = g;
+
             b = Math.max(-85, Math.min(85, b));
             g = Math.max(-85, Math.min(85, g));
+
             let finalX = 0, finalY = 0;
             const TILT_DIVISOR = 60.0;
-            if (angle === 90) { finalX = b / TILT_DIVISOR; finalY = (g + 45.0) / TILT_DIVISOR; }
-            else if (angle === -90 || angle === 270) { finalX = -b / TILT_DIVISOR; finalY = -(g - 45.0) / TILT_DIVISOR; }
-            else { finalX = g / TILT_DIVISOR; finalY = (b - 45.0) / TILT_DIVISOR; }
+
+            if (angle === 90) {
+                finalX = b / TILT_DIVISOR;
+                finalY = (g + 45.0) / TILT_DIVISOR;
+            } else if (angle === -90 || angle === 270) {
+                finalX = -b / TILT_DIVISOR;
+                finalY = -(g - 45.0) / TILT_DIVISOR;
+            } else {
+                finalX = g / TILT_DIVISOR;
+                finalY = (b - 45.0) / TILT_DIVISOR; 
+            }
+
             targetMX = Math.max(-1.5, Math.min(1.5, finalX));
             targetMY = Math.max(-0.9, Math.min(0.9, finalY));
         }
@@ -690,20 +768,37 @@ void main() {
             if (typeof DeviceOrientationEvent.requestPermission !== 'function') {
                 window.addEventListener('deviceorientation', handleOrientation);
             }
+        } else {
+            window.addEventListener('deviceorientation', handleOrientation);
         }
 
         function initExperience() {
             if (audioInit) return;
             audioInit = true;
+
             if (isMobile && typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission().then(p => { if (p === 'granted') window.addEventListener('deviceorientation', handleOrientation); });
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                        }
+                    })
+                    .catch(console.error);
             }
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
 
             const bufferSize = audioCtx.sampleRate * 2;
             const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const output = noiseBuffer.getChannelData(0);
+
             let lastOut = 0;
             for (let i = 0; i < bufferSize; i++) {
                 let white = Math.random() * 2 - 1;
@@ -711,48 +806,77 @@ void main() {
                 lastOut = output[i];
                 output[i] *= 3.5;
             }
+
             waterSource = audioCtx.createBufferSource();
             waterSource.buffer = noiseBuffer;
             waterSource.loop = true;
+
             waterFilter = audioCtx.createBiquadFilter();
             waterFilter.type = 'lowpass';
             waterFilter.frequency.value = 400;
+            waterFilter.Q.value = 0.5;
+
             waterGain = audioCtx.createGain();
             waterGain.gain.value = 0.0;
+
             waterSource.connect(waterFilter).connect(waterGain).connect(audioCtx.destination);
             waterSource.start(0);
-            if (!isW) { waterGain.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 1.5); }
+
+            if (!isW) {
+                waterGain.gain.setValueAtTime(0.0, audioCtx.currentTime);
+                waterGain.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 1.5);
+            }
         }
 
-        document.addEventListener('mousedown', () => initExperience(), { once: true });
-        document.addEventListener('touchstart', () => initExperience(), { once: true });
+        const unlockExperience = () => { initExperience(); };
+        document.addEventListener('mousedown', unlockExperience, { once: true });
+        document.addEventListener('touchstart', unlockExperience, { once: true });
 
         window.addEventListener('touchstart', (e) => {
-            if (e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
+            if (e.cancelable) e.preventDefault(); 
             isTouching = true;
+            lastTouchTime = Date.now();
             mX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 1.5;
             mY = ((1 - e.touches[0].clientY / window.innerHeight) * 2 - 1) * 0.7;
         }, { passive: false });
 
         window.addEventListener('touchmove', (e) => {
-            if (e.target.closest('.panel-box')) return;
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
+            if (e.cancelable) e.preventDefault();
+            isTouching = true;
+            lastTouchTime = Date.now();
             mX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 1.5;
             mY = ((1 - e.touches[0].clientY / window.innerHeight) * 2 - 1) * 0.7;
         }, { passive: false });
 
         window.addEventListener('touchend', () => { isTouching = false; });
+        window.addEventListener('touchcancel', () => { isTouching = false; });
 
         window.onmousemove = (e) => {
             if (isMobile) return;
             mX = ((e.clientX / window.innerWidth) * 2 - 1) * 1.5;
             mY = ((1 - e.clientY / window.innerHeight) * 2 - 1) * 0.7;
             const cur = document.getElementById('cursor');
-            if (cur) { cur.style.left = e.clientX + 'px'; cur.style.top = e.clientY + 'px'; }
+            if (cur) {
+                cur.style.left = e.clientX + 'px';
+                cur.style.top = e.clientY + 'px';
+            }
         };
 
         const targetFPS = 60;
         const frameInterval = 1000 / targetFPS;
-        let lastTime = 0, framesAnalyzed = 0, droppedFrames = 0;
+        let lastTime = 0;
+        let framesAnalyzed = 0;
+        let droppedFrames = 0;
+
+        document.addEventListener("visibilitychange", () => { isPaused = document.hidden; });
+
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(resizeCanvas, 200);
+        });
 
         function resizeCanvas() {
             if (!gl) return;
@@ -763,93 +887,213 @@ void main() {
 
         const compile = (t, s) => {
             const sh = gl.createShader(t); gl.shaderSource(sh, s); gl.compileShader(sh);
-            if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) return null;
+            if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(sh)); return null; }
             return sh;
         };
 
         function initGL() {
             gl = canvas.getContext('webgl2', { antialias: false, powerPreference: "high-performance" });
-            if (!gl) return false;
+            if (!gl) {
+                document.getElementById('ui-layer').innerHTML = "<div class='brand-text'><h1>ENGINE HALTED</h1><div style='color:#fff; letter-spacing:8px; margin-top:20px; font-size:0.8rem;'>WEBGL2 NOT SUPPORTED</div></div>";
+                if (!isMobile) document.getElementById('cursor').style.display = 'none';
+                return false;
+            }
+
             prg = gl.createProgram();
             const vs = compile(gl.VERTEX_SHADER, '#version 300 es\nin vec4 p;void main(){gl_Position=p;}');
             const fs = compile(gl.FRAGMENT_SHADER, document.getElementById('fs').text);
-            gl.attachShader(prg, vs); gl.attachShader(prg, fs); gl.linkProgram(prg);
+            if (!vs || !fs) return false;
+
+            gl.attachShader(prg, vs);
+            gl.attachShader(prg, fs);
+            gl.linkProgram(prg);
+
             const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
             const a = gl.getAttribLocation(prg, 'p'); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
+
             uLocs.res = gl.getUniformLocation(prg, 'u_res');
             uLocs.time = gl.getUniformLocation(prg, 'u_time');
             uLocs.mouse = gl.getUniformLocation(prg, 'u_mouse');
             uLocs.warp = gl.getUniformLocation(prg, 'u_warp');
-            uLocs.isMob = gl.getUniformLocation(prg, 'u_isMobile');
+            
+            uLocs.isMobile = gl.getUniformLocation(prg, 'u_isMobile');
+            uLocs.touching = gl.getUniformLocation(prg, 'u_touching');
+
             uLocs.wColor = gl.getUniformLocation(prg, 'u_waterColor');
             uLocs.wEnergy = gl.getUniformLocation(prg, 'u_waveEnergy');
             uLocs.wHeight = gl.getUniformLocation(prg, 'u_waveHeight');
             uLocs.sDensity = gl.getUniformLocation(prg, 'u_starDensity');
+
             resizeCanvas();
             return true;
         }
 
+        canvas.addEventListener("webglcontextlost", (e) => { e.preventDefault(); isPaused = true; }, false);
+        canvas.addEventListener("webglcontextrestored", () => { initGL(); isPaused = false; }, false);
+
         function engage() {
-            if (isW || !gl) return;
+            if (isW || !gl || document.getElementById('custom-panel').style.display === 'flex') return;
+            
+            if (!audioInit) initExperience();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
             isW = true;
             document.getElementById('ui-layer').style.opacity = '0';
+            if (!isMobile) {
+                document.getElementById('cursor').style.transform = 'translate(-50%, -50%) scale(2.0)';
+                document.getElementById('cursor').style.opacity = '0.3';
+            }
             document.getElementById('cinematic-layer').classList.add('active');
+
+            if (isMobile) {
+                if ('vibrate' in navigator && typeof navigator.vibrate === 'function') {
+                    navigator.vibrate([30, 200, 50, 150, 80, 100, 120, 50, 200, 50, 1000]);
+                } else if (audioCtx && audioCtx.state === 'running') {
+                    let rumble = audioCtx.createOscillator();
+                    let rumbleGain = audioCtx.createGain();
+                    
+                    rumble.type = 'sine'; 
+                    rumble.frequency.setValueAtTime(45, audioCtx.currentTime); 
+                    rumble.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 1.2); 
+                    
+                    rumbleGain.gain.setValueAtTime(1.5, audioCtx.currentTime);
+                    rumbleGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+                    
+                    rumble.connect(rumbleGain).connect(audioCtx.destination);
+                    rumble.start();
+                    rumble.stop(audioCtx.currentTime + 1.2);
+                }
+            }
+            
+            if (waterGain) {
+                waterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+                waterGain.gain.setValueAtTime(waterGain.gain.value, audioCtx.currentTime);
+                waterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5);
+            }
+
             if (audioCtx) {
                 const playBell = (freq, delay) => {
-                    let osc = audioCtx.createOscillator(), g = audioCtx.createGain();
-                    osc.type = 'sine'; osc.frequency.value = freq;
+                    let osc1 = audioCtx.createOscillator();
+                    let osc2 = audioCtx.createOscillator();
+                    let noteGain = audioCtx.createGain();
+
+                    osc1.type = 'sine';
+                    osc2.type = 'triangle';
+                    osc1.frequency.value = freq;
+                    osc2.frequency.value = freq * 1.005;
+
                     let t = audioCtx.currentTime + delay;
-                    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.15, t + 0.05);
-                    g.gain.exponentialRampToValueAtTime(0.001, t + 2.5);
-                    osc.connect(g).connect(audioCtx.destination);
-                    osc.start(t); osc.stop(t + 2.5);
+
+                    noteGain.gain.setValueAtTime(0, t);
+                    noteGain.gain.linearRampToValueAtTime(0.15, t + 0.05);
+                    noteGain.gain.exponentialRampToValueAtTime(0.001, t + 2.5);
+
+                    osc1.connect(noteGain).connect(audioCtx.destination);
+                    osc2.connect(noteGain).connect(audioCtx.destination);
+
+                    osc1.start(t); osc1.stop(t + 2.5);
+                    osc2.start(t); osc2.stop(t + 2.5);
                 };
-                [261.63, 392.00, 493.88, 587.33, 659.25, 1046.50].forEach((f, i) => playBell(f, i * 0.2));
+
+                playBell(261.63, 0.0);
+                playBell(392.00, 0.2);
+                playBell(493.88, 0.4);
+                playBell(587.33, 0.6);
+                playBell(659.25, 0.8);
+                playBell(1046.50, 1.2);
             }
         }
 
         function render(now) {
             requestAnimationFrame(render);
             if (isPaused || !gl) return;
+
             let elapsed = now - lastTime;
             if (elapsed < frameInterval) return;
             lastTime = now - (elapsed % frameInterval);
 
-            if (framesAnalyzed++ >= 60) {
-                if (droppedFrames > 8 && currentDPR > 0.5) { currentDPR -= 0.25; resizeCanvas(); }
-                framesAnalyzed = 0; droppedFrames = 0;
+            let dtFactor = Math.min(elapsed, 50) / 16.666;
+
+            // SMART AGGRESSIVE MOBILE DRS CHECK
+            if (framesAnalyzed >= 60) {
+                if (droppedFrames > 8 && currentDPR > 0.5) {
+                    currentDPR = Math.max(0.5, currentDPR - 0.25);
+                    resizeCanvas();
+                }
+                framesAnalyzed = 0;
+                droppedFrames = 0;
             }
             if (elapsed > 33) droppedFrames++;
+            framesAnalyzed++;
 
-            if (gyroActive && !isTouching) {
-                mX += (targetMX - mX) * 0.07;
-                mY += (targetMY - mY) * 0.07;
+            let timeSinceTouch = Date.now() - lastTouchTime;
+            if (gyroActive) {
+                if (isTouching || timeSinceTouch < 150) {
+                    offsetMX = mX - targetMX;
+                    offsetMY = mY - targetMY;
+                    if (isTouching) lastTouchTime = Date.now();
+                } else {
+                    if (timeSinceTouch > 2000) {
+                        let decay = Math.pow(0.95, dtFactor);
+                        offsetMX *= decay; 
+                        offsetMY *= decay;
+                    }
+                    let destX = targetMX + offsetMX;
+                    let destY = targetMY + offsetMY;
+                    
+                    let lerpAmt = 1.0 - Math.pow(0.93, dtFactor);
+                    mX += (destX - mX) * lerpAmt;
+                    mY += (destY - mY) * lerpAmt;
+                }
             }
 
             if (isW) {
-                warp = Math.min(1.0, warp + 0.008);
-                if (warp >= 1.0 && !redirected) { redirected = true; window.location.href = TARGET; }
+                warp = Math.min(1.0, warp + (0.008 * dtFactor)); 
+
+                if (warp >= 1.0 && !redirected) {
+                    redirected = true;
+                    window.location.href = TARGET;
+                }
+            } else if (audioInit && audioCtx.state === 'running') {
+                if (waterFilter && waterSource) {
+                    let waveCycle = Math.sin(now * 0.0003 * engineConfig.energy);
+                    let targetWaterFreq = 250 + (waveCycle * 100) + (engineConfig.height * 600);
+                    
+                    waterFilter.frequency.value = Math.max(150, targetWaterFreq);
+
+                    let targetRate = 0.4 + (engineConfig.energy * 0.02) + (waveCycle * 0.03);
+                    waterSource.playbackRate.value = Math.max(0.1, targetRate);
+                }
             }
 
             gl.useProgram(prg);
+
             gl.uniform2f(uLocs.res, canvas.width, canvas.height);
             gl.uniform1f(uLocs.time, now * 0.001);
             gl.uniform2f(uLocs.mouse, mX, mY);
             gl.uniform1f(uLocs.warp, warp);
-            gl.uniform1f(uLocs.isMob, isMobile ? 1.0 : 0.0);
+            
+            gl.uniform1f(uLocs.isMobile, isMobile ? 1.0 : 0.0);
+            gl.uniform1f(uLocs.touching, isTouching ? 1.0 : 0.0);
+
             gl.uniform3f(uLocs.wColor, engineConfig.r, engineConfig.g, engineConfig.b);
             gl.uniform1f(uLocs.wEnergy, engineConfig.energy);
             gl.uniform1f(uLocs.wHeight, engineConfig.height);
             gl.uniform1f(uLocs.sDensity, engineConfig.stars);
+
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         }
 
-        if (initGL()) requestAnimationFrame(render);
+        if (initGL()) { requestAnimationFrame(render); }
 
         window.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 's') {
+                e.preventDefault();
                 document.getElementById('auth-modal').style.display = 'flex';
+                document.getElementById('auth-input').value = '';
                 document.getElementById('auth-input').focus();
             }
         });
@@ -857,25 +1101,43 @@ void main() {
         document.getElementById('auth-input').addEventListener('keydown', async (e) => {
             if (e.key === 'Enter') {
                 const val = e.target.value.trim();
-                const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(val));
-                const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+                
+                const msgBuffer = new TextEncoder().encode(val);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
                 if (hashHex === '3057e9b04f32c9497e7f62c5db4d93bd579997184282563f10111f1de43c3325') {
                     document.getElementById('auth-modal').style.display = 'none';
                     document.getElementById('custom-panel').style.display = 'flex';
+                } else {
+                    e.target.style.color = '#ff4444';
+                    setTimeout(() => e.target.style.color = '#fff', 600);
                 }
             }
         });
 
         configKeys.forEach(k => {
             document.getElementById(`inp-${k}`).addEventListener('input', (e) => {
+                lastTouchTime = Date.now(); 
                 const val = parseFloat(e.target.value);
                 document.getElementById(`val-${k}`).innerText = val.toFixed(k === 'stars' ? 0 : 2);
                 engineConfig[k] = val;
+                try { localStorage.setItem('rahatil_engine_config', JSON.stringify(engineConfig)); } catch (err) { }
             });
         });
 
-        function resetAdminPanel() { engineConfig = { ...defaultConfig }; syncUIWithConfig(); }
-        function closeAdminPanel() { document.getElementById('custom-panel').style.display = 'none'; }
+        function resetAdminPanel() {
+            localStorage.removeItem('rahatil_engine_config');
+            engineConfig = { ...defaultConfig };
+            syncUIWithConfig();
+        }
+
+        function closeAdminPanel() {
+            document.getElementById('custom-panel').style.display = 'none';
+        }
+
     </script>
 </body>
+
 </html>
