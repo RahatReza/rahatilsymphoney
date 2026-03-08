@@ -558,7 +558,8 @@ void main() {
 
     float solarEase = u_warp * u_warp * (3.0 - 2.0 * u_warp);
     
-    float currentSunY = mix(0.5 + u_mouse.y * 1.2, -1.5, solarEase);
+    // SUN CENTER START FIX: Changed 0.5 to 0.25 so it centers perfectly in the sky on initial mobile load
+    float currentSunY = mix(0.25 + u_mouse.y * 1.2, -1.5, solarEase);
     vec3 sunDir = normalize(vec3(u_mouse.x * 1.5, currentSunY, 1.0));
     vec3 moonDir = normalize(vec3(-u_mouse.x * 1.5, -currentSunY + 0.15, -1.0));
 
@@ -687,8 +688,7 @@ void main() {
 }</script>
     <script>
         const canvas = document.getElementById('v');
-        let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.2, redirected = false; 
-        let offsetMX = 0, offsetMY = 0; 
+        let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.0, redirected = false; // Initial mY fixed to 0.0 for perfectly centered sun
         let isTouching = false; 
         const TARGET = "https://www.linkedin.com/in/rahatreza100/";
 
@@ -723,14 +723,15 @@ void main() {
         let waterSource, waterFilter, waterGain;
         let audioInit = false;
         let gyroActive = false;
-        let lastTouchTime = 0;
-        let targetMX = 0, targetMY = 0.2; 
         
-        // ADAPTIVE VR GYROSCOPE VARIABLES
+        let targetMX = 0, targetMY = 0.0; 
+        let manualPanX = 0, manualPanY = 0; // Stores offset injected by manual touch scrolling
+        
+        // ADAPTIVE VR GYROSCOPE VARIABLES (Solves the "Bed/90-degree" problem)
         let lastBeta = null;
         let lastGamma = null;
-        let baseBeta = null;
-        let baseGamma = null;
+        let referencePitch = null;
+        let referenceRoll = null;
 
         function handleOrientation(event) {
             if (event.beta === null || event.gamma === null) return;
@@ -740,52 +741,47 @@ void main() {
             let b = event.beta;
             let g = event.gamma;
 
-            // Prevent sudden camera jumps if device crosses 90/-90 boundaries (Gimbal lock protection)
-            if (lastBeta !== null && Math.abs(b - lastBeta) > 60) {
-                baseBeta += (b - lastBeta);
-            }
-            if (lastGamma !== null && Math.abs(g - lastGamma) > 60) {
-                baseGamma += (g - lastGamma);
-            }
+            // Prevent sudden camera jumps if device crosses 90/-90 boundaries
+            if (lastBeta !== null && Math.abs(b - lastBeta) > 60) referencePitch += (b - lastBeta);
+            if (lastGamma !== null && Math.abs(g - lastGamma) > 60) referenceRoll += (g - lastGamma);
 
             lastBeta = b;
             lastGamma = g;
 
-            if (baseBeta === null) {
-                baseBeta = b;
-                baseGamma = g;
+            // Establish the starting "Center" posture dynamically based on how the user holds the phone initially
+            if (referencePitch === null) {
+                referencePitch = b;
+                referenceRoll = g;
             }
 
-            // Auto-Center Mechanism (Adapts to lying down or sitting up over time)
-            baseBeta += (b - baseBeta) * 0.005;
-            baseGamma += (g - baseGamma) * 0.005;
+            // Slowly adapt to user posture shifting over time (sitting up -> lying down)
+            referencePitch += (b - referencePitch) * 0.005;
+            referenceRoll += (g - referenceRoll) * 0.005;
 
-            // Manual VR Recenter via Touch Dragging
-            if (typeof isTouching !== 'undefined' && isTouching) {
-                baseBeta = b;
-                baseGamma = g;
+            // When touching to pan, instantly lock the gyro baseline so it seamlessly adds the manual swipe
+            if (isTouching) {
+                referencePitch = b;
+                referenceRoll = g;
             }
-
-            let deltaB = b - baseBeta;
-            let deltaG = g - baseGamma;
 
             let finalX = 0, finalY = 0;
-            const TILT_DIVISOR = 40.0; // Responsive multiplier
+            const TILT_DIVISOR = 50.0; // Responsive multiplier
 
+            // Calculate VR offset from the dynamic baseline
             if (angle === 90) {
-                finalX = deltaB / TILT_DIVISOR;
-                finalY = deltaG / TILT_DIVISOR;
+                finalX = (b - referencePitch) / TILT_DIVISOR;
+                finalY = (g - referenceRoll) / TILT_DIVISOR;
             } else if (angle === -90 || angle === 270) {
-                finalX = -deltaB / TILT_DIVISOR;
-                finalY = -deltaG / TILT_DIVISOR;
+                finalX = -(b - referencePitch) / TILT_DIVISOR;
+                finalY = -(g - referenceRoll) / TILT_DIVISOR;
             } else {
-                finalX = deltaG / TILT_DIVISOR;
-                finalY = deltaB / TILT_DIVISOR; 
+                finalX = (g - referenceRoll) / TILT_DIVISOR;
+                finalY = (b - referencePitch) / TILT_DIVISOR; 
             }
 
-            // Mapped to horizon default (0.2) allowing flawless multi-posture tracking
-            targetMX = Math.max(-1.5, Math.min(1.5, finalX));
-            targetMY = Math.max(-0.9, Math.min(0.9, finalY + 0.2));
+            // Add manual swipe offsets seamlessly to the gyro calculation
+            targetMX = Math.max(-2.0, Math.min(2.0, finalX + manualPanX));
+            targetMY = Math.max(-0.9, Math.min(0.9, finalY + manualPanY));
         }
 
         if (window.DeviceOrientationEvent) {
@@ -860,18 +856,28 @@ void main() {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
             if (e.cancelable) e.preventDefault(); 
             isTouching = true;
-            lastTouchTime = Date.now();
-            mX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 1.5;
-            mY = ((1 - e.touches[0].clientY / window.innerHeight) * 2 - 1) * 0.7;
+            manualPanX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 1.5;
+            manualPanY = ((1 - e.touches[0].clientY / window.innerHeight) * 2 - 1) * 0.7;
+            mX = manualPanX;
+            mY = manualPanY;
+            targetMX = manualPanX;
+            targetMY = manualPanY;
+            if (lastBeta !== null) referencePitch = lastBeta;
+            if (lastGamma !== null) referenceRoll = lastGamma;
         }, { passive: false });
 
         window.addEventListener('touchmove', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
             if (e.cancelable) e.preventDefault();
             isTouching = true;
-            lastTouchTime = Date.now();
-            mX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 1.5;
-            mY = ((1 - e.touches[0].clientY / window.innerHeight) * 2 - 1) * 0.7;
+            manualPanX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 1.5;
+            manualPanY = ((1 - e.touches[0].clientY / window.innerHeight) * 2 - 1) * 0.7;
+            mX = manualPanX;
+            mY = manualPanY;
+            targetMX = manualPanX;
+            targetMY = manualPanY;
+            if (lastBeta !== null) referencePitch = lastBeta;
+            if (lastGamma !== null) referenceRoll = lastGamma;
         }, { passive: false });
 
         window.addEventListener('touchend', () => { isTouching = false; });
@@ -881,6 +887,10 @@ void main() {
             if (isMobile) return;
             mX = ((e.clientX / window.innerWidth) * 2 - 1) * 1.5;
             mY = ((1 - e.clientY / window.innerHeight) * 2 - 1) * 0.7;
+            targetMX = mX;
+            targetMY = mY;
+            manualPanX = mX;
+            manualPanY = mY;
             const cur = document.getElementById('cursor');
             if (cur) {
                 cur.style.left = e.clientX + 'px';
@@ -1053,24 +1063,11 @@ void main() {
             if (elapsed > 33) droppedFrames++;
             framesAnalyzed++;
 
-            let timeSinceTouch = Date.now() - lastTouchTime;
             if (gyroActive) {
-                if (isTouching || timeSinceTouch < 150) {
-                    offsetMX = mX - targetMX;
-                    offsetMY = mY - targetMY;
-                    if (isTouching) lastTouchTime = Date.now();
-                } else {
-                    if (timeSinceTouch > 2000) {
-                        let decay = Math.pow(0.95, dtFactor);
-                        offsetMX *= decay; 
-                        offsetMY *= decay;
-                    }
-                    let destX = targetMX + offsetMX;
-                    let destY = targetMY + offsetMY;
-                    
+                if (!isTouching) {
                     let lerpAmt = 1.0 - Math.pow(0.93, dtFactor);
-                    mX += (destX - mX) * lerpAmt;
-                    mY += (destY - mY) * lerpAmt;
+                    mX += (targetMX - mX) * lerpAmt;
+                    mY += (targetMY - mY) * lerpAmt;
                 }
             }
 
@@ -1143,7 +1140,6 @@ void main() {
 
         configKeys.forEach(k => {
             document.getElementById(`inp-${k}`).addEventListener('input', (e) => {
-                lastTouchTime = Date.now(); 
                 const val = parseFloat(e.target.value);
                 document.getElementById(`val-${k}`).innerText = val.toFixed(k === 'stars' ? 0 : 2);
                 engineConfig[k] = val;
