@@ -452,20 +452,39 @@ float noise(vec2 p) {
     return mix(mix(hash(i), hash(i+vec2(1,0)), u.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), u.x), u.y);
 }
 
-// MULTI-OCTAVE GERSTNER WAVE FORMULA
+// MULTI-OCTAVE GERSTNER WAVE FORMULA (GRID FIX: ORGANIC OVERLAP)
 float GetWaterHeight(vec3 p, bool micro) {
     float t = u_time * u_waveEnergy; 
     float h = 0.0;
     vec2 uv = p.xz;
     
-    vec2 d1 = normalize(vec2(1.0, 1.2));
-    h += u_waveHeight * (sin(dot(uv, d1) * 2.0 + t) * 0.5 + 0.5);
-    
-    vec2 d2 = normalize(vec2(-1.0, 0.8));
-    h += (u_waveHeight * 0.6) * (sin(dot(uv, d2) * 3.5 - t * 1.3) * 0.5 + 0.5);
-    
-    vec2 d3 = normalize(vec2(0.3, -1.5));
-    h += (u_waveHeight * 0.3) * (sin(dot(uv, d3) * 6.0 + t * 1.8) * 0.5 + 0.5);
+    if (u_isMobile > 0.5) {
+        // MOBILE: Smooth, highly optimized wave accumulation
+        vec2 d1 = normalize(vec2(1.0, 1.2));
+        h += u_waveHeight * (sin(dot(uv, d1) * 2.0 + t) * 0.5 + 0.5);
+        vec2 d2 = normalize(vec2(-1.0, 0.8));
+        h += (u_waveHeight * 0.6) * (sin(dot(uv, d2) * 3.5 - t * 1.3) * 0.5 + 0.5);
+        vec2 d3 = normalize(vec2(0.3, -1.5));
+        h += (u_waveHeight * 0.3) * (sin(dot(uv, d3) * 6.0 + t * 1.8) * 0.5 + 0.5);
+    } else {
+        // PC: ORGANIC FLUID CHOPPINESS (Completely removes the diamond grid artifact)
+        // Uses exponentiated overlapping sines with irrational offset frequencies 
+        // to guarantee no repeating grid patterns, yielding natural sharp ocean waves.
+        
+        vec2 d1 = normalize(vec2(1.0, 0.7));
+        h += u_waveHeight * 1.0 * pow(sin(dot(uv, d1) * 1.5 + t) * 0.5 + 0.5, 2.2);
+
+        vec2 d2 = normalize(vec2(-0.8, 0.6));
+        h += u_waveHeight * 0.6 * pow(sin(dot(uv, d2) * 2.7 - t * 1.3) * 0.5 + 0.5, 2.4);
+
+        vec2 d3 = normalize(vec2(0.3, -1.0));
+        h += u_waveHeight * 0.4 * pow(sin(dot(uv, d3) * 4.3 + t * 1.6) * 0.5 + 0.5, 2.6);
+
+        vec2 d4 = normalize(vec2(-0.5, -0.9));
+        h += u_waveHeight * 0.2 * pow(sin(dot(uv, d4) * 7.1 - t * 2.1) * 0.5 + 0.5, 2.8);
+
+        h *= 1.3; // Deepen the overall geometric swell
+    }
 
     if(micro) h += noise(uv * 12.0 + t) * (u_waveHeight * 0.15);
     
@@ -557,7 +576,7 @@ void main() {
 
     float solarEase = u_warp * u_warp * (3.0 - 2.0 * u_warp);
     
-    // SUN CENTER START FIX: Changed 0.5 to 0.25 so it centers perfectly in the sky on initial mobile load
+    // SUN CENTER START FIX
     float currentSunY = mix(0.25 + u_mouse.y * 1.2, -1.5, solarEase);
     vec3 sunDir = normalize(vec3(u_mouse.x * 1.5, currentSunY, 1.0));
     vec3 moonDir = normalize(vec3(-u_mouse.x * 1.5, -currentSunY + 0.15, -1.0));
@@ -689,6 +708,7 @@ void main() {
         let isPaused = false;
         let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
 
+        // SMART DYNAMIC RESOLUTION SCALING
         let baseDPR = isMobile ? Math.min(window.devicePixelRatio, 1.0) : Math.min(window.devicePixelRatio, 2.0);
         let currentDPR = baseDPR;
 
