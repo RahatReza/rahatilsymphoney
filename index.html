@@ -726,8 +726,11 @@ void main() {
         let lastTouchTime = 0;
         let targetMX = 0, targetMY = 0.2; 
         
+        // ADAPTIVE VR GYROSCOPE VARIABLES
         let lastBeta = null;
         let lastGamma = null;
+        let baseBeta = null;
+        let baseGamma = null;
 
         function handleOrientation(event) {
             if (event.beta === null || event.gamma === null) return;
@@ -737,31 +740,52 @@ void main() {
             let b = event.beta;
             let g = event.gamma;
 
-            if (lastBeta !== null && Math.abs(b - lastBeta) > 60) b = lastBeta;
-            if (lastGamma !== null && Math.abs(g - lastGamma) > 60) g = lastGamma;
+            // Prevent sudden camera jumps if device crosses 90/-90 boundaries (Gimbal lock protection)
+            if (lastBeta !== null && Math.abs(b - lastBeta) > 60) {
+                baseBeta += (b - lastBeta);
+            }
+            if (lastGamma !== null && Math.abs(g - lastGamma) > 60) {
+                baseGamma += (g - lastGamma);
+            }
 
             lastBeta = b;
             lastGamma = g;
 
-            b = Math.max(-85, Math.min(85, b));
-            g = Math.max(-85, Math.min(85, g));
-
-            let finalX = 0, finalY = 0;
-            const TILT_DIVISOR = 60.0;
-
-            if (angle === 90) {
-                finalX = b / TILT_DIVISOR;
-                finalY = (g + 45.0) / TILT_DIVISOR;
-            } else if (angle === -90 || angle === 270) {
-                finalX = -b / TILT_DIVISOR;
-                finalY = -(g - 45.0) / TILT_DIVISOR;
-            } else {
-                finalX = g / TILT_DIVISOR;
-                finalY = (b - 45.0) / TILT_DIVISOR; 
+            if (baseBeta === null) {
+                baseBeta = b;
+                baseGamma = g;
             }
 
+            // Auto-Center Mechanism (Adapts to lying down or sitting up over time)
+            baseBeta += (b - baseBeta) * 0.005;
+            baseGamma += (g - baseGamma) * 0.005;
+
+            // Manual VR Recenter via Touch Dragging
+            if (typeof isTouching !== 'undefined' && isTouching) {
+                baseBeta = b;
+                baseGamma = g;
+            }
+
+            let deltaB = b - baseBeta;
+            let deltaG = g - baseGamma;
+
+            let finalX = 0, finalY = 0;
+            const TILT_DIVISOR = 40.0; // Responsive multiplier
+
+            if (angle === 90) {
+                finalX = deltaB / TILT_DIVISOR;
+                finalY = deltaG / TILT_DIVISOR;
+            } else if (angle === -90 || angle === 270) {
+                finalX = -deltaB / TILT_DIVISOR;
+                finalY = -deltaG / TILT_DIVISOR;
+            } else {
+                finalX = deltaG / TILT_DIVISOR;
+                finalY = deltaB / TILT_DIVISOR; 
+            }
+
+            // Mapped to horizon default (0.2) allowing flawless multi-posture tracking
             targetMX = Math.max(-1.5, Math.min(1.5, finalX));
-            targetMY = Math.max(-0.9, Math.min(0.9, finalY));
+            targetMY = Math.max(-0.9, Math.min(0.9, finalY + 0.2));
         }
 
         if (window.DeviceOrientationEvent) {
