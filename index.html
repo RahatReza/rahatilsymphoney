@@ -452,7 +452,7 @@ float noise(vec2 p) {
     return mix(mix(hash(i), hash(i+vec2(1,0)), u.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), u.x), u.y);
 }
 
-// MULTI-OCTAVE GERSTNER WAVE FORMULA (Boxy fix: Removed Pow, added smooth sin interpolation)
+// MULTI-OCTAVE GERSTNER WAVE FORMULA
 float GetWaterHeight(vec3 p, bool micro) {
     float t = u_time * u_waveEnergy; 
     float h = 0.0;
@@ -488,7 +488,7 @@ float GetWaterHeight(vec3 p, bool micro) {
     return h - (u_waveHeight * 0.5); 
 }
 
-// NORMAL CALCULATION (Pixelation Fix: Increased Epsilon for softer blending)
+// NORMAL CALCULATION 
 vec3 GetNormal(vec3 p, bool micro) {
     vec2 e = vec2(0.04, 0.0); 
     float h = GetWaterHeight(p, micro);
@@ -525,7 +525,7 @@ float getClouds(vec3 rd, float t, bool isRef) {
     uv = mat2(1.6, 1.2, -1.2, 1.6) * uv;
     f += 0.5 * noise(uv + t * 0.03);
     
-    // Performance saver: Skip 3rd octave math for water reflections!
+    // Performance saver: Skip 3rd octave math for water reflections
     if(!isRef) {
         uv = mat2(1.6, 1.2, -1.2, 1.6) * uv;
         f += 0.25 * noise(uv - t * 0.02);
@@ -558,7 +558,8 @@ void main() {
 
     float solarEase = u_warp * u_warp * (3.0 - 2.0 * u_warp);
     
-    float currentSunY = mix(0.5 + u_mouse.y * 1.2, -1.5, solarEase);
+    // SUN CENTER START FIX: Changed 0.5 to 0.25 so it centers perfectly in the sky on initial mobile load
+    float currentSunY = mix(0.25 + u_mouse.y * 1.2, -1.5, solarEase);
     vec3 sunDir = normalize(vec3(u_mouse.x * 1.5, currentSunY, 1.0));
     vec3 moonDir = normalize(vec3(-u_mouse.x * 1.5, -currentSunY + 0.15, -1.0));
 
@@ -635,19 +636,17 @@ void main() {
         float refSkyGrad = smoothstep(-0.2, 0.6, reflect(rd, N_smooth).y);
         vec3 reflectedSky = mix(horizon, zenith, refSkyGrad);
         
-        // PERFORMANCE OPTIMIZATION: Only calculate galaxy/stars for reflections if night!
         if(nightFactor > 0.01) {
             reflectedSky += vec3(0.04, 0.015, 0.06) * noise(refR_Planar.xz * 2.0) * noise(refR_Planar.xz * 4.0) * nightFactor * smoothstep(0.0, 0.3, refR_Planar.y);
             reflectedSky += GetStars(refR_Planar, nightFactor, true);
         }
 
-        // Generate water reflection clouds (Uses faster LOD setting)
         float refCloudAlpha = getClouds(refR_Planar, u_time, true);
         if(refCloudAlpha > 0.0) {
             reflectedSky = mix(reflectedSky, getCloudColor(refR_Planar, sunDir), refCloudAlpha * 0.55);
         }
 
-        float fresnel = pow(1.0 - max(0.0, dot(-rd, N_smooth)), 5.0); // Switched to N_smooth
+        float fresnel = pow(1.0 - max(0.0, dot(-rd, N_smooth)), 5.0); 
         
         vec3 waterBase = mix(vec3(0.000, 0.001, 0.003), u_waterColor, dayFactor);
         vec3 waterCol = mix(waterBase, reflectedSky * 0.85, 0.15 + 0.85 * fresnel);
@@ -656,12 +655,10 @@ void main() {
         float sss = pow(max(0.0, dot(sunDir, -rd)), 6.0) * max(0.0, GetWaterHeight(p, false)) * 8.0;
         waterCol += vec3(0.0, 0.6, 0.5) * sss * dayFactor * sunMask;
         
-        // ANTI-PIXELATION FIX: Replaced high pow sharp normal with smoother variables
         float smoothSpecDot = max(0.0, dot(N_smooth, normalize(-rd + sunDir)));
-        
-        float sunSpecCore = pow(smoothSpecDot, 100.0) * 3.0; // Reduced from 180 to 100
+        float sunSpecCore = pow(smoothSpecDot, 100.0) * 3.0; 
         float sunSpecGlow = pow(smoothSpecDot, 30.0) * 1.5; 
-        float sunTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), sunDir.xz)), 15.0); // Smoothed from 35 to 15
+        float sunTrail = pow(max(0.0, dot(normalize(p.xz - ro.xz), sunDir.xz)), 15.0); 
         
         vec3 waterSpecColor = mix(vec3(1.0, 0.3, 0.05), vec3(1.0, 0.9, 0.7), smoothstep(0.0, 0.3, sunDir.y));
         waterCol += waterSpecColor * (sunSpecCore + sunSpecGlow) * sunTrail * sunMask; 
@@ -687,8 +684,7 @@ void main() {
 }</script>
     <script>
         const canvas = document.getElementById('v');
-        let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.2, redirected = false; 
-        let offsetMX = 0, offsetMY = 0; 
+        let gl, prg, isW = false, warp = 0, mX = 0, mY = 0.0, redirected = false; // Initial mY fixed to 0.0 for perfectly centered sun
         let isTouching = false; 
         const TARGET = "https://www.linkedin.com/in/rahatreza100/";
 
@@ -723,45 +719,81 @@ void main() {
         let waterSource, waterFilter, waterGain;
         let audioInit = false;
         let gyroActive = false;
-        let lastTouchTime = 0;
-        let targetMX = 0, targetMY = 0.2; 
         
-        let lastBeta = null;
-        let lastGamma = null;
+        let targetMX = 0, targetMY = 0.0; 
+        let manualPanX = 0, manualPanY = 0; 
+        
+        // --- HARDCORE VR DIAGNOSIS FIX: DELTA TRACKER & JUMP REJECTION ---
+        let lastA = null, lastB = null, lastG = null;
+        let smoothDa = 0, smoothDb = 0, smoothDg = 0;
+        let accumX = 0, accumY = 0;
 
         function handleOrientation(event) {
-            if (event.beta === null || event.gamma === null) return;
+            if (event.alpha === null || event.beta === null || event.gamma === null) return;
             gyroActive = true;
 
-            let angle = (screen.orientation ? screen.orientation.angle : window.orientation) || 0;
+            let a = event.alpha;
             let b = event.beta;
             let g = event.gamma;
 
-            if (lastBeta !== null && Math.abs(b - lastBeta) > 60) b = lastBeta;
-            if (lastGamma !== null && Math.abs(g - lastGamma) > 60) g = lastGamma;
-
-            lastBeta = b;
-            lastGamma = g;
-
-            b = Math.max(-85, Math.min(85, b));
-            g = Math.max(-85, Math.min(85, g));
-
-            let finalX = 0, finalY = 0;
-            const TILT_DIVISOR = 60.0;
-
-            if (angle === 90) {
-                finalX = b / TILT_DIVISOR;
-                finalY = (g + 45.0) / TILT_DIVISOR;
-            } else if (angle === -90 || angle === 270) {
-                finalX = -b / TILT_DIVISOR;
-                finalY = -(g - 45.0) / TILT_DIVISOR;
-            } else {
-                finalX = g / TILT_DIVISOR;
-                finalY = (b - 45.0) / TILT_DIVISOR; 
+            if (lastA === null) {
+                lastA = a; lastB = b; lastG = g;
+                return;
             }
 
-            targetMX = Math.max(-1.5, Math.min(1.5, finalX));
-            targetMY = Math.max(-0.9, Math.min(0.9, finalY));
+            // Find shortest path angular deltas (prevents 360 to 0 degree spinning jump)
+            let da = a - lastA; if(da > 180) da -= 360; else if(da < -180) da += 360;
+            let db = b - lastB; if(db > 180) db -= 360; else if(db < -180) db += 360;
+            let dg = g - lastG; if(dg > 180) dg -= 360; else if(dg < -180) dg += 360;
+
+            lastA = a; lastB = b; lastG = g;
+
+            // GIMBAL LOCK & SENSOR JUMP REJECTION: 
+            // If the sensor flips >100 degrees instantly (impossible physically), drop the frame. Cures vertical jitter.
+            if (Math.abs(da) > 100 || Math.abs(db) > 100 || Math.abs(dg) > 100) return;
+
+            // DEADZONE NOISE GATE: Eliminates compass micro-jitter when holding still
+            if (Math.abs(da) < 0.08) da = 0;
+            if (Math.abs(db) < 0.08) db = 0;
+            if (Math.abs(dg) < 0.08) dg = 0;
+
+            // LOW-PASS DELTA SMOOTHING: Buttery smooth motion without lag
+            smoothDa += (da - smoothDa) * 0.25;
+            smoothDb += (db - smoothDb) * 0.25;
+            smoothDg += (dg - smoothDg) * 0.25;
+
+            let angle = (screen.orientation ? screen.orientation.angle : window.orientation) || 0;
+            let finalDx = 0, finalDy = 0;
+
+            let radB = b * (Math.PI / 180);
+            let radG = g * (Math.PI / 180);
+
+            // Correct mathematical mapping for Portrait vs Landscape
+            if (angle === 90) { 
+                finalDx = smoothDa * Math.sin(Math.abs(radG)) + smoothDb * Math.cos(radG);
+                finalDy = -smoothDg;
+            } else if (angle === -90 || angle === 270) { 
+                finalDx = smoothDa * Math.sin(Math.abs(radG)) - smoothDb * Math.cos(radG);
+                finalDy = smoothDg;
+            } else { // Portrait 
+                finalDx = smoothDg * Math.cos(radB) + smoothDa * Math.sin(radB);
+                finalDy = smoothDb;
+            }
+
+            if (!isTouching) {
+                accumX += finalDx / 30.0; // Adjusted for perfect heavy sensitivity
+                accumY += finalDy / 30.0;
+                
+                // Gravity Center Return (slowly pulls back to the middle if left alone)
+                accumX *= 0.985;
+                accumY *= 0.985;
+            } else {
+                accumX = manualPanX;
+                accumY = manualPanY;
+            }
+
+            targetMX = Math.max(-1.5, Math.min(1.5, accumX));
+            targetMY = Math.max(-0.9, Math.min(0.9, accumY));
         }
 
         if (window.DeviceOrientationEvent) {
@@ -836,18 +868,24 @@ void main() {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
             if (e.cancelable) e.preventDefault(); 
             isTouching = true;
-            lastTouchTime = Date.now();
-            mX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 1.5;
-            mY = ((1 - e.touches[0].clientY / window.innerHeight) * 2 - 1) * 0.7;
+            manualPanX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 1.5;
+            manualPanY = ((1 - e.touches[0].clientY / window.innerHeight) * 2 - 1) * 0.7;
+            mX = manualPanX;
+            mY = manualPanY;
+            targetMX = manualPanX;
+            targetMY = manualPanY;
         }, { passive: false });
 
         window.addEventListener('touchmove', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.panel-box') || e.target.classList.contains('btn-init')) return;
             if (e.cancelable) e.preventDefault();
             isTouching = true;
-            lastTouchTime = Date.now();
-            mX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 1.5;
-            mY = ((1 - e.touches[0].clientY / window.innerHeight) * 2 - 1) * 0.7;
+            manualPanX = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 1.5;
+            manualPanY = ((1 - e.touches[0].clientY / window.innerHeight) * 2 - 1) * 0.7;
+            mX = manualPanX;
+            mY = manualPanY;
+            targetMX = manualPanX;
+            targetMY = manualPanY;
         }, { passive: false });
 
         window.addEventListener('touchend', () => { isTouching = false; });
@@ -857,6 +895,10 @@ void main() {
             if (isMobile) return;
             mX = ((e.clientX / window.innerWidth) * 2 - 1) * 1.5;
             mY = ((1 - e.clientY / window.innerHeight) * 2 - 1) * 0.7;
+            targetMX = mX;
+            targetMY = mY;
+            manualPanX = mX;
+            manualPanY = mY;
             const cur = document.getElementById('cursor');
             if (cur) {
                 cur.style.left = e.clientX + 'px';
@@ -1029,24 +1071,11 @@ void main() {
             if (elapsed > 33) droppedFrames++;
             framesAnalyzed++;
 
-            let timeSinceTouch = Date.now() - lastTouchTime;
             if (gyroActive) {
-                if (isTouching || timeSinceTouch < 150) {
-                    offsetMX = mX - targetMX;
-                    offsetMY = mY - targetMY;
-                    if (isTouching) lastTouchTime = Date.now();
-                } else {
-                    if (timeSinceTouch > 2000) {
-                        let decay = Math.pow(0.95, dtFactor);
-                        offsetMX *= decay; 
-                        offsetMY *= decay;
-                    }
-                    let destX = targetMX + offsetMX;
-                    let destY = targetMY + offsetMY;
-                    
+                if (!isTouching) {
                     let lerpAmt = 1.0 - Math.pow(0.93, dtFactor);
-                    mX += (destX - mX) * lerpAmt;
-                    mY += (destY - mY) * lerpAmt;
+                    mX += (targetMX - mX) * lerpAmt;
+                    mY += (targetMY - mY) * lerpAmt;
                 }
             }
 
