@@ -443,6 +443,35 @@ uniform float u_waveEnergy;
 uniform float u_waveHeight;
 uniform float u_starDensity;
 
+// PC ENHANCEMENT UNIFORMS
+uniform float u_isPC;
+uniform float u_tidalPhase;
+uniform float u_windX;
+uniform float u_windZ;
+uniform float u_foamIntensity;
+uniform float u_causticIntensity;
+
+// REALISTIC TIDAL SIMULATION
+float getTidalHeight(vec2 uv, float t) {
+    // Lunar tidal components (M2, S2, N2 principal constituents)
+    float m2 = sin(t * 0.0805 + uv.x * 0.3) * 0.15;  // Principal lunar semidiurnal
+    float s2 = sin(t * 0.0787 + uv.x * 0.25) * 0.08; // Principal solar semidiurnal  
+    float n2 = sin(t * 0.0780 + uv.x * 0.28) * 0.05; // Larger elliptical
+    float k1 = sin(t * 0.0418 + uv.x * 0.15) * 0.04;  // Luni-solar diurnal
+    
+    // Spring/neap tide modulation (14.77 day cycle)
+    float springNeap = sin(t * 0.0058) * 0.5 + 0.5;
+    
+    return (m2 + s2 + n2 + k1) * springNeap * 0.3;
+}
+
+// WIND-DEPENDENT WAVE DIRECTION
+vec2 getWindDirection(float t) {
+    vec2 baseWind = normalize(vec2(u_windX + 1.0, u_windZ + 0.7));
+    float windGust = sin(t * 0.5) * 0.3 + sin(t * 1.3) * 0.15;
+    return baseWind * (0.7 + windGust);
+}
+
 #define PI 3.14159265359
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
@@ -516,6 +545,39 @@ vec3 GetNormal(vec3 p, bool micro) {
         0.08, 
         h - GetWaterHeight(p - e.yxy, micro)
     ));
+}
+
+// REALISTIC WATER FOAM SYSTEM
+float getFoam(vec3 p, vec3 N, float height) {
+    if (u_isPC < 0.5) return 0.0;
+    
+    float crest = smoothstep(0.02, 0.12, height);
+    float turbulence = pow(max(0.0, 1.0 - abs(N.y)), 3.0);
+    
+    vec2 foamUV = p.xz * 3.0 + u_time * 0.5;
+    float foamNoise = noise(foamUV) * noise(foamUV * 2.3 + u_time * 0.3);
+    
+    float steepness = pow(max(0.0, dot(N.xz, normalize(vec2(u_windX + 1.0, u_windZ + 0.7)))), 2.0);
+    
+    float foam = crest * (0.5 + foamNoise * 0.5) * turbulence * steepness;
+    foam *= u_foamIntensity;
+    
+    return clamp(foam, 0.0, 1.0);
+}
+
+// UNDERWATER CAUSTICS
+float getCaustics(vec3 p, float t) {
+    if (u_isPC < 0.5) return 0.0;
+    
+    vec2 cUV = p.xz * 0.8 + t * 0.15;
+    
+    float c1 = sin(cUV.x * 8.0 + sin(cUV.y * 6.0 + t)) * 0.5 + 0.5;
+    float c2 = sin(cUV.y * 9.0 + sin(cUV.x * 7.0 - t * 0.8)) * 0.5 + 0.5;
+    float c3 = sin((cUV.x + cUV.y) * 5.0 + t * 0.5) * 0.5 + 0.5;
+    
+    float caustic = pow(c1 * c2 * c3, 2.0) * u_causticIntensity;
+    
+    return caustic * 0.3;
 }
 
 // DYNAMIC PLANAR STAR ENGINE
@@ -668,9 +730,26 @@ void main() {
         vec3 waterBase = mix(vec3(0.000, 0.001, 0.003), u_waterColor, dayFactor);
         vec3 waterCol = mix(waterBase, reflectedSky * 0.85, 0.15 + 0.85 * fresnel);
 
+        // Get water height for effects
+        float waterHeight = GetWaterHeight(p, false);
+        
+        // Add tidal influence to height
+        float tidalHeight = getTidalHeight(p.xz * 0.1, u_time + u_tidalPhase);
+        waterHeight += tidalHeight * u_waveHeight * 8.0;
+
         // REALISM SSS (Sub-surface Scattering)
-        float sss = pow(max(0.0, dot(sunDir, -rd)), 6.0) * max(0.0, GetWaterHeight(p, false)) * 8.0;
+        float sss = pow(max(0.0, dot(sunDir, -rd)), 6.0) * max(0.0, waterHeight) * 8.0;
         waterCol += vec3(0.0, 0.6, 0.5) * sss * dayFactor * sunMask;
+        
+        // REALISTIC FOAM ON WAVE CRESTS
+        float foam = getFoam(p, N_smooth, waterHeight);
+        vec3 foamColor = mix(vec3(0.9, 0.95, 1.0), vec3(1.0, 0.98, 0.95), dayFactor);
+        waterCol = mix(waterCol, foamColor, foam * 0.8);
+        
+        // UNDERWATER CAUSTICS
+        float caustic = getCaustics(p, u_time);
+        vec3 causticColor = vec3(0.7, 0.9, 1.0) * caustic * dayFactor;
+        waterCol += causticColor * (1.0 - fresnel) * 0.5;
         
         float smoothSpecDot = max(0.0, dot(N_smooth, normalize(-rd + sunDir)));
         float sunSpecCore = pow(smoothSpecDot, 100.0) * 3.0; 
